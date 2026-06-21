@@ -40,6 +40,18 @@
   :focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px;border-radius:6px;}
   .hidden{display:none !important;}
 
+  /* ---------- HOME ---------- */
+  #home{align-items:center;justify-content:center;text-align:center;padding:30px 24px;overflow-y:auto;}
+  .home-copy{font-family:var(--serif);font-size:1.12rem;line-height:1.45;color:var(--foam-dim);max-width:560px;margin:0 auto 26px;}
+  .painting-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;width:min(720px,100%);}
+  .painting-card{border:1.5px solid var(--foam-faint);border-radius:14px;padding:14px;background:rgba(255,255,255,.04);text-align:left;
+    transition:transform .16s ease,border-color .2s ease,background .2s ease;}
+  .painting-card:hover{border-color:var(--gold);background:rgba(201,162,75,.09);transform:translateY(-2px);}
+  .painting-thumb{width:100%;aspect-ratio:1.45/1;border-radius:9px;object-fit:cover;background:#0c1614;margin-bottom:12px;display:block;}
+  .painting-card h2{font-family:var(--serif);font-size:1.35rem;margin:0 0 5px;color:var(--foam);}
+  .painting-card p{font-family:var(--serif);font-size:1rem;line-height:1.35;color:var(--foam-dim);margin:0 0 12px;}
+  .painting-card .btn{width:100%;min-height:46px;font-size:.95rem;}
+
   /* ---------- START ---------- */
   #start{align-items:center;justify-content:center;text-align:center;padding:30px 26px;overflow-y:auto;}
   .eyebrow{font-size:.74rem;letter-spacing:.36em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;}
@@ -172,15 +184,23 @@
 <body>
 <div class="app" id="app">
 
+  <!-- HOME -->
+  <section class="screen active" id="home">
+    <div class="eyebrow">A looking game</div>
+    <h1>Choose a painting</h1>
+    <p class="home-copy">Pick one painting, spend a quiet minute with it, then follow clues to discover its secrets.</p>
+    <div class="painting-grid" id="paintingGrid"></div>
+  </section>
+
   <!-- START -->
-  <section class="screen active" id="start">
+  <section class="screen" id="start">
     <div class="eyebrow">A looking game</div>
     <div class="hero-frame" id="heroFrame">
       <span class="hero-placeholder">getting ready…</span>
-      <img id="heroImg" alt="The Birth of Venus by Sandro Botticelli" />
+      <img id="heroImg" alt="" />
     </div>
-    <h1>The Birth of Venus</h1>
-    <p class="subtitle">Let's slow down, then go exploring.</p>
+    <h1 id="startTitle">The Birth of Venus</h1>
+    <p class="subtitle" id="startSubtitle">Let's slow down, then go exploring.</p>
     <div class="ask">How long shall we look first?</div>
     <div class="pills" id="pills" role="group" aria-label="Choose how long to look">
       <button class="pill" data-sec="30" aria-pressed="false">30 sec</button>
@@ -204,7 +224,7 @@
         <span class="time" id="timeText">1:00</span></div>
       <button class="quit" id="quitLook">✕ Quit</button>
     </div>
-    <div class="stage"><div class="frame"><img class="painting" id="paintLook" alt="The Birth of Venus" /></div></div>
+    <div class="stage"><div class="frame"><img class="painting" id="paintLook" alt="" /></div></div>
     <div class="prompt"><p id="promptText"></p></div>
   </section>
 
@@ -217,7 +237,7 @@
     <div class="q-bar"><p id="findQ"></p></div>
     <div class="stage">
       <div class="frame" id="frameFind">
-        <img class="painting" id="paintFind" alt="The Birth of Venus" />
+        <img class="painting" id="paintFind" alt="" />
         <div class="ring" id="findRing"></div>
         <div class="hint-ring" id="hintRing"></div>
         <div class="tap-dot" id="tapDot"></div>
@@ -232,7 +252,7 @@
       </div>
       <div class="caption" id="findIntro">
         <h2>Let's go exploring</h2>
-        <p>You looked at the whole painting. Now let's find some things hiding inside it.</p>
+        <p id="findIntroText">You looked at the whole painting. Now let's find some things hiding inside it.</p>
         <button class="btn btn-primary" id="startFindBtn">First clue</button>
       </div>
     </div>
@@ -242,10 +262,8 @@
   <section class="screen" id="done">
     <svg class="star" viewBox="0 0 24 24" fill="none" stroke="#c9a24b" stroke-width="1.4" aria-hidden="true">
       <path d="M12 2.5l2.6 6.1 6.6.5-5 4.3 1.6 6.5L12 16.9 5.6 20.4l1.6-6.5-5-4.3 6.6-.5z" fill="rgba(201,162,75,.18)"/></svg>
-    <h2>You found everything.</h2>
-    <p class="ctx">Here's a secret. This painting isn't really about a lady in the sea. Long ago, people believed Venus <em>was</em> beauty itself — and this is the moment beauty first arrives in the whole world, carried on the wind, with the very first flowers blooming to welcome her.</p>
-    <p class="ctx">A painter named Sandro Botticelli made her stand just like the smooth stone goddesses carved thousands of years ago, and brushed her with real gold so she would shine. He painted it in Italy more than 500 years ago.</p>
-    <p class="ctx trip">It lives in a museum called the Uffizi, in a city named Florence — and you're going to stand in front of the real one very soon. When you do, find her dreaming eyes, the wind's puffed-out cheeks, the falling roses, and her rivers of golden hair.</p>
+    <h2 id="doneTitle">You found everything.</h2>
+    <div id="doneCopy"></div>
     <div class="done-actions">
       <button class="btn btn-ghost" id="againBtn">Play again</button>
       <button class="btn btn-primary" id="doneBtn">All done</button>
@@ -266,7 +284,7 @@
     <div class="tune-hint">Drag on the painting to aim with the magnifier, lift to set. It jumps to the next spot.</div>
     <div class="stage">
       <div class="frame tune" id="frameTune">
-        <img class="painting" id="paintTune" alt="The Birth of Venus" />
+        <img class="painting" id="paintTune" alt="" />
         <div class="loupe" id="loupe"><img class="loupe-img" id="loupeImg" alt="" /><div class="cross"></div></div>
       </div>
     </div>
@@ -299,7 +317,7 @@
   // z = reveal zoom, r = highlight-ring radius (fraction of width).
   var STOPS = [
     {find:"Can you find Venus's face?",
-     cx:0.500, cy:0.125, hit:0.16, z:2.0, r:0.22,
+     cx:0.549, cy:0.155, hit:0.16, z:2.0, r:0.22,
      title:"Her dreaming eyes",
      body:"Here she is — Venus, the goddess of love. Look at her eyes, gazing far, far away, like someone just waking from a dream. This is the very first moment she has ever been in the world."},
     {find:"Can you find the giant seashell she stands on?",
@@ -307,25 +325,62 @@
      title:"A seashell cradle",
      body:"She floated to shore standing on a giant shell — her cradle and her little boat. Long ago, a shell like this meant something new and precious had been born out of the sea."},
     {find:"Can you find the two flying friends blowing the wind?",
-     cx:0.175, cy:0.150, hit:0.19, z:2.1, r:0.30,
+     cx:0.356, cy:0.200, hit:0.19, z:2.1, r:0.30,
      title:"The breath that carries her",
      body:"These two are the wind. The West Wind holds his flower-wife close, and together they breathe out a soft spring breeze — puff out your cheeks like them! Their gentle breath carries Venus safely to land."},
     {find:"Can you find the pink roses falling through the air?",
-     cx:0.235, cy:0.235, hit:0.16, z:2.3, r:0.22,
+     cx:0.423, cy:0.347, hit:0.16, z:2.3, r:0.22,
      title:"The very first roses",
      body:"Watch the flowers fall. The old story says these were the first roses that ever bloomed in the whole world — they opened the moment Venus was born, and the wind sends them tumbling after her."},
     {find:"Can you find her long, flowing hair?",
-     cx:0.565, cy:0.235, hit:0.16, z:2.2, r:0.24,
+     cx:0.622, cy:0.320, hit:0.16, z:2.2, r:0.24,
      title:"Rivers of gold",
      body:"See how her hair flows on and on, like rivers of gold in the wind? The painter brushed it with real gold so it would shine — as if Venus glows with a light from somewhere deep inside."},
     {find:"Can you find the lady holding a cloak full of flowers?",
-     cx:0.850, cy:0.470, hit:0.19, z:2.0, r:0.30,
+     cx:0.784, cy:0.403, hit:0.19, z:2.0, r:0.30,
      title:"Spring comes to greet her",
      body:"This is Spring herself, hurrying to meet Venus. Her dress is sprinkled with tiny flowers, and she holds out a soft cloak — covered in blossoms — to wrap around the new goddess and keep her warm."}
   ];
 
+  var VENUS_DONE = [
+    "Here's a secret. This painting isn't really about a lady in the sea. Long ago, people believed Venus <em>was</em> beauty itself — and this is the moment beauty first arrives in the whole world, carried on the wind, with the very first flowers blooming to welcome her.",
+    "A painter named Sandro Botticelli made her stand just like the smooth stone goddesses carved thousands of years ago, and brushed her with real gold so it would shine. He painted it in Italy more than 500 years ago.",
+    "It lives in a museum called the Uffizi, in a city named Florence — and you're going to stand in front of the real one very soon. When you do, find her dreaming eyes, the wind's puffed-out cheeks, the falling roses, and her rivers of golden hair."
+  ];
+
+  var PRIMAVERA_SRC = "https://commons.wikimedia.org/wiki/Special:FilePath/Sandro_Botticelli_-_La_Primavera_-_Google_Art_Project.jpg";
+  var PRIMAVERA_PROMPTS = [
+    "Just look. Let your eyes wander through the trees.",
+    "How many people can you find? Who seems still, and who is moving?",
+    "Look for flowers, fruit, and hands reaching through the air.",
+    "Can you feel a breeze anywhere? Can you hear dancing?",
+    "What season do you think is hiding here? Keep it secret for now."
+  ];
+  var PRIMAVERA_DONE = [
+    "Now the secret can come out: this painting is called <em>Primavera</em>, which means <em>Spring</em>. Botticelli made the whole picture feel like the season waking up — flowers opening, fruit glowing, wind rushing in, and dancers turning in the grove.",
+    "The figures are from old myths. Venus stands calmly near the center, Mercury guards the left side, the Three Graces dance beside him, and on the right a rushing wind changes a frightened nymph into Flora, the flower-scattering spirit of spring.",
+    "It lives in the Uffizi in Florence, near <em>The Birth of Venus</em>. When you see the real one, look for the tiny blossoms underfoot, the oranges overhead, the dancing hands, and the moment spring begins to burst into the world."
+  ];
+  var PRIMAVERA_STOPS = [
+    {find:"Can you find the quiet woman standing near the center?", cx:0.515, cy:0.425, hit:0.13, z:2.0, r:0.20, title:"The calm center", body:"She stands very still while everyone else moves around her. Her raised hand is gentle, almost like she is asking the noisy grove to become quiet."},
+    {find:"Can you find the little winged archer above her?", cx:0.515, cy:0.205, hit:0.12, z:2.4, r:0.18, title:"A blindfolded arrow", body:"High above the center, a small winged boy aims an arrow while blindfolded. He reminds us that love can be surprising, mischievous, and hard to steer."},
+    {find:"Can you find the three dancers holding hands?", cx:0.345, cy:0.430, hit:0.17, z:2.0, r:0.26, title:"A circle of hands", body:"These three figures move like music. Their fingers weave together so lightly that the dance feels as if it might float away."},
+    {find:"Can you find the figure reaching up toward the clouds?", cx:0.150, cy:0.360, hit:0.14, z:2.1, r:0.22, title:"The cloud-chaser", body:"At the far left, he lifts a wand toward the gray clouds. It is as if he is clearing the sky so the grove can stay bright."},
+    {find:"Can you find the dark blue wind rushing in from the side?", cx:0.885, cy:0.360, hit:0.15, z:2.1, r:0.23, title:"A sudden wind", body:"This blue figure blows into the picture with puffed cheeks and grabbing arms. The story turns wild here, like a gust shaking leaves."},
+    {find:"Can you find the woman scattering flowers from her dress?", cx:0.735, cy:0.505, hit:0.16, z:2.0, r:0.24, title:"A dress full of blossoms", body:"Her gown is crowded with tiny flowers, and more spill from her hands. She is the biggest clue: wherever she walks, the ground seems to bloom."}
+  ];
+
+  var PAINTINGS = [
+    {id:"venus", title:"The Birth of Venus", artist:"Sandro Botticelli", card:"A sea breeze, a shell, and a goddess arriving on shore.", subtitle:"Let's slow down, then go exploring.", src:EMBEDDED, alt:"The Birth of Venus by Sandro Botticelli", intro:"You looked at the whole painting. Now let's find some things hiding inside it.", prompts:PROMPTS, done:VENUS_DONE, stops:STOPS},
+    {id:"primavera", title:"Primavera", artist:"Sandro Botticelli", card:"A shadowy orange grove full of flowers, dancers, wind, and mystery.", subtitle:"Follow the clues first. The big secret waits until the end.", src:PRIMAVERA_SRC, alt:"Primavera by Sandro Botticelli", intro:"You looked at the whole painting. Now let's follow clues without naming the mystery yet.", prompts:PRIMAVERA_PROMPTS, done:PRIMAVERA_DONE, stops:PRIMAVERA_STOPS}
+  ];
+
+  var currentPainting = PAINTINGS[0];
+  var PROMPTS = currentPainting.prompts;
+  var STOPS = currentPainting.stops;
+
   var $ = function(id){ return document.getElementById(id); };
-  var screens = { start:$("start"), looking:$("looking"), find:$("find"), done:$("done"), tune:$("tune") };
+  var screens = { home:$("home"), start:$("start"), looking:$("looking"), find:$("find"), done:$("done"), tune:$("tune") };
   var prog = $("prog"), R = 27, C = 2*Math.PI*R;
   prog.style.strokeDasharray = C; prog.style.strokeDashoffset = 0;
 
@@ -339,12 +394,56 @@
   /* ---------- image ---------- */
   function applySrc(src){
     ["heroImg","paintLook","paintFind","paintTune","loupeImg"].forEach(function(id){ $(id).src = src; });
+    ["heroImg","paintLook","paintFind","paintTune"].forEach(function(id){ $(id).alt = currentPainting.alt; });
     $("heroFrame").classList.add("ready");
     state.imgReady = true;
     $("beginBtn").disabled = false;
     $("status").textContent = "Ready when you are.";
   }
-  applySrc(EMBEDDED);
+  function renderDoneCopy(){
+    $("doneTitle").textContent = "You found everything in " + currentPainting.title + ".";
+    $("doneCopy").innerHTML = currentPainting.done.map(function(txt, idx){
+      return '<p class="ctx'+(idx===currentPainting.done.length-1?' trip':'')+'">'+txt+'</p>';
+    }).join("");
+  }
+  function selectPainting(painting){
+    currentPainting = painting;
+    PROMPTS = painting.prompts;
+    STOPS = painting.stops;
+    state.findIndex = 0;
+    state.findPhase = "intro";
+    state.tuneIndex = 0;
+    state.imgReady = false;
+    $("beginBtn").disabled = true;
+    $("heroFrame").classList.remove("ready");
+    $("status").textContent = "Getting the painting ready…";
+    $("startTitle").textContent = painting.title;
+    $("startSubtitle").textContent = painting.subtitle;
+    $("findIntroText").textContent = painting.intro;
+    document.title = "Looking at " + painting.title;
+    renderDoneCopy();
+    applySrc(painting.src);
+    show("start");
+  }
+  function renderHome(){
+    var grid = $("paintingGrid");
+    grid.innerHTML = "";
+    PAINTINGS.forEach(function(painting){
+      var card = document.createElement("article");
+      card.className = "painting-card";
+      card.innerHTML = '<img class="painting-thumb" alt="" />'
+        + '<h2></h2><p></p><button class="btn btn-primary" type="button">Choose painting</button>';
+      card.querySelector("img").src = painting.src;
+      card.querySelector("img").alt = painting.alt;
+      card.querySelector("h2").textContent = painting.title;
+      card.querySelector("p").textContent = painting.card;
+      card.querySelector("button").addEventListener("click", function(){ selectPainting(painting); });
+      grid.appendChild(card);
+    });
+  }
+  renderHome();
+  renderDoneCopy();
+  applySrc(currentPainting.src);
 
   $("pickLink").addEventListener("click", function(){ $("fileInput").click(); });
   $("fileInput").addEventListener("change", function(e){
@@ -547,14 +646,14 @@
 
   /* ---------- wiring ---------- */
   $("beginBtn").addEventListener("click", startLooking);
-  $("quitLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); show("start"); });
+  $("quitLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); show("home"); });
   $("startFindBtn").addEventListener("click", function(){ beginSeeking(0); });
   $("frameFind").addEventListener("click", onFindTap);
   $("showMeBtn").addEventListener("click", function(){ revealStop(state.findIndex, false); });
   $("nextFindBtn").addEventListener("click", nextFind);
-  $("quitFind").addEventListener("click", function(){ show("start"); });
+  $("quitFind").addEventListener("click", function(){ show("home"); });
   $("againBtn").addEventListener("click", startLooking);
-  $("doneBtn").addEventListener("click", function(){ show("start"); });
+  $("doneBtn").addEventListener("click", function(){ show("home"); });
   $("tuneLink").addEventListener("click", enterTune);
   $("quitTune").addEventListener("click", function(){ show("start"); });
 
