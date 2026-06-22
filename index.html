@@ -125,6 +125,10 @@
   .find-progress{font-size:.78rem;letter-spacing:.18em;color:var(--gold);font-weight:600;text-transform:uppercase;padding-left:4px;}
   .q-bar{flex:0 0 auto;padding:8px 22px 2px;text-align:center;}
   .q-bar p{margin:0;font-family:var(--serif);font-size:clamp(1.2rem,5vw,1.55rem);line-height:1.3;color:var(--foam);}
+  /* Guiding text stays pinned to the screen at a constant size while the painting is pinch-zoomed. */
+  .vv-pin.vv-active{position:fixed;left:0;top:0;right:auto;bottom:auto;transform-origin:0 0;z-index:50;margin:0;pointer-events:none;}
+  .q-bar.vv-pin.vv-active{padding:10px 22px 14px;background:linear-gradient(180deg,rgba(4,8,10,.82),rgba(4,8,10,0));}
+  .prompt.vv-pin.vv-active{padding:16px 28px 18px;background:linear-gradient(0deg,rgba(4,8,10,.85),rgba(4,8,10,0));}
   .find-bottom{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;
     padding:6px 22px max(18px,env(safe-area-inset-bottom));}
   .feedback{min-height:1.5em;text-align:center;font-family:var(--serif);font-style:italic;font-size:1.16rem;color:var(--foam);opacity:0;transition:opacity .3s ease;margin-bottom:4px;}
@@ -203,9 +207,9 @@
     <p class="subtitle" id="startSubtitle">Let's slow down, then go exploring.</p>
     <div class="ask">How long shall we look first?</div>
     <div class="pills" id="pills" role="group" aria-label="Choose how long to look">
-      <button class="pill" data-sec="30" aria-pressed="false">30 sec</button>
-      <button class="pill" data-sec="60" aria-pressed="true">1 min</button>
-      <button class="pill" data-sec="120" aria-pressed="false">2 min</button>
+      <button class="pill" data-sec="180" aria-pressed="false">3 min</button>
+      <button class="pill" data-sec="300" aria-pressed="true">5 min</button>
+      <button class="pill" data-sec="600" aria-pressed="false">10 min</button>
     </div>
     <div class="start-actions">
       <button class="btn btn-primary" id="beginBtn" disabled>Begin looking</button>
@@ -221,11 +225,11 @@
       <div class="timer" role="timer"><svg viewBox="0 0 62 62" aria-hidden="true">
         <circle class="track" cx="31" cy="31" r="27"></circle>
         <circle class="prog" id="prog" cx="31" cy="31" r="27"></circle></svg>
-        <span class="time" id="timeText">1:00</span></div>
+        <span class="time" id="timeText">5:00</span></div>
       <button class="quit" id="quitLook">✕ Quit</button>
     </div>
     <div class="stage"><div class="frame"><img class="painting" id="paintLook" alt="" /></div></div>
-    <div class="prompt"><p id="promptText"></p></div>
+    <div class="prompt vv-pin" data-vv-anchor="bottom"><p id="promptText"></p></div>
   </section>
 
   <!-- FIND -->
@@ -234,7 +238,7 @@
       <div class="find-progress" id="findProgress">Exploring</div>
       <button class="quit" id="quitFind">✕ Quit</button>
     </div>
-    <div class="q-bar"><p id="findQ"></p></div>
+    <div class="q-bar vv-pin" data-vv-anchor="top"><p id="findQ"></p></div>
     <div class="stage">
       <div class="frame" id="frameFind">
         <img class="painting" id="paintFind" alt="" />
@@ -350,29 +354,29 @@
 
   var PRIMAVERA_SRC = "https://commons.wikimedia.org/wiki/Special:FilePath/Sandro_Botticelli_-_La_Primavera_-_Google_Art_Project.jpg";
   var PRIMAVERA_PROMPTS = [
-    "Just look. Let your eyes wander through the trees.",
-    "How many people can you find? Who seems still, and who is moving?",
-    "Look for flowers, fruit, and hands reaching through the air.",
-    "Can you feel a breeze anywhere? Can you hear dancing?",
-    "What season do you think is hiding here? Keep it secret for now."
+    "Let your eyes drift slowly into the grove. Feel the cool green shade settle around you.",
+    "Breathe in. Imagine orange blossom, crushed grass, and the sweetness of ripe fruit in the air.",
+    "Feel the warmth moving through the trees — a soft breeze, bare feet on damp earth, silk against skin.",
+    "Listen. Somewhere there is dancing, a rush of wind, the hush of petals falling.",
+    "Something is waking here, all at once. Hold the feeling. What season is breathing through this garden?"
   ];
   var PRIMAVERA_DONE = [
-    "Now the secret can come out: this painting is called <em>Primavera</em>, which means <em>Spring</em>. Botticelli made the whole picture feel like the season waking up — flowers opening, fruit glowing, wind rushing in, and dancers turning in the grove.",
-    "The figures are from old myths. Venus stands calmly near the center, Mercury guards the left side, the Three Graces dance beside him, and on the right a rushing wind changes a frightened nymph into Flora, the flower-scattering spirit of spring.",
-    "It lives in the Uffizi in Florence, near <em>The Birth of Venus</em>. When you see the real one, look for the tiny blossoms underfoot, the oranges overhead, the dancing hands, and the moment spring begins to burst into the world."
+    "Now the whole garden makes sense. This painting is called <em>Primavera</em> — the Italian word for <em>Spring</em>. Every figure you found is a different part of one season waking up: love at the calm center, the warm wind on one side, flowers spilling out on the other.",
+    "Sandro Botticelli gathered old myths into a single warm afternoon. Zephyr's breath turns a fleeing nymph into Flora, who scatters blossoms; Venus presides while Cupid's arrow sparks love; the Three Graces dance and Mercury keeps the sky clear. Together they tell how spring arrives — wind, then love, then flowers everywhere.",
+    "It hangs in the Uffizi in Florence, in the same rooms as <em>The Birth of Venus</em>. When you stand before the real one, move slowly again: find Venus's calm face, the dancing hands of the Graces, the blue wind rushing in, and the roses falling from Flora's dress — and feel the whole garden breathing spring."
   ];
   var PRIMAVERA_STOPS = [
-    {find:"Can you find the quiet woman standing near the center?", cx:0.515, cy:0.425, hit:0.13, z:2.0, r:0.20, title:"The calm center", body:"She stands very still while everyone else moves around her. Her raised hand is gentle, almost like she is asking the noisy grove to become quiet."},
-    {find:"Can you find the little winged archer above her?", cx:0.515, cy:0.205, hit:0.12, z:2.4, r:0.18, title:"A blindfolded arrow", body:"High above the center, a small winged boy aims an arrow while blindfolded. He reminds us that love can be surprising, mischievous, and hard to steer."},
-    {find:"Can you find the three dancers holding hands?", cx:0.345, cy:0.430, hit:0.17, z:2.0, r:0.26, title:"A circle of hands", body:"These three figures move like music. Their fingers weave together so lightly that the dance feels as if it might float away."},
-    {find:"Can you find the figure reaching up toward the clouds?", cx:0.150, cy:0.360, hit:0.14, z:2.1, r:0.22, title:"The cloud-chaser", body:"At the far left, he lifts a wand toward the gray clouds. It is as if he is clearing the sky so the grove can stay bright."},
-    {find:"Can you find the dark blue wind rushing in from the side?", cx:0.885, cy:0.360, hit:0.15, z:2.1, r:0.23, title:"A sudden wind", body:"This blue figure blows into the picture with puffed cheeks and grabbing arms. The story turns wild here, like a gust shaking leaves."},
-    {find:"Can you find the woman scattering flowers from her dress?", cx:0.735, cy:0.505, hit:0.16, z:2.0, r:0.24, title:"A dress full of blossoms", body:"Her gown is crowded with tiny flowers, and more spill from her hands. She is the biggest clue: wherever she walks, the ground seems to bloom."}
+    {find:"Right at the center of the garden, beneath the arch of leaves, one figure stands perfectly still.", cx:0.534, cy:0.318, hit:0.13, z:2.0, r:0.20, title:"Venus — the heart of the garden", body:"This is Venus, the goddess of love. She stands so still that the whole grove seems to turn gently around her. She is not in a hurry; love never is. She presides over this place, and wherever she is, life softens, opens, and begins to grow."},
+    {find:"Look up into the branches above her head — something small is hovering there.", cx:0.517, cy:0.029, hit:0.12, z:2.4, r:0.18, title:"Cupid — blind, glowing love", body:"High above Venus floats her son, Cupid. He is blindfolded, yet he aims a burning arrow into the garden below. Love arrives without looking and without warning — a sudden warmth that lands where it will and makes the heart bloom like everything else here."},
+    {find:"To the left, three figures dance with their hands woven lightly together.", cx:0.300, cy:0.327, hit:0.17, z:2.0, r:0.26, title:"The Three Graces — beauty given and returned", body:"These three dancers are the Graces, companions of Venus. Their thin gowns drift like mist and their fingers barely touch, passing something between them. They stand for the gentle gifts we give, receive, and give again — beauty and kindness flowing in a circle that never stops."},
+    {find:"At the far left edge, someone reaches a wand up toward the last grey clouds.", cx:0.109, cy:0.381, hit:0.14, z:2.1, r:0.22, title:"Mercury — keeper of clear skies", body:"This is Mercury, messenger of the gods. With his wand he stirs away the last clouds so no storm can reach the grove. He is the guardian here, holding the sky open so this warm season can stay. Spring is being protected, kept safe to last."},
+    {find:"A cold gust is sweeping in from the right, where a blue figure rushes into the garden.", cx:0.817, cy:0.317, hit:0.15, z:2.1, r:0.23, title:"Zephyr — the warm west wind", body:"This blue, breathless figure is Zephyr, the wind of spring. He blows in from the edge of the world and reaches for the nymph fleeing before him. His breath is the first warm gust that wakes the cold earth — wild, alive, and impossible to hold back."},
+    {find:"On the right, follow the falling petals to the woman whose dress overflows with flowers.", cx:0.683, cy:0.511, hit:0.16, z:2.0, r:0.24, title:"Flora — spring made visible", body:"Touched by Zephyr's warm breath, the fleeing nymph is changing — becoming Flora, the goddess of flowers. She steps forward scattering roses from her gown, and wherever she walks the ground blooms. She is spring itself, made into someone you can see."}
   ];
 
   var PAINTINGS = [
     {id:"venus", title:"The Birth of Venus", artist:"Sandro Botticelli", card:"A sea breeze, a shell, and a goddess arriving on shore.", subtitle:"Let's slow down, then go exploring.", src:EMBEDDED, alt:"The Birth of Venus by Sandro Botticelli", intro:"You looked at the whole painting. Now let's find some things hiding inside it.", prompts:PROMPTS, done:VENUS_DONE, stops:STOPS},
-    {id:"primavera", title:"Primavera", artist:"Sandro Botticelli", card:"A shadowy orange grove full of flowers, dancers, wind, and mystery.", subtitle:"Follow the clues first. The big secret waits until the end.", src:PRIMAVERA_SRC, alt:"Primavera by Sandro Botticelli", intro:"You looked at the whole painting. Now let's follow clues without naming the mystery yet.", prompts:PRIMAVERA_PROMPTS, done:PRIMAVERA_DONE, stops:PRIMAVERA_STOPS}
+    {id:"primavera", title:"Primavera", artist:"Sandro Botticelli", card:"A warm, drifting grove of flowers, dancers, and wind.", subtitle:"A warm, drifting garden. Move through it slowly and let each figure show you what is waking.", src:PRIMAVERA_SRC, alt:"Primavera by Sandro Botticelli", intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.", prompts:PRIMAVERA_PROMPTS, done:PRIMAVERA_DONE, stops:PRIMAVERA_STOPS}
   ];
 
   var currentPainting = PAINTINGS[0];
@@ -387,7 +391,7 @@
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(!reduceMotion){ $("app").classList.add("has-motion"); }
 
-  var state = { durationSec:60, imgReady:false, raf:0, startT:0, lastPrompt:-2,
+  var state = { durationSec:300, imgReady:false, raf:0, startT:0, lastPrompt:-2,
                 findIndex:0, findPhase:"intro", misses:0,
                 tuneIndex:0, tunePts:[], _fx:null, _fy:null };
 
@@ -453,6 +457,27 @@
 
   /* ---------- screens ---------- */
   function show(name){ Object.keys(screens).forEach(function(k){ screens[k].classList.toggle("active", k===name); }); }
+
+  /* ---------- keep guiding text a constant size & place on screen while the painting is pinch-zoomed ---------- */
+  var vv = window.visualViewport;
+  function updateGuides(){
+    if(!vv) return;
+    var zoomed = vv.scale > 1.01, inv = 1/vv.scale;
+    Array.prototype.forEach.call(document.querySelectorAll(".vv-pin"), function(el){
+      if(!zoomed){
+        el.classList.remove("vv-active");
+        el.style.transform=""; el.style.width=""; el.style.left=""; el.style.top="";
+        return;
+      }
+      el.classList.add("vv-active");
+      el.style.width = (vv.width * vv.scale) + "px";
+      var ty = (el.getAttribute("data-vv-anchor")==="bottom")
+        ? vv.offsetTop + vv.height - (el.offsetHeight + 8) * inv
+        : vv.offsetTop + 8 * inv;
+      el.style.transform = "translate("+vv.offsetLeft+"px,"+ty+"px) scale("+inv+")";
+    });
+  }
+  if(vv){ vv.addEventListener("resize", updateGuides); vv.addEventListener("scroll", updateGuides); }
   function fmt(sec){ sec=Math.max(0,Math.ceil(sec)); var m=Math.floor(sec/60),s=sec%60; return m+":"+(s<10?"0"+s:s); }
   function frac(el, clientX, clientY){
     var r = el.getBoundingClientRect();
@@ -478,12 +503,13 @@
   function tickLook(){
     var el=(performance.now()-state.startT)/1000, dur=state.durationSec, rem=dur-el;
     prog.style.strokeDashoffset=(C*Math.min(1,el/dur)).toFixed(2); $("timeText").textContent=fmt(rem);
-    var lead=1.4, n=PROMPTS.length, seg=(dur-lead)/n, idx=Math.floor((el-lead)/seg);
+    var lead=4, n=PROMPTS.length, seg=(dur-lead)/n, idx=Math.floor((el-lead)/seg);
     if(idx>=0 && idx<n){
-      var into=(el-lead)-idx*seg, vis=into<Math.min(seg*0.8,8);
+      var into=(el-lead)-idx*seg, vis=into<Math.min(seg*0.45,16);
       if(idx!==state.lastPrompt && vis){
         $("promptText").textContent=PROMPTS[idx]; state.lastPrompt=idx;
         $("promptText").classList.remove("show"); void $("promptText").offsetWidth; $("promptText").classList.add("show");
+        updateGuides();
       } else if(!vis && state.lastPrompt===idx){ $("promptText").classList.remove("show"); state.lastPrompt=-2; }
     }
     if(rem<=0){ $("promptText").classList.remove("show"); enterFind(); return; }
@@ -519,6 +545,7 @@
     $("frameFind").classList.add("seeking");
     $("findQ").textContent = s.find + " Tap it!";
     $("findProgress").textContent = "Find " + (i+1) + " of " + STOPS.length;
+    updateGuides();
   }
   function setFeedback(txt, cls){
     var f=$("feedback"); f.textContent=txt; f.className="feedback";
