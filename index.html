@@ -384,7 +384,7 @@
     {find:"On the right, follow the falling petals to the woman whose dress overflows with flowers.", cx:0.683, cy:0.511, hit:0.16, z:2.0, r:0.24, title:"Flora — spring made visible", body:"Touched by Zephyr's warm breath, the fleeing nymph is changing — becoming Flora, the goddess of flowers. She steps forward scattering roses from her gown, and wherever she walks the ground blooms. She is spring itself, made into someone you can see."}
   ];
 
-  var FRUIT_SRC = "https://commons.wikimedia.org/wiki/Special:FilePath/Rachel_Ruysch_-_Still-Life_with_Fruit_and_Insects_-_WGA20557.jpg";
+  var FRUIT_SRC = "images/fruit.jpg";
   var FRUIT_PROMPTS = [
     "First, let it be quiet. Just look at the fruit and the dark leaves.",
     "Imagine the smell here. Is it sweet, damp, sharp, or earthy?",
@@ -399,17 +399,17 @@
   ];
   var FRUIT_STOPS = [
     {find:"Let your eyes rest on the whole painting. When it feels quiet, tap anywhere to continue.", cx:0.500, cy:0.500, hit:2, z:1.45, r:0.55, title:"Stillness", body:"Everything seems calm at first. Fruit, leaves, darkness, silence. Stay with it for one breath. What do you smell? What temperature is the air?"},
-    {find:"Now look for a tiny living thing. Tap when something catches your eye.", cx:0.705, cy:0.425, hit:2, z:2.0, r:0.24, title:"Something is moving", body:"Did you notice anything alive? Maybe a wing. Maybe legs. Maybe just the feeling that one small thing might move first."},
-    {find:"Look for the smallest clues: specks, eggs, marks, soft places. Tap when you want to look closer.", cx:0.365, cy:0.630, hit:2, z:2.15, r:0.26, title:"The hidden world", body:"The tiny details matter. Little marks and insects are clues left by the artist. The fruit is not just sitting there. It is ripening, softening, changing."},
-    {find:"Look again at the fruit. What seems fresh? What seems almost too ripe? Tap when you notice a change.", cx:0.475, cy:0.450, hit:2, z:1.9, r:0.32, title:"Ripening", body:"Something strange is happening if we look closely. The fruit is beautiful, but it is also in the middle of becoming something else."},
-    {find:"Step back with your eyes. What do you think is happening here? Tap when you have a thought.", cx:0.500, cy:0.520, hit:2, z:1.55, r:0.48, title:"Is it still?", body:"I wonder: is this really a still life? Or is it a quiet place where life is happening very slowly?"},
+    {find:"Now look for a tiny living thing. Tap when something catches your eye.", cx:0.470, cy:0.635, hit:2, z:2.8, r:0.13, title:"Something is moving", body:"Did you notice anything alive? A small fly has landed right on the ripe peach. Maybe a wing. Maybe legs. Maybe just the feeling that one small thing might move first."},
+    {find:"Look for the smallest clues: specks, eggs, marks, soft places. Tap when you want to look closer.", cx:0.205, cy:0.835, hit:2, z:2.6, r:0.17, title:"The hidden world", body:"Down in the shadows sits a little bird's nest full of pale eggs. The tiny details matter. They are clues left by the artist: the fruit is not just sitting there. It is ripening, softening, changing."},
+    {find:"Look again at the fruit. What seems fresh? What seems almost too ripe? Tap when you notice a change.", cx:0.555, cy:0.640, hit:2, z:1.9, r:0.30, title:"Ripening", body:"Something strange is happening if we look closely. The fruit is beautiful, but it is also in the middle of becoming something else."},
+    {find:"Step back with your eyes. What do you think is happening here? Tap when you have a thought.", cx:0.520, cy:0.860, hit:2, z:2.2, r:0.26, title:"Is it still?", body:"A lizard and a butterfly have crept in along the bottom. I wonder: is this really a still life? Or is it a quiet place where life is happening very slowly?"},
     {find:"Take one last slow look. Tap when you are ready to leave the little world inside the painting.", cx:0.500, cy:0.500, hit:2, z:1.25, r:0.70, title:"Still changing", body:"Nothing here is fully still. Everything is in process. Looking carefully changed what we could see."}
   ];
 
   var WIKI = "https://commons.wikimedia.org/wiki/Special:FilePath/";
   var VENUS_TILES     = WIKI + "Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project.jpg?width=6000";
   var PRIMAVERA_TILES = WIKI + "Sandro_Botticelli_-_La_Primavera_-_Google_Art_Project.jpg?width=6000";
-  var FRUIT_TILES     = WIKI + "Rachel_Ruysch_-_Still-Life_with_Fruit_and_Insects_-_WGA20557.jpg?width=6000";
+  var FRUIT_TILES     = "images/fruit.jpg";
 
   var PAINTINGS = [
     {id:"venus", title:"The Birth of Venus", artist:"Sandro Botticelli", card:"A sea breeze, a shell, and a goddess arriving on shore.", subtitle:"Let's slow down, then go exploring.", src:VENUS_SRC, alt:"The Birth of Venus by Sandro Botticelli", intro:"You looked at the whole painting. Now let's find some things hiding inside it.", prompts:VENUS_PROMPTS, done:VENUS_DONE, stops:VENUS_STOPS, tiles:VENUS_TILES},
