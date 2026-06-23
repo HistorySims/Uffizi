@@ -92,8 +92,8 @@
   .skip:hover{border-color:var(--gold);color:var(--gold-bright);}
 
   /* OpenSeadragon find viewer */
-  #frameFind{width:min(100%,1100px);height:74vh;display:block;background:#04080a;}
-  #osd{width:100%;height:100%;}
+  #frameFind,#frameLook{width:min(100%,1100px);height:74vh;display:block;background:#04080a;}
+  #osd,#osdLook{width:100%;height:100%;}
   .osd-ring{border:2.5px solid var(--gold-bright);border-radius:50%;opacity:0;pointer-events:none;
     box-shadow:0 0 22px rgba(201,162,75,.55),inset 0 0 14px rgba(201,162,75,.25);transition:opacity .5s ease;}
   .osd-ring.show{opacity:1;}
@@ -241,7 +241,7 @@
       <button class="quit skip" id="skipLook">Skip ▸</button>
       <button class="quit" id="quitLook">✕ Quit</button>
     </div>
-    <div class="stage"><div class="frame"><img class="painting" id="paintLook" alt="" /></div></div>
+    <div class="stage"><div class="frame" id="frameLook"><div id="osdLook"></div></div></div>
     <div class="prompt vv-pin" data-vv-anchor="bottom"><p id="promptText"></p></div>
   </section>
 
@@ -432,12 +432,12 @@
   var state = { durationSec:300, imgReady:false, raf:0, startT:0, lastPrompt:-2,
                 findIndex:0, findPhase:"intro", misses:0,
                 tuneIndex:0, tunePts:[], _fx:null, _fy:null };
-  var osd = null, osdOverlays = [];
+  var osd = null, osdLook = null, osdOverlays = [];
 
   /* ---------- image ---------- */
   function applySrc(src){
-    ["heroImg","paintLook","paintTune","loupeImg"].forEach(function(id){ $(id).src = src; });
-    ["heroImg","paintLook","paintTune"].forEach(function(id){ $(id).alt = currentPainting.alt; });
+    ["heroImg","paintTune","loupeImg"].forEach(function(id){ $(id).src = src; });
+    ["heroImg","paintTune"].forEach(function(id){ $(id).alt = currentPainting.alt; });
     $("heroFrame").classList.add("ready");
     state.imgReady = true;
     $("beginBtn").disabled = false;
@@ -531,6 +531,7 @@
   function startLooking(){
     if(!state.imgReady) return;
     show("looking"); $("promptText").classList.remove("show"); $("promptText").textContent="";
+    osdLookLoad();
     state.lastPrompt=-2; state.startT=performance.now();
     cancelAnimationFrame(state.raf); tickLook();
   }
@@ -563,10 +564,9 @@
     resetReveal();
   }
   /* ---------- OpenSeadragon viewer ---------- */
-  function ensureOSD(){
-    if(osd || typeof OpenSeadragon === "undefined") return osd;
-    osd = OpenSeadragon({
-      element: $("osd"),
+  function osdConfig(elId){
+    return {
+      element: $(elId),
       prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/",
       drawer: "canvas",
       showNavigationControl:false,
@@ -575,12 +575,23 @@
       zoomPerScroll:1.4, zoomPerClick:2.2,
       gestureSettingsMouse:{ clickToZoom:false, dblClickToZoom:true, scrollToZoom:true },
       gestureSettingsTouch:{ clickToZoom:false, dblClickToZoom:true, pinchToZoom:true, flickEnabled:true }
-    });
+    };
+  }
+  function ensureOSD(){
+    if(osd || typeof OpenSeadragon === "undefined") return osd;
+    osd = OpenSeadragon(osdConfig("osd"));
     osd.addHandler("canvas-click", onOsdTap);
     osd.addHandler("open", function(){ try{ osd.viewport.goHome(true); }catch(_){} });
     return osd;
   }
   function osdLoad(){ if(ensureOSD()){ osd.open({ type:"image", url: currentPainting.tiles }); } }
+  function ensureOSDLook(){
+    if(osdLook || typeof OpenSeadragon === "undefined") return osdLook;
+    osdLook = OpenSeadragon(osdConfig("osdLook"));
+    osdLook.addHandler("open", function(){ try{ osdLook.viewport.goHome(true); }catch(_){} });
+    return osdLook;
+  }
+  function osdLookLoad(){ if(ensureOSDLook()){ osdLook.open({ type:"image", url: currentPainting.tiles }); } }
   function osdImgSize(){ var it = osd && osd.world.getItemAt(0); return it ? it.getContentSize() : null; }
   function osdHome(){ if(osd){ try{ osd.viewport.goHome(true); }catch(_){} } }
   function clearOverlays(){
