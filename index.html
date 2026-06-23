@@ -568,8 +568,11 @@
     osd = OpenSeadragon({
       element: $("osd"),
       prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/",
-      showNavigationControl:false, showNavigator:false,
-      maxZoomPixelRatio:5, minZoomImageRatio:0.9, visibilityRatio:1, animationTime:0.9,
+      drawer: "canvas",
+      showNavigationControl:false,
+      showNavigator:true, navigatorPosition:"BOTTOM_RIGHT", navigatorAutoFade:true,
+      maxZoomPixelRatio:20, minZoomImageRatio:0.9, visibilityRatio:1, animationTime:0.9,
+      zoomPerScroll:1.4, zoomPerClick:2.2,
       gestureSettingsMouse:{ clickToZoom:false, dblClickToZoom:true, scrollToZoom:true },
       gestureSettingsTouch:{ clickToZoom:false, dblClickToZoom:true, pinchToZoom:true, flickEnabled:true }
     });
