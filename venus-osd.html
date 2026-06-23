@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Zoom comparison — The Birth of Venus</title>
+<style>
+  :root{
+    --sea:#07100f; --stage:#04080a; --foam:#f2ebdd; --foam-dim:rgba(242,235,221,.62);
+    --foam-faint:rgba(242,235,221,.16); --gold:#c9a24b; --gold-bright:#e0bd6a;
+    --serif:'Iowan Old Style','Palatino Linotype','Palatino','Georgia',serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--stage);color:var(--foam);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;}
+  body{display:flex;flex-direction:column;height:100dvh;overflow:hidden;}
+  header{flex:0 0 auto;padding:12px 16px 8px;text-align:center;border-bottom:1px solid var(--foam-faint);}
+  h1{font-family:var(--serif);font-size:1.1rem;margin:0 0 2px;color:var(--foam);font-weight:600;}
+  .sub{font-size:.8rem;color:var(--foam-dim);margin:0 0 10px;}
+  .toggle{display:inline-flex;gap:6px;background:rgba(255,255,255,.05);padding:5px;border-radius:999px;}
+  .toggle button{appearance:none;border:0;cursor:pointer;border-radius:999px;padding:9px 16px;
+    font-size:.82rem;font-weight:600;letter-spacing:.02em;color:var(--foam-dim);background:transparent;}
+  .toggle button[aria-pressed="true"]{background:var(--gold);color:#1a1208;}
+  main{flex:1 1 auto;position:relative;}
+  .view{position:absolute;inset:0;display:none;}
+  .view.active{display:block;}
+  #osd{width:100%;height:100%;background:#04080a;}
+  /* old-way viewer */
+  #oldFrame{width:100%;height:100%;overflow:hidden;position:relative;
+    display:flex;align-items:center;justify-content:center;touch-action:none;cursor:grab;background:#04080a;}
+  #oldImg{max-width:100%;max-height:100%;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-drag:none;}
+  .hint{position:absolute;left:0;right:0;bottom:14px;text-align:center;font-size:.78rem;
+    color:var(--foam-dim);pointer-events:none;text-shadow:0 1px 6px #000;z-index:5;}
+  .oldctl{position:absolute;top:12px;right:12px;display:flex;gap:6px;z-index:6;}
+  .oldctl button{width:40px;height:40px;border-radius:10px;border:1px solid var(--foam-faint);
+    background:rgba(8,14,16,.8);color:var(--foam);font-size:1.1rem;cursor:pointer;}
+  .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:var(--foam-dim);font-style:italic;font-family:var(--serif);}
+  .note{position:absolute;left:12px;bottom:14px;max-width:60%;font-size:.72rem;color:var(--foam-dim);
+    background:rgba(4,8,10,.6);padding:6px 9px;border-radius:8px;z-index:5;}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.css" />
+</head>
+<body>
+  <header>
+    <h1>The Birth of Venus — zoom comparison</h1>
+    <p class="sub">Zoom into the same painting two ways. Try the eyes, the falling roses, a single strand of golden hair.</p>
+    <div class="toggle" role="group" aria-label="Choose a viewer">
+      <button id="btnOsd" aria-pressed="true">OpenSeadragon (hi-res)</button>
+      <button id="btnOld" aria-pressed="false">Current way (1 image)</button>
+    </div>
+  </header>
+  <main>
+    <section class="view active" id="viewOsd">
+      <div id="osd"></div>
+      <div class="note">OpenSeadragon · streams a ~6000px scan from Wikimedia. Scroll / pinch / double-tap to zoom; drag to pan.</div>
+    </section>
+    <section class="view" id="viewOld">
+      <div id="oldFrame">
+        <div class="loading" id="oldLoading">loading…</div>
+        <img id="oldImg" alt="The Birth of Venus by Sandro Botticelli" />
+      </div>
+      <div class="oldctl">
+        <button id="oldMinus" aria-label="Zoom out">−</button>
+        <button id="oldPlus" aria-label="Zoom in">+</button>
+        <button id="oldReset" aria-label="Reset">⤢</button>
+      </div>
+      <div class="note">Current app approach · scales one ~1280px image with a CSS transform. Wheel / pinch / drag, or use the buttons. Notice it softens as you push in.</div>
+    </section>
+  </main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  var FILE = "Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project.jpg";
+  var SRC = function(w){ return "https://commons.wikimedia.org/wiki/Special:FilePath/" + FILE + "?width=" + w; };
+
+  /* ---------- OpenSeadragon (lazy init) ---------- */
+  var osdViewer = null;
+  function initOsd(){
+    if(osdViewer) return;
+    osdViewer = OpenSeadragon({
+      id: "osd",
+      prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/",
+      tileSources: { type: "image", url: SRC(6000) },
+      showNavigator: true,
+      navigatorPosition: "BOTTOM_RIGHT",
+      maxZoomPixelRatio: 5,      // allow pushing well past native resolution
+      minZoomImageRatio: 0.8,
+      visibilityRatio: 1,
+      gestureSettingsTouch: { pinchToZoom: true, flickEnabled: true },
+      gestureSettingsMouse: { clickToZoom: false, dblClickToZoom: true, scrollToZoom: true }
+    });
+  }
+
+  /* ---------- "current way" transform viewer ---------- */
+  var frame = document.getElementById("oldFrame");
+  var img   = document.getElementById("oldImg");
+  var Z = { k:1, x:0, y:0, max:8, base:1 };
+  function apply(anim){
+    img.style.transition = anim ? "transform .25s ease" : "none";
+    img.style.transform = "translate(" + Z.x.toFixed(1) + "px," + Z.y.toFixed(1) + "px) scale(" + Z.k.toFixed(3) + ")";
+  }
+  function clampPan(){
+    var fr = frame.getBoundingClientRect();
+    var iw = img.offsetWidth * Z.k, ih = img.offsetHeight * Z.k;
+    // keep image overlapping the frame
+    var minX = Math.min(0, fr.width  - iw), minY = Math.min(0, fr.height - ih);
+    if(iw <= fr.width){ Z.x = (fr.width  - iw)/2; } else { Z.x = Math.min(0, Math.max(minX, Z.x)); }
+    if(ih <= fr.height){ Z.y = (fr.height - ih)/2; } else { Z.y = Math.min(0, Math.max(minY, Z.y)); }
+  }
+  function center(){
+    var fr = frame.getBoundingClientRect();
+    Z.k = 1; Z.x = (fr.width - img.offsetWidth)/2; Z.y = (fr.height - img.offsetHeight)/2; apply(false);
+  }
+  function zoomTo(cx, cy, k1, anim){
+    var fr = frame.getBoundingClientRect();
+    var qx = cx - fr.left, qy = cy - fr.top, k0 = Z.k || 1;
+    k1 = Math.max(1, Math.min(Z.max, k1));
+    Z.x = qx - (qx - Z.x) * (k1/k0);
+    Z.y = qy - (qy - Z.y) * (k1/k0);
+    Z.k = k1; clampPan(); apply(anim);
+  }
+  img.addEventListener("load", function(){
+    document.getElementById("oldLoading").style.display = "none";
+    center();
+  });
+  img.src = SRC(1280);
+
+  // gestures
+  var pts = {}, n = 0, pinchD = 0, pinchK = 1, last = null, downX = 0, downY = 0, moved = false;
+  function list(){ var a = []; for(var id in pts){ a.push(pts[id]); } return a; }
+  function dist(a, b){ var dx = a.x-b.x, dy = a.y-b.y; return Math.sqrt(dx*dx + dy*dy); }
+  frame.addEventListener("wheel", function(e){
+    e.preventDefault();
+    zoomTo(e.clientX, e.clientY, Z.k * Math.exp(-e.deltaY * 0.0016), false);
+  }, { passive:false });
+  frame.addEventListener("dblclick", function(e){
+    e.preventDefault();
+    if(Z.k > 1.05){ center(); } else { zoomTo(e.clientX, e.clientY, 3, true); }
+  });
+  frame.addEventListener("pointerdown", function(e){
+    pts[e.pointerId] = { x:e.clientX, y:e.clientY }; n++;
+    try{ frame.setPointerCapture(e.pointerId); }catch(_){}
+    frame.style.cursor = "grabbing";
+    if(n === 1){ moved = false; downX = e.clientX; downY = e.clientY; last = { x:e.clientX, y:e.clientY }; }
+    else if(n === 2){ var l = list(); pinchD = dist(l[0], l[1]); pinchK = Z.k; }
+  });
+  frame.addEventListener("pointermove", function(e){
+    if(!pts[e.pointerId]) return;
+    pts[e.pointerId] = { x:e.clientX, y:e.clientY };
+    if(n >= 2){
+      var l = list(), d = dist(l[0], l[1]);
+      if(pinchD > 0){ zoomTo((l[0].x+l[1].x)/2, (l[0].y+l[1].y)/2, pinchK * (d/pinchD), false); }
+    } else if(n === 1){
+      var dx = e.clientX - last.x, dy = e.clientY - last.y;
+      if(Math.abs(e.clientX-downX) + Math.abs(e.clientY-downY) > 5){ moved = true; }
+      Z.x += dx; Z.y += dy; clampPan(); apply(false);
+      last = { x:e.clientX, y:e.clientY };
+    }
+  });
+  function release(e){
+    if(pts[e.pointerId]){ delete pts[e.pointerId]; n = Math.max(0, n-1); }
+    try{ frame.releasePointerCapture(e.pointerId); }catch(_){}
+    if(n < 2){ pinchD = 0; }
+    if(n === 0){ frame.style.cursor = "grab"; }
+  }
+  frame.addEventListener("pointerup", release);
+  frame.addEventListener("pointercancel", release);
+  document.getElementById("oldPlus").addEventListener("click", function(){ var fr=frame.getBoundingClientRect(); zoomTo(fr.left+fr.width/2, fr.top+fr.height/2, Z.k*1.6, true); });
+  document.getElementById("oldMinus").addEventListener("click", function(){ var fr=frame.getBoundingClientRect(); zoomTo(fr.left+fr.width/2, fr.top+fr.height/2, Z.k/1.6, true); });
+  document.getElementById("oldReset").addEventListener("click", center);
+  window.addEventListener("resize", function(){ if(Z.k <= 1.05){ center(); } else { clampPan(); apply(false); } });
+
+  /* ---------- toggle ---------- */
+  var bOsd = document.getElementById("btnOsd"), bOld = document.getElementById("btnOld");
+  function showView(which){
+    var osd = which === "osd";
+    bOsd.setAttribute("aria-pressed", osd ? "true" : "false");
+    bOld.setAttribute("aria-pressed", osd ? "false" : "true");
+    document.getElementById("viewOsd").classList.toggle("active", osd);
+    document.getElementById("viewOld").classList.toggle("active", !osd);
+    if(osd){ initOsd(); }
+  }
+  bOsd.addEventListener("click", function(){ showView("osd"); });
+  bOld.addEventListener("click", function(){ showView("old"); });
+  initOsd();
+})();
+</script>
+</body>
+</html>
