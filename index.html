@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
 <title>Looking at The Birth of Venus</title>
 <style>
   :root{
@@ -89,6 +90,15 @@
   .quit:hover{border-color:var(--rose);color:var(--rose);}
   .skip{left:16px;right:auto;}
   .skip:hover{border-color:var(--gold);color:var(--gold-bright);}
+
+  /* OpenSeadragon find viewer */
+  #frameFind{width:min(100%,1100px);height:74vh;display:block;background:#04080a;}
+  #osd{width:100%;height:100%;}
+  .osd-ring{border:2.5px solid var(--gold-bright);border-radius:50%;opacity:0;pointer-events:none;
+    box-shadow:0 0 22px rgba(201,162,75,.55),inset 0 0 14px rgba(201,162,75,.25);transition:opacity .5s ease;}
+  .osd-ring.show{opacity:1;}
+  .osd-hint{border:3px dashed var(--rose);border-radius:50%;opacity:0;pointer-events:none;transition:opacity .3s ease;}
+  .osd-hint.show{opacity:.85;}
 
   .stage{flex:1 1 auto;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;padding:6px 10px;}
   .stage::after{content:"";position:absolute;inset:0;pointer-events:none;
@@ -244,10 +254,7 @@
     <div class="q-bar vv-pin" data-vv-anchor="top"><p id="findQ"></p></div>
     <div class="stage">
       <div class="frame" id="frameFind">
-        <img class="painting" id="paintFind" alt="" />
-        <div class="ring" id="findRing"></div>
-        <div class="hint-ring" id="hintRing"></div>
-        <div class="tap-dot" id="tapDot"></div>
+        <div id="osd"></div>
       </div>
     </div>
     <div class="find-bottom">
@@ -399,10 +406,15 @@
     {find:"Take one last slow look. Tap when you are ready to leave the little world inside the painting.", cx:0.500, cy:0.500, hit:2, z:1.25, r:0.70, title:"Still changing", body:"Nothing here is fully still. Everything is in process. Looking carefully changed what we could see."}
   ];
 
+  var WIKI = "https://commons.wikimedia.org/wiki/Special:FilePath/";
+  var VENUS_TILES     = WIKI + "Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project.jpg?width=6000";
+  var PRIMAVERA_TILES = WIKI + "Sandro_Botticelli_-_La_Primavera_-_Google_Art_Project.jpg?width=6000";
+  var FRUIT_TILES     = WIKI + "Rachel_Ruysch_-_Still-Life_with_Fruit_and_Insects_-_WGA20557.jpg?width=6000";
+
   var PAINTINGS = [
-    {id:"venus", title:"The Birth of Venus", artist:"Sandro Botticelli", card:"A sea breeze, a shell, and a goddess arriving on shore.", subtitle:"Let's slow down, then go exploring.", src:VENUS_SRC, alt:"The Birth of Venus by Sandro Botticelli", intro:"You looked at the whole painting. Now let's find some things hiding inside it.", prompts:VENUS_PROMPTS, done:VENUS_DONE, stops:VENUS_STOPS},
-    {id:"primavera", title:"Primavera", artist:"Sandro Botticelli", card:"A warm, drifting grove of flowers, dancers, and wind.", subtitle:"A warm, drifting garden. Move through it slowly and let each figure show you what is waking.", src:PRIMAVERA_SRC, alt:"Primavera by Sandro Botticelli", intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.", prompts:PRIMAVERA_PROMPTS, done:PRIMAVERA_DONE, stops:PRIMAVERA_STOPS},
-    {id:"fruit", title:"Fruit and Insects", artist:"Rachel Ruysch", card:"A quiet still life that starts to move when you look closely.", subtitle:"A slow mystery: is anything truly still?", src:FRUIT_SRC, alt:"Fruit and Insects by Rachel Ruysch", intro:"You looked at the whole painting. Now let's move through it slowly, with no right or wrong answers.", prompts:FRUIT_PROMPTS, done:FRUIT_DONE, stops:FRUIT_STOPS, freeTap:true}
+    {id:"venus", title:"The Birth of Venus", artist:"Sandro Botticelli", card:"A sea breeze, a shell, and a goddess arriving on shore.", subtitle:"Let's slow down, then go exploring.", src:VENUS_SRC, alt:"The Birth of Venus by Sandro Botticelli", intro:"You looked at the whole painting. Now let's find some things hiding inside it.", prompts:VENUS_PROMPTS, done:VENUS_DONE, stops:VENUS_STOPS, tiles:VENUS_TILES},
+    {id:"primavera", title:"Primavera", artist:"Sandro Botticelli", card:"A warm, drifting grove of flowers, dancers, and wind.", subtitle:"A warm, drifting garden. Move through it slowly and let each figure show you what is waking.", src:PRIMAVERA_SRC, alt:"Primavera by Sandro Botticelli", intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.", prompts:PRIMAVERA_PROMPTS, done:PRIMAVERA_DONE, stops:PRIMAVERA_STOPS, tiles:PRIMAVERA_TILES},
+    {id:"fruit", title:"Fruit and Insects", artist:"Rachel Ruysch", card:"A quiet still life that starts to move when you look closely.", subtitle:"A slow mystery: is anything truly still?", src:FRUIT_SRC, alt:"Fruit and Insects by Rachel Ruysch", intro:"You looked at the whole painting. Now let's move through it slowly, with no right or wrong answers.", prompts:FRUIT_PROMPTS, done:FRUIT_DONE, stops:FRUIT_STOPS, freeTap:true, tiles:FRUIT_TILES}
   ];
 
   var currentPainting = PAINTINGS[0];
@@ -420,11 +432,12 @@
   var state = { durationSec:300, imgReady:false, raf:0, startT:0, lastPrompt:-2,
                 findIndex:0, findPhase:"intro", misses:0,
                 tuneIndex:0, tunePts:[], _fx:null, _fy:null };
+  var osd = null, osdOverlays = [];
 
   /* ---------- image ---------- */
   function applySrc(src){
-    ["heroImg","paintLook","paintFind","paintTune","loupeImg"].forEach(function(id){ $(id).src = src; });
-    ["heroImg","paintLook","paintFind","paintTune"].forEach(function(id){ $(id).alt = currentPainting.alt; });
+    ["heroImg","paintLook","paintTune","loupeImg"].forEach(function(id){ $(id).src = src; });
+    ["heroImg","paintLook","paintTune"].forEach(function(id){ $(id).alt = currentPainting.alt; });
     $("heroFrame").classList.add("ready");
     state.imgReady = true;
     $("beginBtn").disabled = false;
@@ -505,11 +518,6 @@
   }
   if(vv){ vv.addEventListener("resize", updateGuides); vv.addEventListener("scroll", updateGuides); }
   function fmt(sec){ sec=Math.max(0,Math.ceil(sec)); var m=Math.floor(sec/60),s=sec%60; return m+":"+(s<10?"0"+s:s); }
-  function frac(el, clientX, clientY){
-    var r = el.getBoundingClientRect();
-    return { x: Math.min(1,Math.max(0,(clientX-r.left)/r.width)),
-             y: Math.min(1,Math.max(0,(clientY-r.top)/r.height)), rect:r };
-  }
 
   /* ---------- duration ---------- */
   Array.prototype.forEach.call(document.querySelectorAll(".pill"), function(p){
@@ -551,13 +559,50 @@
     $("showMeBtn").classList.add("hidden");
     $("findQ").textContent="";
     $("findProgress").textContent="Exploring";
+    osdLoad();
     resetReveal();
   }
+  /* ---------- OpenSeadragon viewer ---------- */
+  function ensureOSD(){
+    if(osd || typeof OpenSeadragon === "undefined") return osd;
+    osd = OpenSeadragon({
+      element: $("osd"),
+      prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/",
+      showNavigationControl:false, showNavigator:false,
+      maxZoomPixelRatio:5, minZoomImageRatio:0.9, visibilityRatio:1, animationTime:0.9,
+      gestureSettingsMouse:{ clickToZoom:false, dblClickToZoom:true, scrollToZoom:true },
+      gestureSettingsTouch:{ clickToZoom:false, dblClickToZoom:true, pinchToZoom:true, flickEnabled:true }
+    });
+    osd.addHandler("canvas-click", onOsdTap);
+    osd.addHandler("open", function(){ try{ osd.viewport.goHome(true); }catch(_){} });
+    return osd;
+  }
+  function osdLoad(){ if(ensureOSD()){ osd.open({ type:"image", url: currentPainting.tiles }); } }
+  function osdImgSize(){ var it = osd && osd.world.getItemAt(0); return it ? it.getContentSize() : null; }
+  function osdHome(){ if(osd){ try{ osd.viewport.goHome(true); }catch(_){} } }
+  function clearOverlays(){
+    if(!osd) return;
+    osdOverlays.forEach(function(el){ try{ osd.removeOverlay(el); }catch(_){} });
+    osdOverlays = [];
+  }
+  function addCircleOverlay(s, cls, diaFrac){
+    var sz = osdImgSize(); if(!sz) return null;
+    var d = diaFrac * sz.x;
+    var rect = new OpenSeadragon.Rect(s.cx*sz.x - d/2, s.cy*sz.y - d/2, d, d);
+    var el = document.createElement("div"); el.className = cls;
+    osd.addOverlay({ element: el, location: osd.viewport.imageToViewportRectangle(rect) });
+    osdOverlays.push(el);
+    return el;
+  }
+  function fitToStop(s){
+    var sz = osdImgSize(); if(!sz) return;
+    var bw = sz.x / s.z;
+    var rect = new OpenSeadragon.Rect(s.cx*sz.x - bw/2, s.cy*sz.y - bw/2, bw, bw);
+    osd.viewport.fitBounds(osd.viewport.imageToViewportRectangle(rect), false);
+  }
   function resetReveal(){
-    var img=$("paintFind");
-    img.style.transformOrigin="center center"; img.style.transform="scale(1)";
-    $("findRing").classList.remove("show");
-    $("hintRing").classList.remove("show");
+    clearOverlays();
+    osdHome();
     $("frameFind").classList.remove("seeking");
   }
   function beginSeeking(i){
@@ -582,45 +627,38 @@
     var v = s.cx<0.33?"on the left":(s.cx>0.66?"on the right":"");
     return v ? (h + ", " + v) : h;
   }
-  function pingAt(x,y){
-    var d=$("tapDot"); d.style.left=(x*100)+"%"; d.style.top=(y*100)+"%";
-    d.classList.remove("ping"); void d.offsetWidth; d.classList.add("ping");
+  function onOsdTap(e){
+    if(!e.quick || state.findPhase!=="seeking" || !osd) return;
+    var sz = osdImgSize(); if(!sz) return;
+    var ip = osd.viewport.viewportToImageCoordinates(osd.viewport.pointFromPixel(e.position));
+    handleSeekTap(ip.x/sz.x, ip.y/sz.y, sz);
   }
-  function onFindTap(e){
-    if(state.findPhase!=="seeking") return;
-    var p=frac($("paintFind"), e.clientX, e.clientY);
-    pingAt(p.x,p.y);
-    var s=STOPS[state.findIndex];
+  function handleSeekTap(px, py, sz){
+    var s = STOPS[state.findIndex];
     if(currentPainting.freeTap){ revealStop(state.findIndex, true); return; }
-    var dx=(p.x-s.cx)*p.rect.width, dy=(p.y-s.cy)*p.rect.height;
-    var dist=Math.sqrt(dx*dx+dy*dy), hitPx=s.hit*p.rect.width;
-    if(dist<=hitPx){ revealStop(state.findIndex, true); }
-    else {
-      state.misses++;
-      if(state.misses>=2){
-        setFeedback("Here's a hint — look " + hintWord(s) + ".", "try");
-        var hr=$("hintRing");
-        hr.style.left=(s.cx*100)+"%"; hr.style.top=(s.cy*100)+"%"; hr.style.width=(s.r*1.3*100)+"%";
-        hr.classList.add("show");
-        $("showMeBtn").classList.remove("hidden");
-      } else {
-        setFeedback((["Not quite — try again!","So close! Look again."])[state.misses-1] || "Try again!", "try");
-      }
+    var aspect = sz.y/sz.x;
+    var dx = px - s.cx, dy = (py - s.cy)*aspect;
+    if(Math.sqrt(dx*dx + dy*dy) <= s.hit){ revealStop(state.findIndex, true); return; }
+    state.misses++;
+    if(state.misses>=2){
+      setFeedback("Here's a hint — look " + hintWord(s) + ".", "try");
+      clearOverlays();
+      var h = addCircleOverlay(s, "osd-hint", s.r*1.3);
+      if(h){ requestAnimationFrame(function(){ h.classList.add("show"); }); }
+      $("showMeBtn").classList.remove("hidden");
+    } else {
+      setFeedback((["Not quite — try again!","So close! Look again."])[state.misses-1] || "Try again!", "try");
     }
   }
   function revealStop(i, celebrate){
     var s=STOPS[i]; state.findPhase="revealed";
     $("frameFind").classList.remove("seeking");
-    $("hintRing").classList.remove("show");
+    clearOverlays();
     $("showMeBtn").classList.add("hidden");
     setFeedback(celebrate ? (currentPainting.freeTap ? "Let's look closer." : "You found it!") : "", celebrate ? "good" : "");
-    var img=$("paintFind");
-    img.style.transformOrigin=(s.cx*100).toFixed(2)+"% "+(s.cy*100).toFixed(2)+"%";
-    img.style.transform="scale("+s.z+")";
-    var ring=$("findRing");
-    ring.classList.remove("show");
-    ring.style.left=(s.cx*100)+"%"; ring.style.top=(s.cy*100)+"%"; ring.style.width=(s.r*100)+"%";
-    void ring.offsetWidth; ring.classList.add("show");
+    fitToStop(s);
+    var ring = addCircleOverlay(s, "osd-ring", s.r);
+    if(ring){ requestAnimationFrame(function(){ ring.classList.add("show"); }); }
     $("findQ").textContent="";
     $("capTitle").textContent=s.title; $("capBody").textContent=s.body;
     $("nextFindBtn").textContent = (i===STOPS.length-1) ? "Finish" : "Next";
@@ -703,7 +741,6 @@
   $("quitLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); show("home"); });
   $("skipLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); $("promptText").classList.remove("show"); enterFind(); });
   $("startFindBtn").addEventListener("click", function(){ beginSeeking(0); });
-  $("frameFind").addEventListener("click", onFindTap);
   $("showMeBtn").addEventListener("click", function(){ revealStop(state.findIndex, false); });
   $("nextFindBtn").addEventListener("click", nextFind);
   $("quitFind").addEventListener("click", function(){ show("home"); });
