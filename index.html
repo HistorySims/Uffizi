@@ -87,6 +87,8 @@
     border:1.5px solid var(--foam-faint);color:var(--foam-dim);font-size:.82rem;font-weight:600;
     letter-spacing:.12em;text-transform:uppercase;display:inline-flex;align-items:center;gap:7px;}
   .quit:hover{border-color:var(--rose);color:var(--rose);}
+  .skip{left:16px;right:auto;}
+  .skip:hover{border-color:var(--gold);color:var(--gold-bright);}
 
   .stage{flex:1 1 auto;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;padding:6px 10px;}
   .stage::after{content:"";position:absolute;inset:0;pointer-events:none;
@@ -226,6 +228,7 @@
         <circle class="track" cx="31" cy="31" r="27"></circle>
         <circle class="prog" id="prog" cx="31" cy="31" r="27"></circle></svg>
         <span class="time" id="timeText">5:00</span></div>
+      <button class="quit skip" id="skipLook">Skip ▸</button>
       <button class="quit" id="quitLook">✕ Quit</button>
     </div>
     <div class="stage"><div class="frame"><img class="painting" id="paintLook" alt="" /></div></div>
@@ -374,9 +377,32 @@
     {find:"On the right, follow the falling petals to the woman whose dress overflows with flowers.", cx:0.683, cy:0.511, hit:0.16, z:2.0, r:0.24, title:"Flora — spring made visible", body:"Touched by Zephyr's warm breath, the fleeing nymph is changing — becoming Flora, the goddess of flowers. She steps forward scattering roses from her gown, and wherever she walks the ground blooms. She is spring itself, made into someone you can see."}
   ];
 
+  var FRUIT_SRC = "https://commons.wikimedia.org/wiki/Special:FilePath/Rachel_Ruysch_-_Still-Life_with_Fruit_and_Insects_-_WGA20557.jpg";
+  var FRUIT_PROMPTS = [
+    "First, let it be quiet. Just look at the fruit and the dark leaves.",
+    "Imagine the smell here. Is it sweet, damp, sharp, or earthy?",
+    "What sound would this little world make if you leaned close?",
+    "Is the air cool, warm, heavy, or still?",
+    "Now look again. I wonder if anything here is truly still."
+  ];
+  var FRUIT_DONE = [
+    "At first, this looked like a quiet pile of fruit. But careful looking made the stillness feel less still.",
+    "Something is always happening. Fruit ripens. Skins soften. Tiny creatures search, rest, nibble, hide, and begin again.",
+    "Maybe a still life is not really still. Maybe it is a slow life. When you look carefully, the painting changes because your attention changes."
+  ];
+  var FRUIT_STOPS = [
+    {find:"Let your eyes rest on the whole painting. When it feels quiet, tap anywhere to continue.", cx:0.500, cy:0.500, hit:2, z:1.45, r:0.55, title:"Stillness", body:"Everything seems calm at first. Fruit, leaves, darkness, silence. Stay with it for one breath. What do you smell? What temperature is the air?"},
+    {find:"Now look for a tiny living thing. Tap when something catches your eye.", cx:0.705, cy:0.425, hit:2, z:2.0, r:0.24, title:"Something is moving", body:"Did you notice anything alive? Maybe a wing. Maybe legs. Maybe just the feeling that one small thing might move first."},
+    {find:"Look for the smallest clues: specks, eggs, marks, soft places. Tap when you want to look closer.", cx:0.365, cy:0.630, hit:2, z:2.15, r:0.26, title:"The hidden world", body:"The tiny details matter. Little marks and insects are clues left by the artist. The fruit is not just sitting there. It is ripening, softening, changing."},
+    {find:"Look again at the fruit. What seems fresh? What seems almost too ripe? Tap when you notice a change.", cx:0.475, cy:0.450, hit:2, z:1.9, r:0.32, title:"Ripening", body:"Something strange is happening if we look closely. The fruit is beautiful, but it is also in the middle of becoming something else."},
+    {find:"Step back with your eyes. What do you think is happening here? Tap when you have a thought.", cx:0.500, cy:0.520, hit:2, z:1.55, r:0.48, title:"Is it still?", body:"I wonder: is this really a still life? Or is it a quiet place where life is happening very slowly?"},
+    {find:"Take one last slow look. Tap when you are ready to leave the little world inside the painting.", cx:0.500, cy:0.500, hit:2, z:1.25, r:0.70, title:"Still changing", body:"Nothing here is fully still. Everything is in process. Looking carefully changed what we could see."}
+  ];
+
   var PAINTINGS = [
     {id:"venus", title:"The Birth of Venus", artist:"Sandro Botticelli", card:"A sea breeze, a shell, and a goddess arriving on shore.", subtitle:"Let's slow down, then go exploring.", src:EMBEDDED, alt:"The Birth of Venus by Sandro Botticelli", intro:"You looked at the whole painting. Now let's find some things hiding inside it.", prompts:PROMPTS, done:VENUS_DONE, stops:STOPS},
-    {id:"primavera", title:"Primavera", artist:"Sandro Botticelli", card:"A warm, drifting grove of flowers, dancers, and wind.", subtitle:"A warm, drifting garden. Move through it slowly and let each figure show you what is waking.", src:PRIMAVERA_SRC, alt:"Primavera by Sandro Botticelli", intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.", prompts:PRIMAVERA_PROMPTS, done:PRIMAVERA_DONE, stops:PRIMAVERA_STOPS}
+    {id:"primavera", title:"Primavera", artist:"Sandro Botticelli", card:"A warm, drifting grove of flowers, dancers, and wind.", subtitle:"A warm, drifting garden. Move through it slowly and let each figure show you what is waking.", src:PRIMAVERA_SRC, alt:"Primavera by Sandro Botticelli", intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.", prompts:PRIMAVERA_PROMPTS, done:PRIMAVERA_DONE, stops:PRIMAVERA_STOPS},
+    {id:"fruit", title:"Fruit and Insects", artist:"Rachel Ruysch", card:"A quiet still life that starts to move when you look closely.", subtitle:"A slow mystery: is anything truly still?", src:FRUIT_SRC, alt:"Fruit and Insects by Rachel Ruysch", intro:"You looked at the whole painting. Now let's move through it slowly, with no right or wrong answers.", prompts:FRUIT_PROMPTS, done:FRUIT_DONE, stops:FRUIT_STOPS, freeTap:true}
   ];
 
   var currentPainting = PAINTINGS[0];
@@ -543,8 +569,8 @@
     setFeedback("", "");
     resetReveal();
     $("frameFind").classList.add("seeking");
-    $("findQ").textContent = s.find + " Tap it!";
-    $("findProgress").textContent = "Find " + (i+1) + " of " + STOPS.length;
+    $("findQ").textContent = currentPainting.freeTap ? s.find : (s.find + " Tap it!");
+    $("findProgress").textContent = (currentPainting.freeTap ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
     updateGuides();
   }
   function setFeedback(txt, cls){
@@ -565,6 +591,7 @@
     var p=frac($("paintFind"), e.clientX, e.clientY);
     pingAt(p.x,p.y);
     var s=STOPS[state.findIndex];
+    if(currentPainting.freeTap){ revealStop(state.findIndex, true); return; }
     var dx=(p.x-s.cx)*p.rect.width, dy=(p.y-s.cy)*p.rect.height;
     var dist=Math.sqrt(dx*dx+dy*dy), hitPx=s.hit*p.rect.width;
     if(dist<=hitPx){ revealStop(state.findIndex, true); }
@@ -586,7 +613,7 @@
     $("frameFind").classList.remove("seeking");
     $("hintRing").classList.remove("show");
     $("showMeBtn").classList.add("hidden");
-    setFeedback(celebrate ? "You found it!" : "", celebrate ? "good" : "");
+    setFeedback(celebrate ? (currentPainting.freeTap ? "Let's look closer." : "You found it!") : "", celebrate ? "good" : "");
     var img=$("paintFind");
     img.style.transformOrigin=(s.cx*100).toFixed(2)+"% "+(s.cy*100).toFixed(2)+"%";
     img.style.transform="scale("+s.z+")";
@@ -674,6 +701,7 @@
   /* ---------- wiring ---------- */
   $("beginBtn").addEventListener("click", startLooking);
   $("quitLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); show("home"); });
+  $("skipLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); $("promptText").classList.remove("show"); enterFind(); });
   $("startFindBtn").addEventListener("click", function(){ beginSeeking(0); });
   $("frameFind").addEventListener("click", onFindTap);
   $("showMeBtn").addEventListener("click", function(){ revealStop(state.findIndex, false); });
