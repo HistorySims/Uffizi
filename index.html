@@ -93,7 +93,11 @@
 
   /* OpenSeadragon find viewer */
   #frameFind,#frameLook{width:min(100%,1100px);height:74vh;display:block;background:#04080a;}
-  #osd,#osdLook{width:100%;height:100%;touch-action:none;}
+  #frameTune{width:min(100%,1100px);height:50vh;display:block;background:#04080a;margin:0 auto;}
+  #osd,#osdLook,#osdTune{width:100%;height:100%;touch-action:none;}
+  .tune-point{width:18px;height:18px;border-radius:50%;background:rgba(224,189,106,.95);
+    border:2px solid #1a1206;box-shadow:0 0 0 2px rgba(224,189,106,.55);pointer-events:none;}
+  .tune-box{border:2px dashed var(--gold-bright);background:rgba(201,162,75,.10);pointer-events:none;}
   .osd-ring{border:2.5px solid var(--gold-bright);border-radius:50%;opacity:0;pointer-events:none;
     box-shadow:0 0 22px rgba(201,162,75,.55),inset 0 0 14px rgba(201,162,75,.25);transition:opacity .5s ease;}
   .osd-ring.show{opacity:1;}
@@ -285,7 +289,7 @@
   </section>
 
   <!-- TUNE (grown-ups) -->
-  <section class="screen" id="tune">
+  <section class="screen viewer" id="tune">
     <div class="topbar">
       <div class="tune-title">Tuning the spots</div>
       <button class="quit" id="quitTune">✕ Done</button>
@@ -295,19 +299,15 @@
       <div class="tlabel" id="tuneLabel">Spot<small>1 / 6</small></div>
       <button class="tnav" id="tuneNext" aria-label="Next spot">›</button>
     </div>
-    <div class="tune-hint">Drag on the painting to aim with the magnifier, lift to set. It jumps to the next spot.</div>
-    <div class="stage">
-      <div class="frame tune" id="frameTune">
-        <img class="painting" id="paintTune" alt="" />
-        <div class="loupe" id="loupe"><img class="loupe-img" id="loupeImg" alt="" /><div class="cross"></div></div>
-      </div>
-    </div>
+    <div class="tune-hint">Tap the painting to set the point. Pinch/scroll to frame the detail, then “Capture frame”.</div>
+    <div class="stage"><div class="frame" id="frameTune"><div id="osdTune"></div></div></div>
     <div class="tune-panel">
-      <textarea id="tuneOut" readonly spellcheck="false"></textarea>
       <div class="tune-actions">
-        <button class="btn btn-ghost" id="copyTune">Copy coordinates</button>
+        <button class="btn btn-ghost" id="captureBtn">Capture frame</button>
+        <button class="btn btn-ghost" id="copyTune">Copy</button>
         <button class="btn btn-ghost" id="resetTune">Reset</button>
       </div>
+      <textarea id="tuneOut" readonly spellcheck="false"></textarea>
     </div>
   </section>
 
@@ -393,17 +393,18 @@
     "Now look again. I wonder if anything here is truly still."
   ];
   var FRUIT_DONE = [
-    "At first, this looked like a quiet pile of fruit. But careful looking made the stillness feel less still.",
-    "Something is always happening. Fruit ripens. Skins soften. Tiny creatures search, rest, nibble, hide, and begin again.",
-    "Maybe a still life is not really still. Maybe it is a slow life. When you look carefully, the painting changes because your attention changes."
+    "So — was that really a <em>still</em> life? We found a fly feeding, a leaf with nibbled holes, a lizard hunting, a butterfly resting, and a nest of eggs waiting in the dark.",
+    "A peach becomes softer. An egg becomes a bird. A caterpillar becomes a butterfly. Nothing here has finished becoming what it will be.",
+    "Maybe a still life is not still at all. It is a slow life — and the longer and more carefully you look, the more it begins to move."
   ];
+  // box {x,y,w,h} = fraction-of-image rectangle to zoom to on reveal (also the tap target). Tune in the grown-ups tool.
   var FRUIT_STOPS = [
-    {find:"Let your eyes rest on the whole painting. When it feels quiet, tap anywhere to continue.", cx:0.500, cy:0.500, hit:2, z:1.45, r:0.55, title:"Stillness", body:"Everything seems calm at first. Fruit, leaves, darkness, silence. Stay with it for one breath. What do you smell? What temperature is the air?"},
-    {find:"Now look for a tiny living thing. Tap when something catches your eye.", cx:0.470, cy:0.635, hit:2, z:2.8, r:0.13, title:"Something is moving", body:"Did you notice anything alive? A small fly has landed right on the ripe peach. Maybe a wing. Maybe legs. Maybe just the feeling that one small thing might move first."},
-    {find:"Look for the smallest clues: specks, eggs, marks, soft places. Tap when you want to look closer.", cx:0.205, cy:0.835, hit:2, z:2.6, r:0.17, title:"The hidden world", body:"Down in the shadows sits a little bird's nest full of pale eggs. The tiny details matter. They are clues left by the artist: the fruit is not just sitting there. It is ripening, softening, changing."},
-    {find:"Look again at the fruit. What seems fresh? What seems almost too ripe? Tap when you notice a change.", cx:0.555, cy:0.640, hit:2, z:1.9, r:0.30, title:"Ripening", body:"Something strange is happening if we look closely. The fruit is beautiful, but it is also in the middle of becoming something else."},
-    {find:"Step back with your eyes. What do you think is happening here? Tap when you have a thought.", cx:0.520, cy:0.860, hit:2, z:2.2, r:0.26, title:"Is it still?", body:"A lizard and a butterfly have crept in along the bottom. I wonder: is this really a still life? Or is it a quiet place where life is happening very slowly?"},
-    {find:"Take one last slow look. Tap when you are ready to leave the little world inside the painting.", cx:0.500, cy:0.500, hit:2, z:1.25, r:0.70, title:"Still changing", body:"Nothing here is fully still. Everything is in process. Looking carefully changed what we could see."}
+    {find:"I spy a tiny fly that has landed on a ripe peach.", cx:0.470, cy:0.635, box:{x:0.40, y:0.56, w:0.16, h:0.16}, title:"The fly", body:"Look at the fly's feet — notice the tiny shadow Ruysch paints just beneath them. That shadow is what makes the fly sit on the peach instead of floating, and it tricks the eye into reading it as real and close. A painted fly was a way to show off that illusion, and a quiet symbol too: where fruit is this ripe, decay has already arrived."},
+    {find:"I spy a butterfly with bright open wings near the bottom.", cx:0.420, cy:0.875, box:{x:0.34, y:0.80, w:0.18, h:0.16}, title:"The butterfly", body:"Look at the wings — notice how Ruysch builds their glow from thin, see-through layers of paint, so light seems to pass through them like stained glass. Setting that warm red against the near-black background makes the colour jump forward and pulls your eye across the canvas. The butterfly carries a meaning as well: reborn from a dull chrysalis, it long stood for the soul and for transformation."},
+    {find:"I spy a leaf with little holes nibbled right through it.", cx:0.340, cy:0.240, box:{x:0.25, y:0.15, w:0.20, h:0.18}, title:"The nibbled leaf", body:"Look at the holes — notice how Ruysch lets the dark background show straight through the chewed gaps and browns the torn edges. By painting the damage instead of a perfect leaf, she tells you this little world is being eaten and is already passing. The flaw is the technique: the leaf reads as true precisely because it isn't flawless."},
+    {find:"I spy a little nest of pale, speckled eggs in the shadows.", cx:0.205, cy:0.835, box:{x:0.12, y:0.74, w:0.19, h:0.16}, title:"The bird's nest", body:"Look at the eggs — notice how Ruysch keeps them in soft shadow with the faintest speckles, so they whisper while the ripe fruit above shouts in the light. Placing new life down in the dark and ripe decay up in the light is deliberate: birth and ending share one picture, the whole cycle gathered in a single corner."},
+    {find:"I spy a lizard creeping along the bottom edge.", cx:0.555, cy:0.860, box:{x:0.46, y:0.79, w:0.22, h:0.16}, title:"The lizard", body:"Look at the pose — notice the arched back and lifted foot caught mid-step, with a crisp highlight along the spine that makes the body feel round and alive. Ruysch uses that diagonal of movement to slip real action into a 'still' life. The lizard is hunting the very insects we just found, turning the tabletop into a tiny stage."},
+    {find:"I spy a bright crayfish raising its claws up among the leaves.", cx:0.800, cy:0.200, box:{x:0.69, y:0.10, w:0.24, h:0.20}, title:"The crayfish", body:"Look at the shell — notice the small, sharp white highlights Ruysch dots along its ridges. Wet, hard surfaces catch the brightest, tiniest points of reflected light, and placing those exactly is what tells your eye the shell is shiny and damp. The hot red against the cool green leaves pushes the crayfish forward and lights up the dark corner."}
   ];
 
   var VENUS_TILES     = "images/venus.jpg";
@@ -413,7 +414,7 @@
   var PAINTINGS = [
     {id:"venus", title:"The Birth of Venus", artist:"Sandro Botticelli", card:"A sea breeze, a shell, and a goddess arriving on shore.", subtitle:"Let's slow down, then go exploring.", src:VENUS_SRC, alt:"The Birth of Venus by Sandro Botticelli", intro:"You looked at the whole painting. Now let's find some things hiding inside it.", prompts:VENUS_PROMPTS, done:VENUS_DONE, stops:VENUS_STOPS, tiles:VENUS_TILES},
     {id:"primavera", title:"Primavera", artist:"Sandro Botticelli", card:"A warm, drifting grove of flowers, dancers, and wind.", subtitle:"A warm, drifting garden. Move through it slowly and let each figure show you what is waking.", src:PRIMAVERA_SRC, alt:"Primavera by Sandro Botticelli", intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.", prompts:PRIMAVERA_PROMPTS, done:PRIMAVERA_DONE, stops:PRIMAVERA_STOPS, tiles:PRIMAVERA_TILES},
-    {id:"fruit", title:"Fruit and Insects", artist:"Rachel Ruysch", card:"A quiet still life that starts to move when you look closely.", subtitle:"A slow mystery: is anything truly still?", src:FRUIT_SRC, alt:"Fruit and Insects by Rachel Ruysch", intro:"You looked at the whole painting. Now let's move through it slowly, with no right or wrong answers.", prompts:FRUIT_PROMPTS, done:FRUIT_DONE, stops:FRUIT_STOPS, freeTap:true, tiles:FRUIT_TILES}
+    {id:"fruit", title:"Fruit and Insects", artist:"Rachel Ruysch", card:"A quiet still life that starts to move when you look closely.", subtitle:"A slow mystery: is anything truly still?", src:FRUIT_SRC, alt:"Fruit and Insects by Rachel Ruysch", intro:"You looked at the whole painting. Now let's hunt for the little creatures hiding inside it.", prompts:FRUIT_PROMPTS, done:FRUIT_DONE, stops:FRUIT_STOPS, tiles:FRUIT_TILES}
   ];
 
   var currentPainting = PAINTINGS[0];
@@ -431,12 +432,11 @@
   var state = { durationSec:300, imgReady:false, raf:0, startT:0, lastPrompt:-2,
                 findIndex:0, findPhase:"intro", misses:0,
                 tuneIndex:0, tunePts:[], _fx:null, _fy:null };
-  var osd = null, osdLook = null, osdOverlays = [];
+  var osd = null, osdLook = null, osdTune = null, osdOverlays = [], tuneOverlays = [];
 
   /* ---------- image ---------- */
   function applySrc(src){
-    ["heroImg","paintTune","loupeImg"].forEach(function(id){ $(id).src = src; });
-    ["heroImg","paintTune"].forEach(function(id){ $(id).alt = currentPainting.alt; });
+    $("heroImg").src = src; $("heroImg").alt = currentPainting.alt;
     $("heroFrame").classList.add("ready");
     state.imgReady = true;
     $("beginBtn").disabled = false;
@@ -609,10 +609,12 @@
   }
   function fitToStop(s){
     var sz = osdImgSize(); if(!sz) return;
-    var bw = sz.x / s.z;
-    var rect = new OpenSeadragon.Rect(s.cx*sz.x - bw/2, s.cy*sz.y - bw/2, bw, bw);
+    var rect;
+    if(s.box){ rect = new OpenSeadragon.Rect(s.box.x*sz.x, s.box.y*sz.y, s.box.w*sz.x, s.box.h*sz.y); }
+    else { var bw = sz.x / s.z; rect = new OpenSeadragon.Rect(s.cx*sz.x - bw/2, s.cy*sz.y - bw/2, bw, bw); }
     osd.viewport.fitBounds(osd.viewport.imageToViewportRectangle(rect), false);
   }
+  function ringDia(s){ return s.box ? Math.max(s.box.w, s.box.h) : s.r; }
   function resetReveal(){
     clearOverlays();
     osdHome();
@@ -649,14 +651,15 @@
   function handleSeekTap(px, py, sz){
     var s = STOPS[state.findIndex];
     if(currentPainting.freeTap){ revealStop(state.findIndex, true); return; }
-    var aspect = sz.y/sz.x;
-    var dx = px - s.cx, dy = (py - s.cy)*aspect;
-    if(Math.sqrt(dx*dx + dy*dy) <= s.hit){ revealStop(state.findIndex, true); return; }
+    var inside;
+    if(s.box){ inside = px>=s.box.x && px<=s.box.x+s.box.w && py>=s.box.y && py<=s.box.y+s.box.h; }
+    else { var aspect = sz.y/sz.x, dx = px - s.cx, dy = (py - s.cy)*aspect; inside = Math.sqrt(dx*dx + dy*dy) <= s.hit; }
+    if(inside){ revealStop(state.findIndex, true); return; }
     state.misses++;
     if(state.misses>=2){
       setFeedback("Here's a hint — look " + hintWord(s) + ".", "try");
       clearOverlays();
-      var h = addCircleOverlay(s, "osd-hint", s.r*1.3);
+      var h = addCircleOverlay(s, "osd-hint", ringDia(s)*1.3);
       if(h){ requestAnimationFrame(function(){ h.classList.add("show"); }); }
       $("showMeBtn").classList.remove("hidden");
     } else {
@@ -670,7 +673,7 @@
     $("showMeBtn").classList.add("hidden");
     setFeedback(celebrate ? (currentPainting.freeTap ? "Let's look closer." : "You found it!") : "", celebrate ? "good" : "");
     fitToStop(s);
-    var ring = addCircleOverlay(s, "osd-ring", s.r);
+    var ring = addCircleOverlay(s, "osd-ring", ringDia(s));
     if(ring){ requestAnimationFrame(function(){ ring.classList.add("show"); }); }
     $("findQ").textContent="";
     $("capTitle").textContent=s.title; $("capBody").textContent=s.body;
@@ -684,63 +687,90 @@
   }
 
   /* ---------- tune (grown-ups) ---------- */
-  function clonePts(){ return STOPS.map(function(s){ return {cx:s.cx, cy:s.cy}; }); }
+  function ensureOSDTune(){
+    if(osdTune || typeof OpenSeadragon === "undefined") return osdTune;
+    osdTune = OpenSeadragon(osdConfig("osdTune"));
+    osdTune.addHandler("canvas-click", onTuneTap);
+    osdTune.addHandler("open", function(){ requestAnimationFrame(function(){ try{ osdTune.viewport.goHome(true); }catch(_){} renderTune(); }); });
+    return osdTune;
+  }
+  function osdTuneSize(){ var it = osdTune && osdTune.world.getItemAt(0); return it ? it.getContentSize() : null; }
+  function clonePts(){
+    return STOPS.map(function(s){
+      var p = { cx:s.cx, cy:s.cy };
+      if(s.box){ p.box = { x:s.box.x, y:s.box.y, w:s.box.w, h:s.box.h }; }
+      return p;
+    });
+  }
   function enterTune(){
     show("tune"); state.tuneIndex=0; state.tunePts=clonePts();
-    $("paintTune").style.transform="scale(1)";
+    requestAnimationFrame(function(){ if(ensureOSDTune()){ osdTune.open({ type:"image", url: currentPainting.tiles }); } });
     renderTune();
   }
+  function onTuneTap(e){
+    if(!e.quick || !osdTune) return;
+    var sz = osdTuneSize(); if(!sz) return;
+    var ip = osdTune.viewport.viewportToImageCoordinates(osdTune.viewport.pointFromPixel(e.position));
+    var p = state.tunePts[state.tuneIndex];
+    p.cx = +(ip.x/sz.x).toFixed(4); p.cy = +(ip.y/sz.y).toFixed(4);
+    renderTune();
+  }
+  function captureFrame(){
+    if(!osdTune) return;
+    var sz = osdTuneSize(); if(!sz) return;
+    var ir = osdTune.viewport.viewportToImageRectangle(osdTune.viewport.getBounds());
+    var x = Math.max(0, ir.x), y = Math.max(0, ir.y);
+    var w = Math.min(sz.x, ir.x + ir.width) - x, h = Math.min(sz.y, ir.y + ir.height) - y;
+    state.tunePts[state.tuneIndex].box = {
+      x:+(x/sz.x).toFixed(4), y:+(y/sz.y).toFixed(4),
+      w:+(w/sz.x).toFixed(4), h:+(h/sz.y).toFixed(4)
+    };
+    renderTune();
+  }
+  function tuneFmt(n){ return (n==null?0:n).toFixed(3); }
+  function tuneFocus(){
+    if(!osdTune) return;
+    var sz = osdTuneSize(); if(!sz) return;
+    var p = state.tunePts[state.tuneIndex];
+    if(p.box){ osdTune.viewport.fitBounds(osdTune.viewport.imageToViewportRectangle(new OpenSeadragon.Rect(p.box.x*sz.x, p.box.y*sz.y, p.box.w*sz.x, p.box.h*sz.y)), false); }
+    else { osdTune.viewport.goHome(false); }
+  }
   function renderTune(){
-    var frame=$("frameTune");
-    Array.prototype.slice.call(frame.querySelectorAll(".marker")).forEach(function(m){ m.remove(); });
-    state.tunePts.forEach(function(p,idx){
-      var m=document.createElement("div");
-      m.className="marker"+(idx===state.tuneIndex?" active":"");
-      m.style.left=(p.cx*100)+"%"; m.style.top=(p.cy*100)+"%"; m.textContent=(idx+1);
-      frame.appendChild(m);
-    });
-    var s=STOPS[state.tuneIndex];
+    var s = STOPS[state.tuneIndex];
     $("tuneLabel").innerHTML = s.title + "<small>"+(state.tuneIndex+1)+" / "+STOPS.length+"</small>";
+    var sz = osdTuneSize();
+    if(osdTune && sz){
+      tuneOverlays.forEach(function(el){ try{ osdTune.removeOverlay(el); }catch(_){} });
+      tuneOverlays = [];
+      var p = state.tunePts[state.tuneIndex];
+      if(p.box){
+        var be = document.createElement("div"); be.className = "tune-box";
+        osdTune.addOverlay({ element:be, location: osdTune.viewport.imageToViewportRectangle(new OpenSeadragon.Rect(p.box.x*sz.x, p.box.y*sz.y, p.box.w*sz.x, p.box.h*sz.y)) });
+        tuneOverlays.push(be);
+      }
+      if(p.cx!=null){
+        var dot = document.createElement("div"); dot.className = "tune-point";
+        osdTune.addOverlay({ element:dot, location: osdTune.viewport.imageToViewportCoordinates(new OpenSeadragon.Point(p.cx*sz.x, p.cy*sz.y)), placement: OpenSeadragon.Placement.CENTER, checkResize:false });
+        tuneOverlays.push(dot);
+      }
+    }
     buildTuneOut();
   }
   function buildTuneOut(){
     var lines = state.tunePts.map(function(p,idx){
-      return (idx+1)+". "+STOPS[idx].title+" — cx:"+p.cx.toFixed(3)+", cy:"+p.cy.toFixed(3);
+      var b = p.box ? (" box{x:"+tuneFmt(p.box.x)+" y:"+tuneFmt(p.box.y)+" w:"+tuneFmt(p.box.w)+" h:"+tuneFmt(p.box.h)+"}") : " (no frame yet)";
+      return (idx+1)+". "+STOPS[idx].title+" — cx:"+tuneFmt(p.cx)+", cy:"+tuneFmt(p.cy)+b;
     });
-    var code = state.tunePts.map(function(p){ return "{cx:"+p.cx.toFixed(3)+", cy:"+p.cy.toFixed(3)+"},"; }).join("\n");
+    var code = state.tunePts.map(function(p){
+      var b = p.box ? (", box:{x:"+tuneFmt(p.box.x)+", y:"+tuneFmt(p.box.y)+", w:"+tuneFmt(p.box.w)+", h:"+tuneFmt(p.box.h)+"}") : "";
+      return "{cx:"+tuneFmt(p.cx)+", cy:"+tuneFmt(p.cy)+b+"},";
+    }).join("\n");
     $("tuneOut").value = lines.join("\n") + "\n\n" + code;
   }
-  function moveLoupe(clientX, clientY){
-    var img=$("paintTune"), r=img.getBoundingClientRect();
-    var fx=Math.min(1,Math.max(0,(clientX-r.left)/r.width));
-    var fy=Math.min(1,Math.max(0,(clientY-r.top)/r.height));
-    state._fx=fx; state._fy=fy;
-    var Z=3, lp=128;
-    var li=$("loupeImg");
-    li.style.width=(r.width*Z)+"px"; li.style.height=(r.height*Z)+"px";
-    li.style.left=(lp/2 - fx*r.width*Z)+"px"; li.style.top=(lp/2 - fy*r.height*Z)+"px";
-    var frame=$("frameTune"), fr=frame.getBoundingClientRect();
-    var lx=(clientX-fr.left)-lp/2, ly=(clientY-fr.top)-lp-18;
-    lx=Math.min(fr.width-lp+40, Math.max(-40, lx)); ly=Math.max(-40, ly);
-    var loupe=$("loupe"); loupe.style.left=lx+"px"; loupe.style.top=ly+"px"; loupe.classList.add("show");
-  }
-  function commitTune(){
-    if(state._fx==null) return;
-    state.tunePts[state.tuneIndex]={cx:+state._fx.toFixed(3), cy:+state._fy.toFixed(3)};
-    $("loupe").classList.remove("show");
-    if(state.tuneIndex < STOPS.length-1) state.tuneIndex++;
-    renderTune();
-  }
-  (function bindTune(){
-    var frame=$("frameTune"); var down=false;
-    frame.addEventListener("pointerdown", function(e){ down=true; try{frame.setPointerCapture(e.pointerId);}catch(_){} moveLoupe(e.clientX,e.clientY); e.preventDefault(); });
-    frame.addEventListener("pointermove", function(e){ if(down) moveLoupe(e.clientX,e.clientY); });
-    frame.addEventListener("pointerup", function(){ if(down){ down=false; commitTune(); } });
-    frame.addEventListener("pointercancel", function(){ down=false; $("loupe").classList.remove("show"); });
-  })();
-  $("tunePrev").addEventListener("click", function(){ state.tuneIndex=(state.tuneIndex-1+STOPS.length)%STOPS.length; renderTune(); });
-  $("tuneNext").addEventListener("click", function(){ state.tuneIndex=(state.tuneIndex+1)%STOPS.length; renderTune(); });
-  $("resetTune").addEventListener("click", function(){ state.tunePts=clonePts(); state.tuneIndex=0; renderTune(); });
+  $("tunePrev").addEventListener("click", function(){ state.tuneIndex=(state.tuneIndex-1+STOPS.length)%STOPS.length; renderTune(); tuneFocus(); });
+  $("tuneNext").addEventListener("click", function(){ state.tuneIndex=(state.tuneIndex+1)%STOPS.length; renderTune(); tuneFocus(); });
+  $("captureBtn").addEventListener("click", captureFrame);
+  $("resetTune").addEventListener("click", function(){ state.tunePts=clonePts(); state.tuneIndex=0; renderTune(); tuneFocus(); });
   $("copyTune").addEventListener("click", function(){
     var t=$("tuneOut"); t.select(); t.setSelectionRange(0,99999);
     var ok=false; try{ ok=document.execCommand("copy"); }catch(e){}
