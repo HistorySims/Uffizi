@@ -93,7 +93,7 @@
 
   /* OpenSeadragon find viewer */
   #frameFind,#frameLook{width:min(100%,1100px);height:74vh;display:block;background:#04080a;}
-  #osd,#osdLook{width:100%;height:100%;}
+  #osd,#osdLook{width:100%;height:100%;touch-action:none;}
   .osd-ring{border:2.5px solid var(--gold-bright);border-radius:50%;opacity:0;pointer-events:none;
     box-shadow:0 0 22px rgba(201,162,75,.55),inset 0 0 14px rgba(201,162,75,.25);transition:opacity .5s ease;}
   .osd-ring.show{opacity:1;}
@@ -530,7 +530,7 @@
   function startLooking(){
     if(!state.imgReady) return;
     show("looking"); $("promptText").classList.remove("show"); $("promptText").textContent="";
-    osdLookLoad();
+    requestAnimationFrame(osdLookLoad);
     state.lastPrompt=-2; state.startT=performance.now();
     cancelAnimationFrame(state.raf); tickLook();
   }
@@ -587,7 +587,7 @@
   function ensureOSDLook(){
     if(osdLook || typeof OpenSeadragon === "undefined") return osdLook;
     osdLook = OpenSeadragon(osdConfig("osdLook"));
-    osdLook.addHandler("open", function(){ try{ osdLook.viewport.goHome(true); }catch(_){} });
+    osdLook.addHandler("open", function(){ requestAnimationFrame(function(){ try{ osdLook.viewport.goHome(true); }catch(_){} }); });
     return osdLook;
   }
   function osdLookLoad(){ if(ensureOSDLook()){ osdLook.open({ type:"image", url: currentPainting.tiles }); } }
