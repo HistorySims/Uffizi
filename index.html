@@ -410,11 +410,35 @@
   var VENUS_TILES     = "images/venus.jpg";
   var PRIMAVERA_TILES = "images/primavera.jpg";
   var FRUIT_TILES     = "images/fruit.jpg";
+  var PERSEUS_TILES   = "images/perseus.jpg";
+
+  var PERSEUS_SRC = "images/perseus.jpg";
+  var PERSEUS_PROMPTS = [
+    "Just look. Something big and frightening is happening by the sea — can you feel it?",
+    "Where is the water? What strange creature is rising up out of it?",
+    "Look for someone in danger. Now look for someone rushing in to help.",
+    "Are all the people feeling the same thing? Find someone afraid, and someone full of hope.",
+    "How does this painting make you feel — scared, excited, or a little of both?"
+  ];
+  var PERSEUS_DONE = [
+    "And he does it. Perseus saves Andromeda, the monster falls, and the waiting music turns into a real celebration. A scary story becomes a happy one, right in front of our eyes.",
+    "A painter named Piero di Cosimo made this more than 500 years ago. He loved odd and wonderful animals, and he invented this sea dragon out of his own imagination — which is why it looks like nothing you have ever seen.",
+    "It lives in the Uffizi in Florence. When you stand before the real one, find the monster's curling tail, the hero up in the sky and again on the monster's back, the chained princess, and the people who could not stop themselves from making music."
+  ];
+  var PERSEUS_STOPS = [
+    {find:"Can you find the sea dragon rising out of the water?", cx:0.405, cy:0.520, box:{x:0.27, y:0.38, w:0.31, h:0.31}, title:"The sea monster", body:"Here is the monster — a sea dragon sent to eat the princess. Piero invented his own beast: the snout of a wild pig, the body of a great fish, and a long curling tail. It looks fierce and a little sad at once, like a creature that does not quite belong anywhere."},
+    {find:"Can you find the hero standing right on the monster's back?", cx:0.435, cy:0.330, box:{x:0.37, y:0.20, w:0.14, h:0.28}, title:"Perseus the hero", body:"That brave young man balancing on the monster is Perseus. He has leapt straight onto its back and raises his curved sword to strike. He is not fighting from a safe distance — he is right on top of the danger, which is exactly what makes him a hero."},
+    {find:"Can you find the same hero a second time, up in the sky?", cx:0.770, cy:0.110, box:{x:0.70, y:0.02, w:0.17, h:0.20}, title:"The hero, twice", body:"Look up! There is Perseus again, flying in on winged sandals. The painter shows him twice in one picture — first swooping down from the sky, then landing on the monster — so we can watch the whole rescue happen at once, like two moments in a single breath."},
+    {find:"Can you find the girl tied to the rock?", cx:0.190, cy:0.430, box:{x:0.12, y:0.30, w:0.14, h:0.30}, title:"Andromeda", body:"This is Princess Andromeda, chained to a rock and left for the monster. See how still and pale she stands against the dark cliff. She is the reason Perseus came — and in a moment, she will be free."},
+    {find:"Can you find the people playing music?", cx:0.640, cy:0.760, box:{x:0.55, y:0.62, w:0.21, h:0.30}, title:"The music begins", body:"Over on the right, people have already begun to play strange, beautiful instruments. They are so sure Perseus will win that they start the celebration before the fight is even over. Music is how the painter tells us this story has a happy ending."},
+    {find:"Can you find the people who are too scared to watch?", cx:0.110, cy:0.640, box:{x:0.01, y:0.50, w:0.21, h:0.34}, title:"The watching crowd", body:"On the shore, Andromeda's family huddle together. Some point, some cover their faces, some can hardly look. Piero fills the edges with all these feelings — fear, hope, and wonder — so the whole beach seems to hold its breath along with us."
+  ];
 
   var PAINTINGS = [
     {id:"venus", title:"The Birth of Venus", artist:"Sandro Botticelli", card:"A sea breeze, a shell, and a goddess arriving on shore.", subtitle:"Let's slow down, then go exploring.", src:VENUS_SRC, alt:"The Birth of Venus by Sandro Botticelli", intro:"You looked at the whole painting. Now let's find some things hiding inside it.", prompts:VENUS_PROMPTS, done:VENUS_DONE, stops:VENUS_STOPS, tiles:VENUS_TILES},
     {id:"primavera", title:"Primavera", artist:"Sandro Botticelli", card:"A warm, drifting grove of flowers, dancers, and wind.", subtitle:"A warm, drifting garden. Move through it slowly and let each figure show you what is waking.", src:PRIMAVERA_SRC, alt:"Primavera by Sandro Botticelli", intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.", prompts:PRIMAVERA_PROMPTS, done:PRIMAVERA_DONE, stops:PRIMAVERA_STOPS, tiles:PRIMAVERA_TILES},
-    {id:"fruit", title:"Fruit and Insects", artist:"Rachel Ruysch", card:"A quiet still life that starts to move when you look closely.", subtitle:"A slow mystery: is anything truly still?", src:FRUIT_SRC, alt:"Fruit and Insects by Rachel Ruysch", intro:"You looked at the whole painting. Now let's hunt for the little creatures hiding inside it.", prompts:FRUIT_PROMPTS, done:FRUIT_DONE, stops:FRUIT_STOPS, tiles:FRUIT_TILES}
+    {id:"fruit", title:"Fruit and Insects", artist:"Rachel Ruysch", card:"A quiet still life that starts to move when you look closely.", subtitle:"A slow mystery: is anything truly still?", src:FRUIT_SRC, alt:"Fruit and Insects by Rachel Ruysch", intro:"You looked at the whole painting. Now let's hunt for the little creatures hiding inside it.", prompts:FRUIT_PROMPTS, done:FRUIT_DONE, stops:FRUIT_STOPS, tiles:FRUIT_TILES},
+    {id:"perseus", title:"Perseus Frees Andromeda", artist:"Piero di Cosimo", card:"A flying hero, a sea dragon, and a rescue by the shore.", subtitle:"A hero, a chained princess, and a sea dragon.", src:PERSEUS_SRC, alt:"Perseus Freeing Andromeda by Piero di Cosimo", intro:"You looked at the whole painting. Now let's find the people and the monster in this rescue story.", prompts:PERSEUS_PROMPTS, done:PERSEUS_DONE, stops:PERSEUS_STOPS, tiles:PERSEUS_TILES}
   ];
 
   var currentPainting = PAINTINGS[0];
