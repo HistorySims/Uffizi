@@ -110,24 +110,6 @@
   .frame{position:relative;display:inline-block;overflow:hidden;line-height:0;border-radius:2px;
     box-shadow:0 24px 70px -30px rgba(0,0,0,.95);}
   .frame.seeking{cursor:crosshair;}
-  .painting{display:block;max-width:min(100%,1100px);max-height:74vh;width:auto;height:auto;transform-origin:center center;}
-  .has-motion .painting{transition:transform .9s cubic-bezier(.22,.61,.36,1);}
-
-  .ring{position:absolute;width:30%;aspect-ratio:1/1;transform:translate(-50%,-50%) scale(.6);
-    border:2.5px solid var(--gold-bright);border-radius:50%;opacity:0;pointer-events:none;
-    box-shadow:0 0 0 1px rgba(0,0,0,.35),0 0 22px rgba(201,162,75,.55),inset 0 0 14px rgba(201,162,75,.25);}
-  .has-motion .ring{transition:opacity .5s ease .35s, transform .6s cubic-bezier(.22,.61,.36,1) .35s;}
-  .ring.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
-
-  .hint-ring{position:absolute;aspect-ratio:1/1;transform:translate(-50%,-50%);border:3px dashed var(--rose);
-    border-radius:50%;opacity:0;pointer-events:none;}
-  .hint-ring.show{opacity:.8;animation:pulse 1.3s ease-in-out infinite;}
-  @keyframes pulse{0%,100%{opacity:.28;transform:translate(-50%,-50%) scale(.85);}50%{opacity:.9;transform:translate(-50%,-50%) scale(1.06);}}
-
-  .tap-dot{position:absolute;width:18px;height:18px;border-radius:50%;transform:translate(-50%,-50%) scale(.4);
-    background:rgba(224,189,106,.9);box-shadow:0 0 0 6px rgba(224,189,106,.25);opacity:0;pointer-events:none;}
-  .tap-dot.ping{animation:ping .55s ease-out;}
-  @keyframes ping{0%{opacity:1;transform:translate(-50%,-50%) scale(.4);}100%{opacity:0;transform:translate(-50%,-50%) scale(2.4);}}
 
   /* prompts (looking) */
   .prompt{position:absolute;left:0;right:0;bottom:max(30px,env(safe-area-inset-bottom));z-index:6;text-align:center;padding:0 28px;pointer-events:none;}
@@ -175,29 +157,12 @@
   .tlabel{font-family:var(--serif);font-style:italic;color:var(--foam);font-size:1.05rem;min-width:150px;text-align:center;}
   .tlabel small{display:block;font-family:var(--sans);font-style:normal;color:var(--gold);font-size:.72rem;letter-spacing:.16em;margin-top:2px;}
   .tune-hint{text-align:center;font-size:.84rem;color:var(--foam-dim);padding:0 22px 4px;font-family:var(--serif);font-style:italic;}
-  .frame.tune{overflow:visible;}
-  .marker{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;
-    background:rgba(0,0,0,.55);border:2px solid var(--gold);color:var(--foam);font-size:.78rem;font-weight:700;
-    display:flex;align-items:center;justify-content:center;pointer-events:none;}
-  .marker.active{border-color:var(--rose);background:var(--rose);color:#1a1206;box-shadow:0 0 12px rgba(217,140,122,.8);}
-  .loupe{position:absolute;width:128px;height:128px;border-radius:50%;overflow:hidden;border:2px solid var(--gold);
-    box-shadow:0 6px 24px rgba(0,0,0,.7);pointer-events:none;opacity:0;z-index:8;background:#000;}
-  .loupe.show{opacity:1;}
-  .loupe-img{position:absolute;left:0;top:0;max-width:none;}
-  .loupe .cross::before,.loupe .cross::after{content:"";position:absolute;background:rgba(224,189,106,.9);}
-  .loupe .cross::before{left:50%;top:calc(50% - 12px);width:1.5px;height:24px;transform:translateX(-50%);}
-  .loupe .cross::after{top:50%;left:calc(50% - 12px);height:1.5px;width:24px;transform:translateY(-50%);}
   .tune-panel{flex:0 0 auto;padding:10px 16px max(16px,env(safe-area-inset-bottom));background:linear-gradient(0deg,var(--stage) 72%,transparent);}
   #tuneOut{width:100%;height:62px;resize:none;font-family:ui-monospace,Menlo,monospace;font-size:.74rem;
     color:var(--foam);background:rgba(255,255,255,.05);border:1px solid var(--foam-faint);border-radius:8px;padding:8px 10px;margin-bottom:8px;}
   .tune-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
   .tune-actions .btn{min-height:46px;padding:0 20px;font-size:.95rem;}
 
-  .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
-  @media (prefers-reduced-motion: reduce){
-    .hint-ring.show{animation:none;opacity:.85;}
-    .tap-dot.ping{animation:none;opacity:0;}
-  }
   @media (max-width:380px){ .btn{font-size:1rem;padding:0 24px;} .caption p{font-size:1.08rem;} }
 </style>
 </head>
@@ -230,7 +195,6 @@
     <div class="start-actions">
       <button class="btn btn-primary" id="beginBtn" disabled>Begin looking</button>
       <div class="status" id="status">Getting the painting ready…</div>
-      <button class="link" id="pickLink">Use a different picture</button>
     </div>
     <div class="tune-entry"><button class="link" id="tuneLink">Grown-ups: tune the spots</button></div>
   </section>
@@ -311,7 +275,6 @@
     </div>
   </section>
 
-  <input type="file" id="fileInput" accept="image/*" class="visually-hidden" />
 </div>
 
 <script>
@@ -510,12 +473,6 @@
   renderHome();
   renderDoneCopy();
   applySrc(currentPainting.src);
-
-  $("pickLink").addEventListener("click", function(){ $("fileInput").click(); });
-  $("fileInput").addEventListener("change", function(e){
-    var f = e.target.files && e.target.files[0];
-    if(f) applySrc(URL.createObjectURL(f));
-  });
 
   /* ---------- screens ---------- */
   function show(name){ Object.keys(screens).forEach(function(k){ screens[k].classList.toggle("active", k===name); }); }
