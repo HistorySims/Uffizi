@@ -140,5 +140,33 @@ window.WORKS = [
       "Now look at their faces again, knowing what you know. Gabriel makes sense: he came straight from God and he is sure. Mary is harder to explain. She has just heard something that will change everything. But she raises her hand not in fear. More like she is saying: yes. As if some quiet part of her already knew.",
       "Leonardo da Vinci painted this around 1472. It lives in the Uffizi in Florence. When you stand in front of the real one, look at the wings first. Everyone does. Then look at their faces. Then look all the way down at the tiny wildflowers blooming in the grass."
     ]
+  },
+  {
+    id:"adoration", title:"Adoration of the Magi", artist:"Gentile da Fabriano",
+    card:"The whole world arrives to see one baby, and everyone brings everything they have.",
+    subtitle:"Gold everywhere, and a crowd from every corner of the earth.",
+    alt:"Adoration of the Magi by Gentile da Fabriano",
+    intro:"You've looked at the whole painting. Now let's find some things hiding inside it.",
+    src:"images/adoration.jpg", tiles:"images/adoration.jpg",
+    prompts:[
+      "Just look. This might be the most decorated painting in the whole museum. Take your time with it.",
+      "There is an enormous crowd. Can you find someone who looks like they came from very far away?",
+      "How many different animals can you spot? Look carefully.",
+      "Find the baby. With all this gold and all these people, where is the baby?",
+      "Now look at the small panels along the very bottom. What do you think is happening there?"
+    ],
+    stops:[
+      {find:"Can you find the king who is kneeling on the ground?", cx:0.35, cy:0.73, box:{x:0.23, y:0.60, w:0.22, h:0.25}, title:"A king who kneels", body:"This is the oldest of the three kings who followed a star across the world to find this baby. He has taken off his golden crown and set it on the ground. His robe is covered in thousands of tiny patterns pressed into real gold: flowers and vines hammered so carefully they catch the light like jewelry. He is the most powerful person in the room, and he chose to kneel."},
+      {find:"Can you find the big white horse on the right side?", cx:0.80, cy:0.67, box:{x:0.70, y:0.52, w:0.20, h:0.30}, title:"Something new at the edge of the old world", body:"Most painted horses from this time were flat and stiff, more like a horse shape than a real horse. Gentile watched real horses and painted what he actually saw: the curve of the neck, the weight on each leg, the way the coat goes bright and dark in the light. Almost everything in this painting is the old way of making art. But this horse is already something new."},
+      {find:"Can you find the crowd of different faces on the right side?", cx:0.73, cy:0.52, box:{x:0.58, y:0.38, w:0.32, h:0.28}, title:"Everyone, from everywhere", body:"Look at all the different faces, hats, and clothes. The three kings were said to represent the whole world coming to one place: every country, every kind of person. So Gentile filled the crowd with every face he could imagine. Young and old, noblemen and servants, people from near and far, all mixed together like the busiest market in the world."},
+      {find:"Can you find the procession winding through the hills far behind the crowd?", cx:0.55, cy:0.28, box:{x:0.36, y:0.16, w:0.38, h:0.24}, title:"The long road to get here", body:"The crowd in front didn't just appear. Look through the arches behind them and you can see where they came from: horses and riders winding through hills and past a city, following a star. Gentile painted the journey and the arrival in the same picture. You can see where they started and where they ended up, all at once."},
+      {find:"Can you find the small panels along the very bottom of the painting?", cx:0.50, cy:0.91, box:{x:0.12, y:0.85, w:0.76, h:0.11}, title:"Before and after", body:"These three small panels are called the predella. They show what happened before and after the big moment above: the birth of the baby on a dark night, the family escaping in secret, and a scene from much later in his life. The painter fit the whole story into the frame, past and future wrapped around the present."},
+      {find:"Can you find a dog lying down at the feet of the crowd?", cx:0.62, cy:0.84, box:{x:0.52, y:0.79, w:0.18, h:0.10}, title:"The dog who came along", body:"Right at the feet of the crowd, a greyhound lies down and waits. Noblemen in 1423 brought their hunting dogs everywhere, even to the most important occasions imaginable. A dog at the feet of a king kneeling before a baby: this detail is so specific that Gentile must have seen exactly this happen, and decided to put it in."}
+    ],
+    done:[
+      "Here is the story. Three kings called the Magi followed a star from far away to bring gifts to the newborn Jesus. The old tradition said they came from the whole earth — which is why Gentile painted every kind of person, costume, and animal he could fit in the picture.",
+      "This painting is from 1423, fifty years before Leonardo's Annunciation. In 1423, a painting was meant to dazzle you. There is no sky here, just gold. No empty space, just decoration. The flowers on the king's robe are pressed in gold because that is what beautiful meant. But look at the white horse. Something new is already starting.",
+      "Leonardo da Vinci was born seven years after this painting was finished. When you look at his Annunciation in the same museum, notice the wildflowers in the grass: not gold patterns, but real plants he actually went outside and studied. That is the difference between this world and the one that came right after it."
+    ]
   }
 ];
