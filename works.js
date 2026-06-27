@@ -112,5 +112,33 @@ window.WORKS = [
       "A painter named Piero di Cosimo made this more than 500 years ago. He loved odd and wonderful animals, and he invented this sea dragon out of his own imagination — which is why it looks like nothing you have ever seen.",
       "It lives in the Uffizi in Florence. When you stand before the real one, find the monster's curling tail, the hero up in the sky and again on the monster's back, the chained princess, and the people who could not stop themselves from making music."
     ]
+  },
+  {
+    id:"annunciation", title:"The Annunciation", artist:"Leonardo da Vinci",
+    card:"An angel arrives in a garden with the most important news in the world.",
+    subtitle:"Two faces, one message, a meadow full of secrets.",
+    alt:"The Annunciation by Leonardo da Vinci",
+    intro:"You've looked at the two people and their expressions. Now let's go closer and find what's hidden inside this painting.",
+    src:"images/annunciation.jpg", tiles:"images/annunciation.jpg",
+    prompts:[
+      "Just look. Two people are in a garden. Something has just passed between them.",
+      "Find their faces. Before you know anything about this painting — what do you think each of them is feeling right now?",
+      "One is kneeling, one is seated. What do you think that means?",
+      "Now look down at the ground between them. What is growing there?",
+      "And look far behind them — past the dark trees. What kind of place do you see in the distance?"
+    ],
+    stops:[
+      {find:"Can you find the wings?", cx:0.16, cy:0.27, box:{x:0.04, y:0.08, w:0.22, h:0.38}, title:"Wings no painter had seen before", body:"Most painted angels have soft, decorative wings — more symbol than anatomy. Leonardo studied real birds and painted real feathers: the heavy brown-gold plumage of an eagle, layered in ranks exactly the way they grow. These wings look like they could actually lift something."},
+      {find:"Can you find the angel's face?", cx:0.25, cy:0.30, box:{x:0.20, y:0.22, w:0.09, h:0.13}, title:"A messenger who is certain", body:"Gabriel kneels with complete stillness. His expression isn't dramatic or theatrical — just focused and quietly certain. He has crossed the distance between heaven and earth to deliver one piece of news. He knows exactly what he carries."},
+      {find:"Can you find Mary's face?", cx:0.73, cy:0.25, box:{x:0.68, y:0.17, w:0.10, h:0.14}, title:"Neither frightened nor frozen", body:"Most people imagine that being visited by a glowing angel would be terrifying. But Mary's face is calm — eyes steady, composure unbroken, her hand raised almost mid-conversation. Leonardo paints her as someone who receives this news with quiet, astonishing dignity."},
+      {find:"Can you find the white flower the angel is holding?", cx:0.38, cy:0.37, box:{x:0.33, y:0.27, w:0.08, h:0.18}, title:"A flower that carries a message", body:"Gabriel holds a white lily toward Mary. In Renaissance painting this species meant one specific thing: purity, and a message from heaven. It isn't just decoration — it is punctuation. The angel is not just speaking; he is handing her the proof of what he says."},
+      {find:"Can you find the meadow of wildflowers in the foreground?", cx:0.30, cy:0.67, box:{x:0.03, y:0.55, w:0.60, h:0.24}, title:"A field guide disguised as a painting", body:"Leonardo was also a scientist. Every flower in this meadow is a real species, painted with the accuracy of a botanical atlas: iris, dandelion, columbine, daisy. Renaissance painters competed to include the most botanically precise wildflowers in sacred scenes — as if the natural world and the divine world required exactly the same careful attention."},
+      {find:"Can you find the mountains far away in the distance?", cx:0.56, cy:0.20, box:{x:0.42, y:0.09, w:0.24, h:0.22}, title:"A landscape dissolving into haze", body:"Through the gap in the trees, mountains blur into pale mist and a river bends toward a distant harbor. Leonardo invented a technique — later called sfumato — where edges don't end cleanly but dissolve into atmosphere, exactly the way your eyes actually experience distance. He was barely twenty years old when he painted this."}
+    ],
+    done:[
+      "Here is the story. An angel named Gabriel has arrived to tell a young woman named Mary that she will become the mother of Jesus. This moment — the Annunciation — was painted hundreds of times across the Renaissance. This is Leonardo's version, made when he was barely a teenager in Florence.",
+      "Now look at the expressions again, knowing what you know. Gabriel's certainty makes sense: he has come directly from God, and he does not hesitate. Mary's calm is harder to explain — she has just been told something that will change everything. She raises her hand not in fear but almost in acknowledgment, as if some quiet part of her already knew.",
+      "Leonardo da Vinci painted this around 1472. It lives in the Uffizi in Florence. When you stand in front of the real one, look at the wings first — everyone does — then look at their faces, and then look all the way down at the tiny wildflowers blooming in the grass."
+    ]
   }
 ];
