@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
+<script src="works.js"></script>
 <title>Looking at The Birth of Venus</title>
 <style>
   :root{
@@ -110,24 +111,6 @@
   .frame{position:relative;display:inline-block;overflow:hidden;line-height:0;border-radius:2px;
     box-shadow:0 24px 70px -30px rgba(0,0,0,.95);}
   .frame.seeking{cursor:crosshair;}
-  .painting{display:block;max-width:min(100%,1100px);max-height:74vh;width:auto;height:auto;transform-origin:center center;}
-  .has-motion .painting{transition:transform .9s cubic-bezier(.22,.61,.36,1);}
-
-  .ring{position:absolute;width:30%;aspect-ratio:1/1;transform:translate(-50%,-50%) scale(.6);
-    border:2.5px solid var(--gold-bright);border-radius:50%;opacity:0;pointer-events:none;
-    box-shadow:0 0 0 1px rgba(0,0,0,.35),0 0 22px rgba(201,162,75,.55),inset 0 0 14px rgba(201,162,75,.25);}
-  .has-motion .ring{transition:opacity .5s ease .35s, transform .6s cubic-bezier(.22,.61,.36,1) .35s;}
-  .ring.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
-
-  .hint-ring{position:absolute;aspect-ratio:1/1;transform:translate(-50%,-50%);border:3px dashed var(--rose);
-    border-radius:50%;opacity:0;pointer-events:none;}
-  .hint-ring.show{opacity:.8;animation:pulse 1.3s ease-in-out infinite;}
-  @keyframes pulse{0%,100%{opacity:.28;transform:translate(-50%,-50%) scale(.85);}50%{opacity:.9;transform:translate(-50%,-50%) scale(1.06);}}
-
-  .tap-dot{position:absolute;width:18px;height:18px;border-radius:50%;transform:translate(-50%,-50%) scale(.4);
-    background:rgba(224,189,106,.9);box-shadow:0 0 0 6px rgba(224,189,106,.25);opacity:0;pointer-events:none;}
-  .tap-dot.ping{animation:ping .55s ease-out;}
-  @keyframes ping{0%{opacity:1;transform:translate(-50%,-50%) scale(.4);}100%{opacity:0;transform:translate(-50%,-50%) scale(2.4);}}
 
   /* prompts (looking) */
   .prompt{position:absolute;left:0;right:0;bottom:max(30px,env(safe-area-inset-bottom));z-index:6;text-align:center;padding:0 28px;pointer-events:none;}
@@ -175,29 +158,12 @@
   .tlabel{font-family:var(--serif);font-style:italic;color:var(--foam);font-size:1.05rem;min-width:150px;text-align:center;}
   .tlabel small{display:block;font-family:var(--sans);font-style:normal;color:var(--gold);font-size:.72rem;letter-spacing:.16em;margin-top:2px;}
   .tune-hint{text-align:center;font-size:.84rem;color:var(--foam-dim);padding:0 22px 4px;font-family:var(--serif);font-style:italic;}
-  .frame.tune{overflow:visible;}
-  .marker{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;
-    background:rgba(0,0,0,.55);border:2px solid var(--gold);color:var(--foam);font-size:.78rem;font-weight:700;
-    display:flex;align-items:center;justify-content:center;pointer-events:none;}
-  .marker.active{border-color:var(--rose);background:var(--rose);color:#1a1206;box-shadow:0 0 12px rgba(217,140,122,.8);}
-  .loupe{position:absolute;width:128px;height:128px;border-radius:50%;overflow:hidden;border:2px solid var(--gold);
-    box-shadow:0 6px 24px rgba(0,0,0,.7);pointer-events:none;opacity:0;z-index:8;background:#000;}
-  .loupe.show{opacity:1;}
-  .loupe-img{position:absolute;left:0;top:0;max-width:none;}
-  .loupe .cross::before,.loupe .cross::after{content:"";position:absolute;background:rgba(224,189,106,.9);}
-  .loupe .cross::before{left:50%;top:calc(50% - 12px);width:1.5px;height:24px;transform:translateX(-50%);}
-  .loupe .cross::after{top:50%;left:calc(50% - 12px);height:1.5px;width:24px;transform:translateY(-50%);}
   .tune-panel{flex:0 0 auto;padding:10px 16px max(16px,env(safe-area-inset-bottom));background:linear-gradient(0deg,var(--stage) 72%,transparent);}
   #tuneOut{width:100%;height:62px;resize:none;font-family:ui-monospace,Menlo,monospace;font-size:.74rem;
     color:var(--foam);background:rgba(255,255,255,.05);border:1px solid var(--foam-faint);border-radius:8px;padding:8px 10px;margin-bottom:8px;}
   .tune-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
   .tune-actions .btn{min-height:46px;padding:0 20px;font-size:.95rem;}
 
-  .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
-  @media (prefers-reduced-motion: reduce){
-    .hint-ring.show{animation:none;opacity:.85;}
-    .tap-dot.ping{animation:none;opacity:0;}
-  }
   @media (max-width:380px){ .btn{font-size:1rem;padding:0 24px;} .caption p{font-size:1.08rem;} }
 </style>
 </head>
@@ -230,7 +196,6 @@
     <div class="start-actions">
       <button class="btn btn-primary" id="beginBtn" disabled>Begin looking</button>
       <div class="status" id="status">Getting the painting ready…</div>
-      <button class="link" id="pickLink">Use a different picture</button>
     </div>
     <div class="tune-entry"><button class="link" id="tuneLink">Grown-ups: tune the spots</button></div>
   </section>
@@ -311,135 +276,12 @@
     </div>
   </section>
 
-  <input type="file" id="fileInput" accept="image/*" class="visually-hidden" />
 </div>
 
 <script>
 (function(){
   "use strict";
-  var VENUS_SRC = "images/venus.jpg";
-
-  var VENUS_PROMPTS = [
-    "Just look. You don't have to say anything yet.",
-    "Where is she? What is she standing on?",
-    "Look at her eyes. What do you think she's dreaming about?",
-    "Is anything falling from the sky? Who is blowing the wind?",
-    "How does this painting make you feel?"
-  ];
-
-  // cx/cy = fraction of the painting (0–1). hit = tap radius (fraction of width).
-  // z = reveal zoom, r = highlight-ring radius (fraction of width).
-  var VENUS_STOPS = [
-    {find:"Can you find Venus's face?",
-     cx:0.549, cy:0.155, hit:0.16, z:2.0, r:0.22,
-     title:"Her dreaming eyes",
-     body:"Here she is — Venus, the goddess of love. Look at her eyes, gazing far, far away, like someone just waking from a dream. This is the very first moment she has ever been in the world."},
-    {find:"Can you find the giant seashell she stands on?",
-     cx:0.395, cy:0.800, hit:0.17, z:2.2, r:0.26,
-     title:"A seashell cradle",
-     body:"She floated to shore standing on a giant shell — her cradle and her little boat. Long ago, a shell like this meant something new and precious had been born out of the sea."},
-    {find:"Can you find the two flying friends blowing the wind?",
-     cx:0.356, cy:0.200, hit:0.19, z:2.1, r:0.30,
-     title:"The breath that carries her",
-     body:"These two are the wind. The West Wind holds his flower-wife close, and together they breathe out a soft spring breeze — puff out your cheeks like them! Their gentle breath carries Venus safely to land."},
-    {find:"Can you find the pink roses falling through the air?",
-     cx:0.423, cy:0.347, hit:0.16, z:2.3, r:0.22,
-     title:"The very first roses",
-     body:"Watch the flowers fall. The old story says these were the first roses that ever bloomed in the whole world — they opened the moment Venus was born, and the wind sends them tumbling after her."},
-    {find:"Can you find her long, flowing hair?",
-     cx:0.622, cy:0.320, hit:0.16, z:2.2, r:0.24,
-     title:"Rivers of gold",
-     body:"See how her hair flows on and on, like rivers of gold in the wind? The painter brushed it with real gold so it would shine — as if Venus glows with a light from somewhere deep inside."},
-    {find:"Can you find the lady holding a cloak full of flowers?",
-     cx:0.784, cy:0.403, hit:0.19, z:2.0, r:0.30,
-     title:"Spring comes to greet her",
-     body:"This is Spring herself, hurrying to meet Venus. Her dress is sprinkled with tiny flowers, and she holds out a soft cloak — covered in blossoms — to wrap around the new goddess and keep her warm."}
-  ];
-
-  var VENUS_DONE = [
-    "Here's a secret. This painting isn't really about a lady in the sea. Long ago, people believed Venus <em>was</em> beauty itself — and this is the moment beauty first arrives in the whole world, carried on the wind, with the very first flowers blooming to welcome her.",
-    "A painter named Sandro Botticelli made her stand just like the smooth stone goddesses carved thousands of years ago, and brushed her with real gold so it would shine. He painted it in Italy more than 500 years ago.",
-    "It lives in a museum called the Uffizi, in a city named Florence — and you're going to stand in front of the real one very soon. When you do, find her dreaming eyes, the wind's puffed-out cheeks, the falling roses, and her rivers of golden hair."
-  ];
-
-  var PRIMAVERA_SRC = "images/primavera.jpg";
-  var PRIMAVERA_PROMPTS = [
-    "Let your eyes drift slowly into the grove. Feel the cool green shade settle around you.",
-    "Breathe in. Imagine orange blossom, crushed grass, and the sweetness of ripe fruit in the air.",
-    "Feel the warmth moving through the trees — a soft breeze, bare feet on damp earth, silk against skin.",
-    "Listen. Somewhere there is dancing, a rush of wind, the hush of petals falling.",
-    "Something is waking here, all at once. Hold the feeling. What season is breathing through this garden?"
-  ];
-  var PRIMAVERA_DONE = [
-    "Now the whole garden makes sense. This painting is called <em>Primavera</em> — the Italian word for <em>Spring</em>. Every figure you found is a different part of one season waking up: love at the calm center, the warm wind on one side, flowers spilling out on the other.",
-    "Sandro Botticelli gathered old myths into a single warm afternoon. Zephyr's breath turns a fleeing nymph into Flora, who scatters blossoms; Venus presides while Cupid's arrow sparks love; the Three Graces dance and Mercury keeps the sky clear. Together they tell how spring arrives — wind, then love, then flowers everywhere.",
-    "It hangs in the Uffizi in Florence, in the same rooms as <em>The Birth of Venus</em>. When you stand before the real one, move slowly again: find Venus's calm face, the dancing hands of the Graces, the blue wind rushing in, and the roses falling from Flora's dress — and feel the whole garden breathing spring."
-  ];
-  var PRIMAVERA_STOPS = [
-    {find:"Right at the center of the garden, beneath the arch of leaves, one figure stands perfectly still.", cx:0.534, cy:0.318, hit:0.13, z:2.0, r:0.20, title:"Venus — the heart of the garden", body:"This is Venus, the goddess of love. She stands so still that the whole grove seems to turn gently around her. She is not in a hurry; love never is. She presides over this place, and wherever she is, life softens, opens, and begins to grow."},
-    {find:"Look up into the branches above her head — something small is hovering there.", cx:0.517, cy:0.029, hit:0.12, z:2.4, r:0.18, title:"Cupid — blind, glowing love", body:"High above Venus floats her son, Cupid. He is blindfolded, yet he aims a burning arrow into the garden below. Love arrives without looking and without warning — a sudden warmth that lands where it will and makes the heart bloom like everything else here."},
-    {find:"To the left, three figures dance with their hands woven lightly together.", cx:0.300, cy:0.327, hit:0.17, z:2.0, r:0.26, title:"The Three Graces — beauty given and returned", body:"These three dancers are the Graces, companions of Venus. Their thin gowns drift like mist and their fingers barely touch, passing something between them. They stand for the gentle gifts we give, receive, and give again — beauty and kindness flowing in a circle that never stops."},
-    {find:"At the far left edge, someone reaches a wand up toward the last grey clouds.", cx:0.109, cy:0.381, hit:0.14, z:2.1, r:0.22, title:"Mercury — keeper of clear skies", body:"This is Mercury, messenger of the gods. With his wand he stirs away the last clouds so no storm can reach the grove. He is the guardian here, holding the sky open so this warm season can stay. Spring is being protected, kept safe to last."},
-    {find:"A cold gust is sweeping in from the right, where a blue figure rushes into the garden.", cx:0.817, cy:0.317, hit:0.15, z:2.1, r:0.23, title:"Zephyr — the warm west wind", body:"This blue, breathless figure is Zephyr, the wind of spring. He blows in from the edge of the world and reaches for the nymph fleeing before him. His breath is the first warm gust that wakes the cold earth — wild, alive, and impossible to hold back."},
-    {find:"On the right, follow the falling petals to the woman whose dress overflows with flowers.", cx:0.683, cy:0.511, hit:0.16, z:2.0, r:0.24, title:"Flora — spring made visible", body:"Touched by Zephyr's warm breath, the fleeing nymph is changing — becoming Flora, the goddess of flowers. She steps forward scattering roses from her gown, and wherever she walks the ground blooms. She is spring itself, made into someone you can see."}
-  ];
-
-  var FRUIT_SRC = "images/fruit.jpg";
-  var FRUIT_PROMPTS = [
-    "First, let it be quiet. Just look at the fruit and the dark leaves.",
-    "Imagine the smell here. Is it sweet, damp, sharp, or earthy?",
-    "What sound would this little world make if you leaned close?",
-    "Is the air cool, warm, heavy, or still?",
-    "Now look again. I wonder if anything here is truly still."
-  ];
-  var FRUIT_DONE = [
-    "So — was that really a <em>still</em> life? We found a fly feeding, a leaf with nibbled holes, a lizard hunting, a butterfly resting, and a nest of eggs waiting in the dark.",
-    "A peach becomes softer. An egg becomes a bird. A caterpillar becomes a butterfly. Nothing here has finished becoming what it will be.",
-    "Maybe a still life is not still at all. It is a slow life — and the longer and more carefully you look, the more it begins to move."
-  ];
-  // box {x,y,w,h} = fraction-of-image rectangle to zoom to on reveal (also the tap target). Tune in the grown-ups tool.
-  var FRUIT_STOPS = [
-    {find:"I spy a tiny fly that has landed on a ripe peach.", cx:0.478, cy:0.665, box:{x:0.420, y:0.582, w:0.122, h:0.160}, title:"The fly", body:"Look at the fly's feet — notice the tiny shadow Ruysch paints just beneath them. That shadow is what makes the fly sit on the peach instead of floating, and it tricks the eye into reading it as real and close. A painted fly was a way to show off that illusion, and a quiet symbol too: where fruit is this ripe, decay has already arrived."},
-    {find:"I spy a butterfly with bright open wings near the bottom.", cx:0.436, cy:0.903, box:{x:0.375, y:0.806, w:0.129, h:0.169}, title:"The butterfly", body:"Look at the wings — notice how Ruysch builds their glow from thin, see-through layers of paint, so light seems to pass through them like stained glass. Setting that warm red against the near-black background makes the colour jump forward and pulls your eye across the canvas. The butterfly carries a meaning as well: reborn from a dull chrysalis, it long stood for the soul and for transformation."},
-    {find:"I spy a leaf with little holes nibbled right through it.", cx:0.284, cy:0.587, box:{x:0.129, y:0.421, w:0.200, h:0.262}, title:"The nibbled leaf", body:"Look at the holes — notice how Ruysch lets the dark background show straight through the chewed gaps and browns the torn edges. By painting the damage instead of a perfect leaf, she tells you this little world is being eaten and is already passing. The flaw is the technique: the leaf reads as true precisely because it isn't flawless."},
-    {find:"I spy a little nest of pale, speckled eggs in the shadows.", cx:0.252, cy:0.838, box:{x:0.153, y:0.712, w:0.199, h:0.261}, title:"The bird's nest", body:"Look at the eggs — notice how Ruysch keeps them in soft shadow with the faintest speckles, so they whisper while the ripe fruit above shouts in the light. Placing new life down in the dark and ripe decay up in the light is deliberate: birth and ending share one picture, the whole cycle gathered in a single corner."},
-    {find:"I spy a lizard creeping along the bottom edge.", cx:0.586, cy:0.848, box:{x:0.460, y:0.790, w:0.220, h:0.160}, title:"The lizard", body:"Look at the pose — notice the arched back and lifted foot caught mid-step, with a crisp highlight along the spine that makes the body feel round and alive. Ruysch uses that diagonal of movement to slip real action into a 'still' life. The lizard is hunting the very insects we just found, turning the tabletop into a tiny stage."},
-    {find:"I spy a beetle climbing among the leaves near the top.", cx:0.805, cy:0.233, box:{x:0.724, y:0.117, w:0.154, h:0.202}, title:"The beetle", body:"Look at the beetle's back — notice the small, sharp points of white Ruysch sets along its hard wing-cases. A glossy shell catches light in tiny, bright pinpricks, and placing those exactly is what tells your eye the surface is smooth and polished, not soft. Set high among the drying leaves and wheat, it is one more small life threaded quietly through the scene."}
-  ];
-
-  var VENUS_TILES     = "images/venus.jpg";
-  var PRIMAVERA_TILES = "images/primavera.jpg";
-  var FRUIT_TILES     = "images/fruit.jpg";
-  var PERSEUS_TILES   = "images/perseus.jpg";
-
-  var PERSEUS_SRC = "images/perseus.jpg";
-  var PERSEUS_PROMPTS = [
-    "Just look. Something big and frightening is happening by the sea — can you feel it?",
-    "Where is the water? What strange creature is rising up out of it?",
-    "Look for someone in danger. Now look for someone rushing in to help.",
-    "Are all the people feeling the same thing? Find someone afraid, and someone full of hope.",
-    "How does this painting make you feel — scared, excited, or a little of both?"
-  ];
-  var PERSEUS_DONE = [
-    "And he does it. Perseus saves Andromeda, the monster falls, and the waiting music turns into a real celebration. A scary story becomes a happy one, right in front of our eyes.",
-    "A painter named Piero di Cosimo made this more than 500 years ago. He loved odd and wonderful animals, and he invented this sea dragon out of his own imagination — which is why it looks like nothing you have ever seen.",
-    "It lives in the Uffizi in Florence. When you stand before the real one, find the monster's curling tail, the hero up in the sky and again on the monster's back, the chained princess, and the people who could not stop themselves from making music."
-  ];
-  var PERSEUS_STOPS = [
-    {find:"Can you find the sea dragon rising out of the water?", cx:0.405, cy:0.520, box:{x:0.27, y:0.38, w:0.31, h:0.31}, title:"The sea monster", body:"Here is the monster — a sea dragon sent to eat the princess. Piero invented his own beast: the snout of a wild pig, the body of a great fish, and a long curling tail. It looks fierce and a little sad at once, like a creature that does not quite belong anywhere."},
-    {find:"Can you find the hero standing right on the monster's back?", cx:0.435, cy:0.330, box:{x:0.37, y:0.20, w:0.14, h:0.28}, title:"Perseus the hero", body:"That brave young man balancing on the monster is Perseus. He has leapt straight onto its back and raises his curved sword to strike. He is not fighting from a safe distance — he is right on top of the danger, which is exactly what makes him a hero."},
-    {find:"Can you find the same hero a second time, up in the sky?", cx:0.770, cy:0.110, box:{x:0.70, y:0.02, w:0.17, h:0.20}, title:"The hero, twice", body:"Look up! There is Perseus again, flying in on winged sandals. The painter shows him twice in one picture — first swooping down from the sky, then landing on the monster — so we can watch the whole rescue happen at once, like two moments in a single breath."},
-    {find:"Can you find the girl tied to the rock?", cx:0.190, cy:0.430, box:{x:0.12, y:0.30, w:0.14, h:0.30}, title:"Andromeda", body:"This is Princess Andromeda, chained to a rock and left for the monster. See how still and pale she stands against the dark cliff. She is the reason Perseus came — and in a moment, she will be free."},
-    {find:"Can you find the people playing music?", cx:0.640, cy:0.760, box:{x:0.55, y:0.62, w:0.21, h:0.30}, title:"The music begins", body:"Over on the right, people have already begun to play strange, beautiful instruments. They are so sure Perseus will win that they start the celebration before the fight is even over. Music is how the painter tells us this story has a happy ending."},
-    {find:"Can you find the people who are too scared to watch?", cx:0.110, cy:0.640, box:{x:0.01, y:0.50, w:0.21, h:0.34}, title:"The watching crowd", body:"On the shore, Andromeda's family huddle together. Some point, some cover their faces, some can hardly look. Piero fills the edges with all these feelings — fear, hope, and wonder — so the whole beach seems to hold its breath along with us."}
-  ];
-
-  var PAINTINGS = [
-    {id:"venus", title:"The Birth of Venus", artist:"Sandro Botticelli", card:"A sea breeze, a shell, and a goddess arriving on shore.", subtitle:"Let's slow down, then go exploring.", src:VENUS_SRC, alt:"The Birth of Venus by Sandro Botticelli", intro:"You looked at the whole painting. Now let's find some things hiding inside it.", prompts:VENUS_PROMPTS, done:VENUS_DONE, stops:VENUS_STOPS, tiles:VENUS_TILES},
-    {id:"primavera", title:"Primavera", artist:"Sandro Botticelli", card:"A warm, drifting grove of flowers, dancers, and wind.", subtitle:"A warm, drifting garden. Move through it slowly and let each figure show you what is waking.", src:PRIMAVERA_SRC, alt:"Primavera by Sandro Botticelli", intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.", prompts:PRIMAVERA_PROMPTS, done:PRIMAVERA_DONE, stops:PRIMAVERA_STOPS, tiles:PRIMAVERA_TILES},
-    {id:"fruit", title:"Fruit and Insects", artist:"Rachel Ruysch", card:"A quiet still life that starts to move when you look closely.", subtitle:"A slow mystery: is anything truly still?", src:FRUIT_SRC, alt:"Fruit and Insects by Rachel Ruysch", intro:"You looked at the whole painting. Now let's hunt for the little creatures hiding inside it.", prompts:FRUIT_PROMPTS, done:FRUIT_DONE, stops:FRUIT_STOPS, tiles:FRUIT_TILES},
-    {id:"perseus", title:"Perseus Frees Andromeda", artist:"Piero di Cosimo", card:"A flying hero, a sea dragon, and a rescue by the shore.", subtitle:"A hero, a chained princess, and a sea dragon.", src:PERSEUS_SRC, alt:"Perseus Freeing Andromeda by Piero di Cosimo", intro:"You looked at the whole painting. Now let's find the people and the monster in this rescue story.", prompts:PERSEUS_PROMPTS, done:PERSEUS_DONE, stops:PERSEUS_STOPS, tiles:PERSEUS_TILES}
-  ];
+  var PAINTINGS = window.WORKS || [];
 
   var currentPainting = PAINTINGS[0];
   var PROMPTS = currentPainting.prompts;
@@ -510,12 +352,6 @@
   renderHome();
   renderDoneCopy();
   applySrc(currentPainting.src);
-
-  $("pickLink").addEventListener("click", function(){ $("fileInput").click(); });
-  $("fileInput").addEventListener("change", function(e){
-    var f = e.target.files && e.target.files[0];
-    if(f) applySrc(URL.createObjectURL(f));
-  });
 
   /* ---------- screens ---------- */
   function show(name){ Object.keys(screens).forEach(function(k){ screens[k].classList.toggle("active", k===name); }); }
