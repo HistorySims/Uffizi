@@ -208,6 +208,7 @@
         <circle class="prog" id="prog" cx="31" cy="31" r="27"></circle></svg>
         <span class="time" id="timeText">5:00</span></div>
       <button class="quit skip" id="skipLook">Skip ▸</button>
+      <button class="quit" id="muteLook" aria-label="Mute music" style="display:none">♫</button>
       <button class="quit" id="quitLook">✕ Quit</button>
     </div>
     <div class="stage"><div class="frame" id="frameLook"><div id="osdLook"></div></div></div>
@@ -297,7 +298,8 @@
 
   var state = { durationSec:300, imgReady:false, raf:0, startT:0, lastPrompt:-2,
                 findIndex:0, findPhase:"intro", misses:0,
-                tuneIndex:0, tunePts:[], _fx:null, _fy:null };
+                tuneIndex:0, tunePts:[], _fx:null, _fy:null,
+                bgAudio:null, bgMuted:false };
   var osd = null, osdLook = null, osdTune = null, osdOverlays = [], tuneOverlays = [];
 
   /* ---------- image ---------- */
@@ -387,12 +389,35 @@
   });
 
   /* ---------- looking ---------- */
+  function stopBgAudio(){
+    if(!state.bgAudio) return;
+    var a = state.bgAudio; state.bgAudio = null;
+    var t = setInterval(function(){
+      if(a.volume > 0.04){ a.volume = Math.max(0, a.volume - 0.04); }
+      else { a.pause(); clearInterval(t); }
+    }, 60);
+  }
   function startLooking(){
     if(!state.imgReady) return;
     show("looking"); $("promptText").classList.remove("show"); $("promptText").textContent="";
     requestAnimationFrame(osdLookLoad);
     state.lastPrompt=-2; state.startT=performance.now();
     cancelAnimationFrame(state.raf); tickLook();
+    stopBgAudio();
+    if(currentPainting.music){
+      var a = new Audio(currentPainting.music);
+      a.loop = true; a.volume = 0;
+      a.play().then(function(){
+        var t = setInterval(function(){
+          if(a.volume < 0.28){ a.volume = Math.min(0.28, a.volume + 0.014); }
+          else { clearInterval(t); }
+        }, 80);
+      }).catch(function(){});
+      state.bgAudio = a; state.bgMuted = false;
+      $("muteLook").style.display = ""; $("muteLook").textContent = "♫";
+    } else {
+      $("muteLook").style.display = "none";
+    }
   }
   function tickLook(){
     var el=(performance.now()-state.startT)/1000, dur=state.durationSec, rem=dur-el;
@@ -413,6 +438,7 @@
   /* ---------- find (seek & find) ---------- */
   function enterFind(){
     cancelAnimationFrame(state.raf);
+    stopBgAudio();
     show("find");
     $("findIntro").classList.remove("hidden");
     $("findCaption").classList.add("hidden");
@@ -641,8 +667,14 @@
 
   /* ---------- wiring ---------- */
   $("beginBtn").addEventListener("click", startLooking);
-  $("quitLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); show("home"); });
+  $("quitLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); stopBgAudio(); show("home"); });
   $("skipLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); $("promptText").classList.remove("show"); enterFind(); });
+  $("muteLook").addEventListener("click", function(){
+    if(!state.bgAudio) return;
+    state.bgMuted = !state.bgMuted;
+    state.bgAudio.muted = state.bgMuted;
+    $("muteLook").textContent = state.bgMuted ? "♪" : "♫";
+  });
   $("startFindBtn").addEventListener("click", function(){ beginSeeking(0); });
   $("showMeBtn").addEventListener("click", function(){ revealStop(state.findIndex, false); });
   $("nextFindBtn").addEventListener("click", nextFind);
