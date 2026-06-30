@@ -36,7 +36,7 @@ window.WORKS = [
     alt:"Primavera by Sandro Botticelli",
     intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.",
     src:"images/primavera.jpg", tiles:"images/primavera.jpg",
-    music:"audio/vivaldi-spring.mp3",
+    music:"audio/vivaldi-spring.ogg",
     prompts:[
       "Let your eyes drift slowly into the grove. Feel the cool green shade settle around you.",
       "Breathe in. Imagine orange blossom, crushed grass, and the sweetness of ripe fruit in the air.",
