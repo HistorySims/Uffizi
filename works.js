@@ -66,6 +66,7 @@ window.WORKS = [
     alt:"Fruit and Insects by Rachel Ruysch",
     intro:"You looked at the whole painting. Now let's hunt for the little creatures hiding inside it.",
     src:"images/fruit.jpg", tiles:"images/fruit.jpg",
+    music:"audio/gnossienne-1.ogg",
     prompts:[
       "First, let it be quiet. Just look at the fruit and the dark leaves.",
       "Imagine the smell here. Is it sweet, damp, sharp, or earthy?",
