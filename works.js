@@ -124,6 +124,7 @@ window.WORKS = [
     alt:"The Annunciation by Leonardo da Vinci",
     intro:"You've looked at the two people and their expressions. Now let's go closer and find what's hiding in this painting.",
     src:"images/annunciation.jpg", tiles:"images/annunciation.jpg",
+    music:"audio/biber-annunciation.mp3",
     prompts:[
       "Just look. Two people are in a garden. Something has just happened between them.",
       "Find their faces. Before you know anything about this painting, what do you think each of them is feeling right now?",
