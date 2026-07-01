@@ -95,6 +95,7 @@ window.WORKS = [
     alt:"Perseus Freeing Andromeda by Piero di Cosimo",
     intro:"You looked at the whole painting. Now let's find the people and the monster in this rescue story.",
     src:"images/perseus.jpg", tiles:"images/perseus.jpg",
+    music:"audio/vivaldi-2-cellos.mp3",
     prompts:[
       "Just look. Something big and frightening is happening by the sea — can you feel it?",
       "Where is the water? What strange creature is rising up out of it?",
