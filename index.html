@@ -407,6 +407,7 @@
     if(currentPainting.music){
       var a = new Audio(currentPainting.music);
       a.loop = true; a.volume = 0;
+      if(currentPainting.musicStart) a.currentTime = currentPainting.musicStart;
       a.play().then(function(){
         var t = setInterval(function(){
           if(a.volume < 0.28){ a.volume = Math.min(0.28, a.volume + 0.014); }

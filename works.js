@@ -8,6 +8,7 @@ window.WORKS = [
     alt:"The Birth of Venus by Sandro Botticelli",
     intro:"You looked at the whole painting. Now let's find some things hiding inside it.",
     src:"images/venus.jpg", tiles:"images/venus.jpg",
+    music:"audio/la-mer.mp3", musicStart:75,
     prompts:[
       "Just look. You don't have to say anything yet.",
       "Where is she? What is she standing on?",
