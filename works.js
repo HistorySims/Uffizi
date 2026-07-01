@@ -37,7 +37,7 @@ window.WORKS = [
     alt:"Primavera by Sandro Botticelli",
     intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.",
     src:"images/primavera.jpg", tiles:"images/primavera.jpg",
-    music:"audio/vivaldi-spring.ogg",
+    music:"audio/vivaldi-spring.mp3",
     prompts:[
       "Let your eyes drift slowly into the grove. Feel the cool green shade settle around you.",
       "Breathe in. Imagine orange blossom, crushed grass, and the sweetness of ripe fruit in the air.",
@@ -66,7 +66,7 @@ window.WORKS = [
     alt:"Fruit and Insects by Rachel Ruysch",
     intro:"You looked at the whole painting. Now let's hunt for the little creatures hiding inside it.",
     src:"images/fruit.jpg", tiles:"images/fruit.jpg",
-    music:"audio/gnossienne-1.ogg",
+    music:"audio/gnossienne-1.mp3",
     prompts:[
       "First, let it be quiet. Just look at the fruit and the dark leaves.",
       "Imagine the smell here. Is it sweet, damp, sharp, or earthy?",
