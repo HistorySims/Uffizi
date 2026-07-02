@@ -37,7 +37,7 @@ window.WORKS = [
     alt:"Primavera by Sandro Botticelli",
     intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.",
     src:"images/primavera.jpg", tiles:"images/primavera.jpg",
-    music:"audio/vivaldi-spring.ogg",
+    music:"audio/vivaldi-spring.mp3",
     prompts:[
       "Let your eyes drift slowly into the grove. Feel the cool green shade settle around you.",
       "Breathe in. Imagine orange blossom, crushed grass, and the sweetness of ripe fruit in the air.",
@@ -66,6 +66,7 @@ window.WORKS = [
     alt:"Fruit and Insects by Rachel Ruysch",
     intro:"You looked at the whole painting. Now let's hunt for the little creatures hiding inside it.",
     src:"images/fruit.jpg", tiles:"images/fruit.jpg",
+    music:"audio/gnossienne-1.mp3",
     prompts:[
       "First, let it be quiet. Just look at the fruit and the dark leaves.",
       "Imagine the smell here. Is it sweet, damp, sharp, or earthy?",
@@ -94,6 +95,7 @@ window.WORKS = [
     alt:"Perseus Freeing Andromeda by Piero di Cosimo",
     intro:"You looked at the whole painting. Now let's find the people and the monster in this rescue story.",
     src:"images/perseus.jpg", tiles:"images/perseus.jpg",
+    music:"audio/vivaldi-2-cellos.mp3",
     prompts:[
       "Just look. Something big and frightening is happening by the sea — can you feel it?",
       "Where is the water? What strange creature is rising up out of it?",
@@ -122,6 +124,7 @@ window.WORKS = [
     alt:"The Annunciation by Leonardo da Vinci",
     intro:"You've looked at the two people and their expressions. Now let's go closer and find what's hiding in this painting.",
     src:"images/annunciation.jpg", tiles:"images/annunciation.jpg",
+    music:"audio/biber-annunciation.mp3",
     prompts:[
       "Just look. Two people are in a garden. Something has just happened between them.",
       "Find their faces. Before you know anything about this painting, what do you think each of them is feeling right now?",
