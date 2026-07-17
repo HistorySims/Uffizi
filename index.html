@@ -439,7 +439,6 @@
   /* ---------- find (seek & find) ---------- */
   function enterFind(){
     cancelAnimationFrame(state.raf);
-    stopBgAudio();
     show("find");
     $("findIntro").classList.remove("hidden");
     $("findCaption").classList.add("hidden");
@@ -679,9 +678,9 @@
   $("startFindBtn").addEventListener("click", function(){ beginSeeking(0); });
   $("showMeBtn").addEventListener("click", function(){ revealStop(state.findIndex, false); });
   $("nextFindBtn").addEventListener("click", nextFind);
-  $("quitFind").addEventListener("click", function(){ show("home"); });
+  $("quitFind").addEventListener("click", function(){ stopBgAudio(); show("home"); });
   $("againBtn").addEventListener("click", startLooking);
-  $("doneBtn").addEventListener("click", function(){ show("home"); });
+  $("doneBtn").addEventListener("click", function(){ stopBgAudio(); show("home"); });
   $("tuneLink").addEventListener("click", enterTune);
   $("quitTune").addEventListener("click", function(){ show("start"); });
 
