@@ -49,6 +49,7 @@
   .home-copy{font-family:var(--serif);font-size:1.12rem;line-height:1.45;color:var(--foam-dim);max-width:560px;margin:0 auto 26px;}
   .back-link{align-self:flex-start;margin:-14px 0 6px -6px;text-decoration:none;}
   .card-role{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:600;margin:0 0 6px;}
+  .grid-heading{grid-column:1/-1;margin:22px 0 0;text-align:left;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);font-weight:600;}
   .painting-card.off-view{border-style:dashed;}
   .painting-card.off-view .painting-thumb{filter:grayscale(.85) brightness(.4);}
   .painting-card.off-view h2,.painting-card.off-view p,.painting-card.off-view .card-artist,.painting-card.off-view .card-role{opacity:.5;}
@@ -356,9 +357,7 @@
     $("beginBtn").disabled = true;
     $("heroFrame").classList.remove("ready");
     $("status").textContent = "Getting the painting ready…";
-    $("startEyebrow").textContent = painting.role
-      ? (worksIn(currentMuseum).indexOf(painting)+1) + " · " + painting.role
-      : "A looking game";
+    $("startEyebrow").textContent = roleLabel(painting) || "A looking game";
     $("startTitle").textContent = painting.title;
     $("startSubtitle").textContent = painting.subtitle;
     $("findIntroText").textContent = painting.intro;
@@ -368,6 +367,13 @@
     show("start");
   }
   function worksIn(museum){ return PAINTINGS.filter(function(p){ return p.museum === museum.id; }); }
+  // Works on view are numbered in visit order; works off view keep their role but no number.
+  function roleLabel(painting){
+    if(!painting.role) return "";
+    if(painting.onView === false) return painting.role;
+    var onView = worksIn(currentMuseum).filter(function(p){ return p.onView !== false; });
+    return (onView.indexOf(painting)+1) + " · " + painting.role;
+  }
   function makeCard(o){
     var card = document.createElement("article");
     card.className = "painting-card";
@@ -393,10 +399,17 @@
   function renderGallery(){
     var grid = $("paintingGrid");
     grid.innerHTML = "";
-    worksIn(currentMuseum).forEach(function(painting, idx){
+    var works = worksIn(currentMuseum);
+    var ordered = works.filter(function(p){ return p.onView !== false; })
+      .concat(works.filter(function(p){ return p.onView === false; }));
+    ordered.forEach(function(painting, idx){
+      if(painting.onView === false && (idx === 0 || ordered[idx-1].onView !== false)){
+        var h = document.createElement("h3"); h.className = "grid-heading"; h.textContent = "Not on view right now";
+        grid.appendChild(h);
+      }
       grid.appendChild(makeCard({
         img:painting.src, alt:painting.alt,
-        role: painting.role ? (idx+1) + " · " + painting.role : "",
+        role: roleLabel(painting),
         title:painting.title, sub:painting.artist, text:painting.card,
         button:"Choose " + (painting.kind || "painting"),
         offView: painting.onView === false,

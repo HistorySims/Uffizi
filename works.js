@@ -8,8 +8,8 @@ window.MUSEUMS = [
   },
   {
     id:"whitney", name:"The Whitney", city:"New York",
-    card:"A tiny circus, a sleepy street, a counter full of pie, and a bridge that glows at night.",
-    intro:"American art from the last hundred years. Follow them in order for the whole visit, from the circus to the bridge, or pick any one.",
+    card:"A brass band at night, a sleepy street, a counter full of pie, and a glowing bridge.",
+    intro:"American art from the last hundred years. Follow the numbers for the whole visit, from the street band to the bridge, or pick any one.",
     cover:"images/early-sunday-morning.jpg"
   }
 ];
@@ -197,35 +197,63 @@ window.WORKS = [
     ]
   },
 
-  /* ---------- The Whitney, New York: in visit order ---------- */
+  /* ---------- The Whitney, New York: in visit order (works off view are listed after) ---------- */
   {
-    id:"calder", museum:"whitney", onView:false, title:"Calder's Circus", artist:"Alexander Calder",
-    role:"The Hook", kind:"sculpture",
-    card:"Real miniature toys & recycled creatures.",
-    subtitle:"A whole circus small enough to pack in a suitcase.",
-    alt:"Calder's Circus by Alexander Calder: tiny wire and cloth performers around a little circus ring",
-    intro:"You've looked over the whole circus. Now let's find the performers. Every one of them was made by hand from bits and scraps.",
-    src:"images/calder-circus.jpg", tiles:"images/calder-circus.jpg",
+    id:"motley", museum:"whitney", title:"Gettin' Religion", artist:"Archibald J. Motley Jr.",
+    role:"The Hook",
+    card:"A blue night, a brass band, and a whole street dancing.",
+    subtitle:"It's night, the band is playing, and everybody's out.",
+    alt:"Gettin' Religion by Archibald J. Motley Jr.: a crowded street at night in deep blue light, with brass musicians, dancers, and neighbors watching from porches and windows",
+    intro:"You've soaked up the whole noisy night. Now let's find the people and the tiny details hiding in the blue.",
+    src:"images/gettin-religion.jpg", tiles:"images/gettin-religion.jpg",
     prompts:[
-      "Just look. A whole circus is waiting for you: tents, a ring, and a crowd of tiny performers.",
-      "Everything here is small enough to hold in your hand. Which one would you pick up first?",
-      "Look closely at what they're made of. Can you spot wire, cloth, string, or a cork?",
-      "Who looks like they're about to move? Find someone ready to swing, ride, or jump.",
-      "If this circus could make a sound right now, what would you hear?"
+      "Just look. It's nighttime, and the whole street is full of people. Can you almost hear it?",
+      "Everything is blue and purple, like the night is glowing. Where is the brightest light?",
+      "Find someone making music. What instrument are they playing?",
+      "Find someone dancing, someone walking, and someone just watching. Who would you be?",
+      "If you could step into this painting, what would you do first?"
     ],
     stops:[
-      {find:"Can you find the acrobats hanging high above the ring?", cx:0.47, cy:0.34, box:{x:0.36, y:0.27, w:0.24, h:0.14}, title:"The flying acrobats", body:"Up on the high wires, tiny acrobats dangle from their trapezes, with a net waiting underneath in case anyone falls. Calder bent their bodies out of wire so they could really swing. When he put on the show, he moved them with his own hands while the audience held its breath."},
-      {find:"Can you find the ringmaster in his tall black top hat?", cx:0.372, cy:0.6, box:{x:0.34, y:0.555, w:0.07, h:0.1}, title:"The ringmaster", body:"Every circus needs someone to shout, 'Ladies and gentlemen!' This little man in the top hat runs the show. But the real ringmaster was Calder himself. He knelt on the floor, moved every figure, and announced each act in English or French."},
-      {find:"Can you find a creature whose head is made from a cork?", cx:0.535, cy:0.75, box:{x:0.5, y:0.7, w:0.075, h:0.1}, title:"A creature made of corks", body:"Its head is a real cork, the kind that plugs a bottle, with two curly wire horns poked into it. Is it a bull? A goat? Calder could find an animal hiding in almost anything: a cork, a button, a bottle cap, a bit of rubber hose."},
-      {find:"Can you find someone with big, fluffy legs?", cx:0.635, cy:0.67, box:{x:0.595, y:0.59, w:0.08, h:0.17}, title:"Fluffy legs", body:"Those shaggy legs look like woolly chaps, the furry leggings cowboys wore on cold days, and that long wire could be his lasso. Calder didn't try to make his performers look real. He made them look fun, and ready to move."},
-      {find:"Can you find the musician with a giant horn?", cx:0.845, cy:0.71, box:{x:0.79, y:0.6, w:0.12, h:0.22}, title:"The big horn", body:"A huge horn curls around this musician, and a long hose loops all over the floor. That hose is real rubber tubing. Calder's circus had sound, too: he brought whistles, noisemakers, and records, and the audience got to make noise along with him."},
-      {find:"Can you find a tiny street lamp with a sign on it?", cx:0.09, cy:0.7, box:{x:0.05, y:0.6, w:0.09, h:0.23}, title:"ONE WAY", body:"Read the little sign: ONE WAY! Calder made a whole street lamp out of wire and metal, like one you'd pass on a city sidewalk. Even the scenery in this circus is homemade."},
-      {find:"Can you find a tiny American flag?", cx:0.385, cy:0.7, box:{x:0.355, y:0.64, w:0.06, h:0.13}, title:"A little piece of home", body:"Calder was an American who moved to Paris in 1926, and that's where he built this circus. Somebody in the show is proudly waving the Stars and Stripes."}
+      {find:"Can you find the glowing streetlamp?", cx:0.63, cy:0.06, box:{x:0.58, y:0.0, w:0.1, h:0.13}, title:"The streetlamp", body:"The streetlamp glows like a little moon, and the whole street is bathed in its blue light. Motley was famous for his night scenes, painted in deep blues and purples, so the darkness feels warm and alive instead of scary."},
+      {find:"Can you find someone playing a shiny trumpet?", cx:0.37, cy:0.48, box:{x:0.3, y:0.42, w:0.14, h:0.14}, title:"The trumpet", body:"Here's a man blowing hard on his trumpet, cheeks full of air. A brass band is marching right down the middle of the street, and the music pulls everyone along with it."},
+      {find:"Can you find someone with both hands raised high in the air?", cx:0.21, cy:0.4, box:{x:0.14, y:0.31, w:0.15, h:0.2}, title:"Hands up high", body:"This tall man throws his head back and lifts both hands toward the sky. Is he singing? Shouting? Praising? The painting is called Gettin' Religion, and he looks like he's feeling the music all the way down to his shoes."},
+      {find:"Can you find a tambourine?", cx:0.59, cy:0.71, box:{x:0.54, y:0.67, w:0.1, h:0.08}, title:"Shake, shake", body:"Someone is holding a tambourine, ready to shake it in time with the band. Look how many ways people make music here: trumpets, a trombone, a tambourine, and voices."},
+      {find:"Can you find a little dog trotting through the crowd?", cx:0.57, cy:0.95, box:{x:0.51, y:0.9, w:0.12, h:0.1}, title:"The little dog", body:"Down at everyone's feet, a small white dog trots along on a leash. Even the dog came out tonight! Motley packed the street so full that you could look for a long time and still find someone new."},
+      {find:"Can you find a child sitting on the porch steps?", cx:0.54, cy:0.46, box:{x:0.51, y:0.41, w:0.06, h:0.1}, title:"Front-row seat", body:"A child sits on the porch steps, watching everything go by. Up on the porch, a woman leans on the railing to watch too. Porches and steps are the best seats in the house when the street turns into a party."},
+      {find:"Look up at the tall building. Can you find people watching from the windows?", cx:0.86, cy:0.2, box:{x:0.73, y:0.0, w:0.27, h:0.4}, title:"Faces in the windows", body:"High in the windows, neighbors look down at the parade below. Some people join the crowd, and some watch from upstairs. Motley painted everyone, so the whole neighborhood is part of the picture."}
     ],
     done:[
-      "Here's the secret: Calder's Circus was a real show. In Paris, around 1926, a young American named Alexander Calder started making tiny performers out of wire, cloth, cork, string, buttons, and bottle caps. Then he invited friends over to watch.",
-      "Guests sat on crates, munched peanuts, and blew on noisemakers while Calder knelt on the floor and made everything move. A show could last two hours. Famous artists came to watch, and the circus kept growing until it filled five suitcases.",
-      "Calder never stopped wanting art to move. A few years later he invented the mobile, a sculpture that hangs and drifts in the air. It all started here. When you see the circus at the Whitney, find the acrobats on their trapezes, the ringmaster's top hat, and the creature with a cork for a head."
+      "Archibald Motley Jr. painted city life in Chicago, especially the busy streets of Black neighborhoods at night: the music, the dancing, the fancy clothes, and the neighbors talking on their porches.",
+      "He loved to fill a painting with people, each one doing something different, and to bathe the whole scene in deep, glowing blue. He painted Gettin' Religion in 1948.",
+      "Here's a fun connection: the Whitney got this painting in 2016 by trading in some works left to the museum by Josephine Hopper, Edward Hopper's wife. When you see it, find the streetlamp, the trumpet, the little dog, and the faces in the windows."
+    ]
+  },
+  {
+    id:"sevenam", museum:"whitney", title:"Seven A.M.", artist:"Edward Hopper",
+    role:"The Wake-Up",
+    card:"A shop at dawn, a clock on the wall, and nobody there yet.",
+    subtitle:"Early light, an empty shop, and a clock that tells you the time.",
+    alt:"Seven A.M. by Edward Hopper: a white corner shop with a clock and a few bottles in the window, next to a dark green wood, in early morning light",
+    intro:"You've watched the morning light. Now let's look closely at this quiet little shop.",
+    src:"images/seven-am.jpg", tiles:"images/seven-am.jpg",
+    prompts:[
+      "Just look. It's very early. The sun is just coming up, and nobody is here yet.",
+      "Where is the light coming from? Find the brightest spot, and the darkest.",
+      "Look at the trees next to the shop. How do they feel: friendly, or a little mysterious?",
+      "Look in the shop window. What's for sale? Can you tell what kind of shop this is?",
+      "Who do you think will be the first person to walk in today?"
+    ],
+    stops:[
+      {find:"Can you find the clock? What time does it say?", cx:0.525, cy:0.42, box:{x:0.49, y:0.34, w:0.07, h:0.17}, title:"Seven o'clock", body:"The clock on the wall says seven o'clock, just like the painting's name. Look at its shadow, too: the low morning sun throws it sideways across the wall. Hopper uses the clock and the light together to tell you exactly what time it is."},
+      {find:"Can you find the green bottles in the window?", cx:0.56, cy:0.76, box:{x:0.47, y:0.72, w:0.18, h:0.08}, title:"A few odd things", body:"A few green bottles and some little signs stand in the window. That's all. The museum says no one can tell what this shop sells. Hopper wanted it to feel a bit mysterious."},
+      {find:"Look inside. Can you find the cash register?", cx:0.75, cy:0.63, box:{x:0.71, y:0.58, w:0.08, h:0.1}, title:"Nobody at the register", body:"Inside, a cash register sits on the counter, waiting for the first customer. The shelves behind it look almost empty. Is the shop about to open, or has it been closed for a long time?"},
+      {find:"Look upstairs. Can you find a window with its blind pulled down?", cx:0.55, cy:0.05, box:{x:0.5, y:0.0, w:0.1, h:0.11}, title:"Someone upstairs?", body:"An upstairs window has its green blind pulled down, just like the sleepy windows in Early Sunday Morning. In his early sketches Hopper put a person in that window. Then he took them out, so the whole building feels empty."},
+      {find:"Can you find the dark woods right next to the shop?", cx:0.2, cy:0.4, box:{x:0.0, y:0.05, w:0.4, h:0.75}, title:"The woods next door", body:"On one side, a bright white shop. On the other, a dark green wood. Hopper put them right next to each other, so the painting feels split in two: light and dark, neat and wild."}
+    ],
+    done:[
+      "Edward Hopper painted Seven A.M. in 1948. His wife, Josephine, wrote in her diary that he finished it in just sixteen days, which was very fast for him.",
+      "Like Early Sunday Morning, this painting has no people in it. Hopper liked painting places in that quiet moment just before the day begins, when everything seems to be waiting.",
+      "When you see it at the Whitney, find the clock first and check the time. Then see if you can find Early Sunday Morning nearby, and compare: which street feels sleepier?"
     ]
   },
   {
@@ -284,6 +312,152 @@ window.WORKS = [
       "Every slice on this counter is a little bit different, and a little bit the same. Thiebaud said pie felt 'very magical, very special.' You make it out of ordinary things like apples or squash, then wrap it up in a crust like a present.",
       "Wayne Thiebaud grew up in California and worked in restaurants when he was young. He remembered the long rows of pies and cakes in their glass cases, and later painted them from memory, with paint so thick and creamy it looks good enough to eat.",
       "He painted Pie Counter in 1963, and he kept on painting until he was 101 years old. When you see it at the Whitney, step close to look at the thick, swooshy paint. Then step back and choose your slice."
+    ]
+  },
+  {
+    id:"sloan", museum:"whitney", title:"Backyards, Greenwich Village", artist:"John Sloan",
+    role:"The Winter Action",
+    card:"A snowman, two cats, and laundry flapping in the cold.",
+    subtitle:"A snowy backyard in New York, seen from a window.",
+    alt:"Backyards, Greenwich Village by John Sloan: children build a snowman in a snowy backyard under clotheslines, while two cats play and a girl watches from a window",
+    intro:"You've felt the cold, bright afternoon. Now let's find everyone who's out in the snow.",
+    src:"images/backyards-greenwich-village.jpg", tiles:"images/backyards-greenwich-village.jpg",
+    prompts:[
+      "Just look. It snowed in the city! Feel how cold and bright it is.",
+      "Look at all the laundry hanging on the lines. Is it blowing in the wind?",
+      "Someone is having fun out there. Find them, and see what they're making.",
+      "Find the animals. What are they up to?",
+      "If you could go out and play here, what would you do first?"
+    ],
+    stops:[
+      {find:"Can you find two kids building a snowman?", cx:0.12, cy:0.53, box:{x:0.02, y:0.43, w:0.21, h:0.2}, title:"The snowman", body:"Two kids in warm coats and hats are finishing their snowman, one reaching up to give him a stick arm. They're far away and small, but they're the happiest part of the whole backyard."},
+      {find:"Can you find a black cat leaping through the snow?", cx:0.33, cy:0.66, box:{x:0.28, y:0.57, w:0.13, h:0.2}, title:"The leaping cat", body:"A black cat bounds across the snow, leaving a trail of little pawprints behind it. Can you follow its tracks back to where it started? Sloan caught it in mid-jump, like a snapshot."},
+      {find:"Can you find another cat sitting on the fence?", cx:0.51, cy:0.89, box:{x:0.45, y:0.82, w:0.13, h:0.14}, title:"The watching cat", body:"This black-and-white cat isn't jumping anywhere. It's curled up on the fence, keeping its paws out of the snow and watching the other cat play. Two cats, two very different ideas about snow!"},
+      {find:"Can you find a girl watching from a window?", cx:0.97, cy:0.37, box:{x:0.93, y:0.29, w:0.07, h:0.15}, title:"Watching from inside", body:"At the very edge, a girl with a bow in her hair peeks out of a window, smiling. Maybe she wishes she were outside too. Sloan painted this scene by watching his neighbors from his own window."},
+      {find:"Can you find one red shirt hanging on the line?", cx:0.645, cy:0.17, box:{x:0.62, y:0.12, w:0.05, h:0.1}, title:"Laundry day", body:"Among all the white sheets and shirts, one red one hangs on the line. People in the city hung their washing between the buildings to dry, even in winter. Sloan thought everyday things like laundry were worth painting."},
+      {find:"Can you find where the painter signed his name?", cx:0.08, cy:0.95, box:{x:0.02, y:0.92, w:0.12, h:0.07}, title:"John Sloan, '14", body:"Down in the corner it says John Sloan, and under it, 14, for 1914. That's more than a hundred years ago, but kids building snowmen and cats in the snow look almost exactly the same today."}
+    ],
+    done:[
+      "John Sloan lived in Greenwich Village, a neighborhood in New York. He made sketches from the window of his apartment on West 4th Street, then turned them into this painting in 1914.",
+      "Sloan said he found 'beauty in commonplace things and people.' Back then, many art teachers thought painters should paint grand, important subjects, not laundry and alley cats. Sloan painted them anyway.",
+      "Greenwich Village is right next to the Whitney's neighborhood. In fact, the Whitney itself first opened in Greenwich Village. When you see the painting, find the snowman, the leaping cat, and the girl in the window."
+    ]
+  },
+  {
+    id:"pelton", museum:"whitney", title:"Sea Change", artist:"Agnes Pelton",
+    role:"The Color Cloud",
+    card:"A glowing teardrop rising out of a soft green sea.",
+    subtitle:"A calm, glowing dream. Breathe slowly and let it float.",
+    alt:"Sea Change by Agnes Pelton: a glowing white teardrop rises above soft mint-green waves under a deep blue sky",
+    intro:"You've let the colors float. Now let's find a few of the shapes in this dream.",
+    src:"images/sea-change.jpg", tiles:"images/sea-change.jpg",
+    prompts:[
+      "Just look. Nothing here is a real thing you know. Let it float in front of you.",
+      "Breathe in slowly… and out. Does the glowing shape seem to rise when you breathe in?",
+      "Is it day or night? Under the sea, or up in the sky? You decide.",
+      "Find the softest color, and the brightest. Which one do you like best?",
+      "If this painting made a sound, what would it be?"
+    ],
+    stops:[
+      {find:"Can you find the glowing white teardrop?", cx:0.25, cy:0.42, box:{x:0.18, y:0.32, w:0.13, h:0.24}, title:"The glow", body:"A soft white teardrop rises up, glowing like a lamp or a bubble or the moon. Pelton loved painting light that seems to shine from inside things, as if the painting were lit from within."},
+      {find:"Can you find the soft green shape it's rising out of?", cx:0.35, cy:0.65, box:{x:0.14, y:0.5, w:0.46, h:0.3}, title:"A soft green wave", body:"The teardrop grows out of a cloud of mint green that curls like sea foam, or a flower opening, or a wave. Is it water? A cloud? Pelton let it be a little bit of everything."},
+      {find:"Can you find a thin curving line, like a thread?", cx:0.6, cy:0.68, box:{x:0.5, y:0.6, w:0.18, h:0.16}, title:"A thin thread", body:"A fine pale line loops out from the green shape and curves away. It's easy to miss! It makes the shape look like it's moving, like a ribbon trailing behind something drifting through water."},
+      {find:"Look at the top. Can you find the gray edge curling like a wave?", cx:0.7, cy:0.14, box:{x:0.45, y:0.02, w:0.55, h:0.25}, title:"The edge of the sky", body:"Across the top, a soft gray edge curls and drips like the crest of a wave. It makes the blue look like a window, or the inside of a shell, or the view looking up from under the sea."},
+      {find:"Can you find a warm orange stripe near the bottom?", cx:0.5, cy:0.88, box:{x:0.05, y:0.82, w:0.9, h:0.12}, title:"A warm stripe", body:"Down at the bottom, layers of dark blue and green are crossed by a stripe of warm orange, like sunset glowing deep under the water. One warm color makes all the cool colors around it feel even calmer."}
+    ],
+    done:[
+      "Agnes Pelton painted Sea Change in 1931, while she was living near the ocean on Long Island, in a house made from an old windmill. The next year, she moved to the California desert.",
+      "She didn't paint things she saw with her eyes. She painted feelings and visions that came to her when she sat very still and quiet. She hoped her paintings would make people feel calm and full of light.",
+      "The words 'sea change' come from a play by Shakespeare, about something under the sea changing into something 'rich and strange.' When you see it at the Whitney, stand still, breathe slowly, and watch the glowing teardrop rise."
+    ]
+  },
+  {
+    id:"stettheimer", museum:"whitney", title:"New York/Liberty", artist:"Florine Stettheimer",
+    role:"The Party",
+    card:"Lady Liberty, puffing boats & the carved eagle.",
+    subtitle:"New York is throwing a party, and everyone's invited.",
+    alt:"New York/Liberty by Florine Stettheimer: a golden Statue of Liberty, a harbor full of ships and flags, and the city skyline, in a frame topped by a carved eagle",
+    intro:"You've taken in the whole celebration. Now let's go and find the guests at this party.",
+    src:"images/new-york-liberty.jpg", tiles:"images/new-york-liberty.jpg",
+    prompts:[
+      "Just look. This is New York City, and it's having a party. Can you feel it?",
+      "Find the colors of the flag: red, white, and blue. How many places can you spot them?",
+      "Look at the water. What's floating on it? What's flying above it?",
+      "Look up at the tall buildings. Which one would you want to live at the top of?",
+      "If you were at this party, where would you want to stand?"
+    ],
+    stops:[
+      {find:"Can you find Lady Liberty, shining gold?", cx:0.275, cy:0.55, box:{x:0.2, y:0.4, w:0.15, h:0.28}, title:"Lady Liberty", body:"The Statue of Liberty is the guest of honor. Stettheimer made her gold and built her up so she seems to pop right out of the picture. She stands on a tall white base that says LIBERTY, welcoming every ship into the harbor."},
+      {find:"Can you find a little boat puffing across the water?", cx:0.473, cy:0.526, box:{x:0.42, y:0.495, w:0.11, h:0.06}, title:"Puff, puff", body:"A little steamboat chugs across the harbor, its smokestack puffing away. In those days, boats like this carried people back and forth across New York's busy waters all day long."},
+      {find:"Can you find a string of tiny party flags?", cx:0.64, cy:0.58, box:{x:0.52, y:0.54, w:0.24, h:0.08}, title:"Dressed for a party", body:"This gray warship is strung with a line of little colored flags, all the way up to the top of its mast. Sailors call that 'dressing ship,' and they do it to celebrate. Even the battleships came to the party."},
+      {find:"Can you find an airplane in the sky?", cx:0.25, cy:0.29, box:{x:0.2, y:0.25, w:0.1, h:0.08}, title:"A brand-new flying machine", body:"Look up! An old-fashioned airplane with two sets of wings zooms over the city. Airplanes were still new and exciting back then, so of course Stettheimer invited one to the party."},
+      {find:"Something else is floating in the sky, shaped like a giant cigar. Can you find it?", cx:0.74, cy:0.29, box:{x:0.68, y:0.26, w:0.12, h:0.06}, title:"An airship", body:"That long floating shape is an airship, a kind of giant balloon with an engine. Stettheimer filled her sky with every kind of flying thing, to make the celebration feel even bigger."},
+      {find:"Can you find the words NEW YORK 1918?", cx:0.505, cy:0.815, box:{x:0.44, y:0.76, w:0.13, h:0.1}, title:"Signed by the city", body:"Down at the bottom, two figures hold up a shield that says NEW YORK 1918, with a little golden eagle perched on top. It's like the city wrote its own name on the painting."},
+      {find:"Now look outside the painting. Can you find the golden eagle on top of the frame?", cx:0.5, cy:0.12, box:{x:0.35, y:0.06, w:0.3, h:0.12}, title:"The carved eagle", body:"The party doesn't stop at the edge of the canvas. The frame is wrapped in a twisted red, white, and blue rope with tassels, and a carved golden eagle spreads its wings on top. Stettheimer often designed special frames for her paintings, and this one is part of the fun."}
+    ],
+    done:[
+      "Florine Stettheimer painted New York/Liberty in 1918 and 1919, just as a terrible world war was ending. The city was ready to celebrate, and so was she: flags, ships, airplanes, skyscrapers, and Lady Liberty in gold.",
+      "Stettheimer lived in New York with her mother and her sisters, and together they threw famous parties for artists, writers, and dancers. Her paintings often look like parties too: bright, busy, and full of fun little details.",
+      "The Whitney got this painting in 2017, so it's one of the newer arrivals at the museum. When you see it, find Lady Liberty, the puffing steamboat, the party flags, and the carved eagle on top of the frame."
+    ]
+  },
+  {
+    id:"stella", museum:"whitney", title:"The Brooklyn Bridge", artist:"Joseph Stella",
+    role:"The Grand Finale",
+    card:"Giant glowing castle arches & silver harp strings.",
+    subtitle:"A bridge so big and bright it feels like a cathedral.",
+    alt:"The Brooklyn Bridge: Variation on an Old Theme by Joseph Stella: the bridge's pointed arches and curving cables glow against a city at night",
+    intro:"You've stood under the bridge. Now let's find what Stella hid inside it.",
+    src:"images/brooklyn-bridge.jpg", tiles:"images/brooklyn-bridge.jpg",
+    prompts:[
+      "Just look up. You're standing right in the middle of a giant bridge, at night.",
+      "Find the two tall pointed arches. Do they remind you of a castle, or a church?",
+      "Follow the long curving cables with your eyes. What do they look like to you?",
+      "Look for lights: windows, stars, glowing circles. Where is it brightest?",
+      "How does it feel to stand here? Do you feel tiny, or huge?"
+    ],
+    stops:[
+      {find:"Can you find the two giant pointed arches?", cx:0.5, cy:0.2, box:{x:0.12, y:0.09, w:0.76, h:0.28}, title:"Castle arches", body:"The real Brooklyn Bridge has two huge stone towers, each with two tall pointed arches, the same shape as the windows of an old castle or cathedral. Stella made them giant and dark, with the glowing city shining through like stained glass."},
+      {find:"Can you find the long silver cables that look like harp strings?", cx:0.2, cy:0.65, box:{x:0.02, y:0.45, w:0.35, h:0.4}, title:"Silver harp strings", body:"The bridge hangs from thick steel cables, and thinner wires run from them like the strings of a giant harp. Stella painted them shining silver and blue, sweeping down toward you, so you feel like you're standing right underneath."},
+      {find:"Inside one arch, can you find a skyscraper with a glowing golden top?", cx:0.71, cy:0.17, box:{x:0.66, y:0.12, w:0.1, h:0.12}, title:"The city beyond", body:"Through the arches you can see the skyscrapers of Manhattan, lit up at night. Stella stacked them like crystals and blocks of light, crowded together and climbing toward the sky."},
+      {find:"Can you find a red window, glowing like stained glass?", cx:0.2, cy:0.74, box:{x:0.14, y:0.69, w:0.14, h:0.11}, title:"Stained glass", body:"Deep inside the bridge, a red shape glows like a stained-glass window in a church. Stella wanted the bridge to feel like a holy place. He called it a 'shrine' for the new America."},
+      {find:"Look along the bottom of the painting. Can you find a tiny bridge?", cx:0.2, cy:0.86, box:{x:0.03, y:0.82, w:0.36, h:0.07}, title:"A bridge inside the bridge", body:"Along the bottom there's a whole little picture of its own: a bridge seen from far away, stretching across the river toward the glittering lights of the city. Old church altarpieces often had a row of small pictures like this along the bottom."},
+      {find:"Can you count the glowing circles along the very bottom?", cx:0.5, cy:0.955, box:{x:0.0, y:0.92, w:1.0, h:0.07}, title:"A row of lights", body:"Did you count ten? They glow like lamps, or jewels, or the lights along the front of a stage. A grand finale for the whole painting."}
+    ],
+    done:[
+      "Joseph Stella came to New York from Italy when he was nineteen. The city amazed him: the noise, the lights, the steel. And nothing amazed him more than the Brooklyn Bridge.",
+      "He loved to stand on the bridge alone at night, with the trains rumbling and the cables humming above him. He painted it again and again for more than twenty years. This one, from 1939, is called <em>The Brooklyn Bridge: Variation on an Old Theme</em>: an old favorite, played one more time, like a song.",
+      "It's almost six feet tall, taller than most grown-ups, and it feels like an altar in a cathedral. When you see it at the Whitney, stand right in front of it, look up at the arches, and follow the silver strings down. Then, if you can, go and see the real bridge."
+    ]
+  },
+  {
+    id:"calder", museum:"whitney", onView:false, title:"Calder's Circus", artist:"Alexander Calder",
+    role:"The Hook", kind:"sculpture",
+    card:"Real miniature toys & recycled creatures.",
+    subtitle:"A whole circus small enough to pack in a suitcase.",
+    alt:"Calder's Circus by Alexander Calder: tiny wire and cloth performers around a little circus ring",
+    intro:"You've looked over the whole circus. Now let's find the performers. Every one of them was made by hand from bits and scraps.",
+    src:"images/calder-circus.jpg", tiles:"images/calder-circus.jpg",
+    prompts:[
+      "Just look. A whole circus is waiting for you: tents, a ring, and a crowd of tiny performers.",
+      "Everything here is small enough to hold in your hand. Which one would you pick up first?",
+      "Look closely at what they're made of. Can you spot wire, cloth, string, or a cork?",
+      "Who looks like they're about to move? Find someone ready to swing, ride, or jump.",
+      "If this circus could make a sound right now, what would you hear?"
+    ],
+    stops:[
+      {find:"Can you find the acrobats hanging high above the ring?", cx:0.47, cy:0.34, box:{x:0.36, y:0.27, w:0.24, h:0.14}, title:"The flying acrobats", body:"Up on the high wires, tiny acrobats dangle from their trapezes, with a net waiting underneath in case anyone falls. Calder bent their bodies out of wire so they could really swing. When he put on the show, he moved them with his own hands while the audience held its breath."},
+      {find:"Can you find the ringmaster in his tall black top hat?", cx:0.372, cy:0.6, box:{x:0.34, y:0.555, w:0.07, h:0.1}, title:"The ringmaster", body:"Every circus needs someone to shout, 'Ladies and gentlemen!' This little man in the top hat runs the show. But the real ringmaster was Calder himself. He knelt on the floor, moved every figure, and announced each act in English or French."},
+      {find:"Can you find a creature whose head is made from a cork?", cx:0.535, cy:0.75, box:{x:0.5, y:0.7, w:0.075, h:0.1}, title:"A creature made of corks", body:"Its head is a real cork, the kind that plugs a bottle, with two curly wire horns poked into it. Is it a bull? A goat? Calder could find an animal hiding in almost anything: a cork, a button, a bottle cap, a bit of rubber hose."},
+      {find:"Can you find someone with big, fluffy legs?", cx:0.635, cy:0.67, box:{x:0.595, y:0.59, w:0.08, h:0.17}, title:"Fluffy legs", body:"Those shaggy legs look like woolly chaps, the furry leggings cowboys wore on cold days, and that long wire could be his lasso. Calder didn't try to make his performers look real. He made them look fun, and ready to move."},
+      {find:"Can you find the musician with a giant horn?", cx:0.845, cy:0.71, box:{x:0.79, y:0.6, w:0.12, h:0.22}, title:"The big horn", body:"A huge horn curls around this musician, and a long hose loops all over the floor. That hose is real rubber tubing. Calder's circus had sound, too: he brought whistles, noisemakers, and records, and the audience got to make noise along with him."},
+      {find:"Can you find a tiny street lamp with a sign on it?", cx:0.09, cy:0.7, box:{x:0.05, y:0.6, w:0.09, h:0.23}, title:"ONE WAY", body:"Read the little sign: ONE WAY! Calder made a whole street lamp out of wire and metal, like one you'd pass on a city sidewalk. Even the scenery in this circus is homemade."},
+      {find:"Can you find a tiny American flag?", cx:0.385, cy:0.7, box:{x:0.355, y:0.64, w:0.06, h:0.13}, title:"A little piece of home", body:"Calder was an American who moved to Paris in 1926, and that's where he built this circus. Somebody in the show is proudly waving the Stars and Stripes."}
+    ],
+    done:[
+      "Here's the secret: Calder's Circus was a real show. In Paris, around 1926, a young American named Alexander Calder started making tiny performers out of wire, cloth, cork, string, buttons, and bottle caps. Then he invited friends over to watch.",
+      "Guests sat on crates, munched peanuts, and blew on noisemakers while Calder knelt on the floor and made everything move. A show could last two hours. Famous artists came to watch, and the circus kept growing until it filled five suitcases.",
+      "Calder never stopped wanting art to move. A few years later he invented the mobile, a sculpture that hangs and drifts in the air. It all started here. When you see the circus at the Whitney, find the acrobats on their trapezes, the ringmaster's top hat, and the creature with a cork for a head."
     ]
   },
   {
@@ -371,65 +545,6 @@ window.WORKS = [
       "Man Ray was an American artist who moved to Paris and joined a group of artists called the Surrealists. They wanted to paint the way things look in dreams: real objects in impossible places.",
       "Here, an ordinary game table floats in an empty desert under a sky full of rainbow clouds. None of it makes sense, and that's the point. Your brain keeps trying to solve the riddle, so you keep on looking.",
       "Man Ray is most famous as a photographer, but he painted La Fortune in 1938. When you see it at the Whitney, find the red ball, count the colored clouds, and come up with your own answer to the riddle."
-    ]
-  },
-  {
-    id:"stettheimer", museum:"whitney", title:"New York/Liberty", artist:"Florine Stettheimer",
-    role:"The Party",
-    card:"Lady Liberty, puffing boats & the carved eagle.",
-    subtitle:"New York is throwing a party, and everyone's invited.",
-    alt:"New York/Liberty by Florine Stettheimer: a golden Statue of Liberty, a harbor full of ships and flags, and the city skyline, in a frame topped by a carved eagle",
-    intro:"You've taken in the whole celebration. Now let's go and find the guests at this party.",
-    src:"images/new-york-liberty.jpg", tiles:"images/new-york-liberty.jpg",
-    prompts:[
-      "Just look. This is New York City, and it's having a party. Can you feel it?",
-      "Find the colors of the flag: red, white, and blue. How many places can you spot them?",
-      "Look at the water. What's floating on it? What's flying above it?",
-      "Look up at the tall buildings. Which one would you want to live at the top of?",
-      "If you were at this party, where would you want to stand?"
-    ],
-    stops:[
-      {find:"Can you find Lady Liberty, shining gold?", cx:0.275, cy:0.55, box:{x:0.2, y:0.4, w:0.15, h:0.28}, title:"Lady Liberty", body:"The Statue of Liberty is the guest of honor. Stettheimer made her gold and built her up so she seems to pop right out of the picture. She stands on a tall white base that says LIBERTY, welcoming every ship into the harbor."},
-      {find:"Can you find a little boat puffing across the water?", cx:0.473, cy:0.526, box:{x:0.42, y:0.495, w:0.11, h:0.06}, title:"Puff, puff", body:"A little steamboat chugs across the harbor, its smokestack puffing away. In those days, boats like this carried people back and forth across New York's busy waters all day long."},
-      {find:"Can you find a string of tiny party flags?", cx:0.64, cy:0.58, box:{x:0.52, y:0.54, w:0.24, h:0.08}, title:"Dressed for a party", body:"This gray warship is strung with a line of little colored flags, all the way up to the top of its mast. Sailors call that 'dressing ship,' and they do it to celebrate. Even the battleships came to the party."},
-      {find:"Can you find an airplane in the sky?", cx:0.25, cy:0.29, box:{x:0.2, y:0.25, w:0.1, h:0.08}, title:"A brand-new flying machine", body:"Look up! An old-fashioned airplane with two sets of wings zooms over the city. Airplanes were still new and exciting back then, so of course Stettheimer invited one to the party."},
-      {find:"Something else is floating in the sky, shaped like a giant cigar. Can you find it?", cx:0.74, cy:0.29, box:{x:0.68, y:0.26, w:0.12, h:0.06}, title:"An airship", body:"That long floating shape is an airship, a kind of giant balloon with an engine. Stettheimer filled her sky with every kind of flying thing, to make the celebration feel even bigger."},
-      {find:"Can you find the words NEW YORK 1918?", cx:0.505, cy:0.815, box:{x:0.44, y:0.76, w:0.13, h:0.1}, title:"Signed by the city", body:"Down at the bottom, two figures hold up a shield that says NEW YORK 1918, with a little golden eagle perched on top. It's like the city wrote its own name on the painting."},
-      {find:"Now look outside the painting. Can you find the golden eagle on top of the frame?", cx:0.5, cy:0.12, box:{x:0.35, y:0.06, w:0.3, h:0.12}, title:"The carved eagle", body:"The party doesn't stop at the edge of the canvas. The frame is wrapped in a twisted red, white, and blue rope with tassels, and a carved golden eagle spreads its wings on top. Stettheimer often designed special frames for her paintings, and this one is part of the fun."}
-    ],
-    done:[
-      "Florine Stettheimer painted New York/Liberty in 1918 and 1919, just as a terrible world war was ending. The city was ready to celebrate, and so was she: flags, ships, airplanes, skyscrapers, and Lady Liberty in gold.",
-      "Stettheimer lived in New York with her mother and her sisters, and together they threw famous parties for artists, writers, and dancers. Her paintings often look like parties too: bright, busy, and full of fun little details.",
-      "The Whitney got this painting in 2017, so it's one of the newer arrivals at the museum. When you see it, find Lady Liberty, the puffing steamboat, the party flags, and the carved eagle on top of the frame."
-    ]
-  },
-  {
-    id:"stella", museum:"whitney", title:"The Brooklyn Bridge", artist:"Joseph Stella",
-    role:"The Grand Finale",
-    card:"Giant glowing castle arches & silver harp strings.",
-    subtitle:"A bridge so big and bright it feels like a cathedral.",
-    alt:"The Brooklyn Bridge: Variation on an Old Theme by Joseph Stella: the bridge's pointed arches and curving cables glow against a city at night",
-    intro:"You've stood under the bridge. Now let's find what Stella hid inside it.",
-    src:"images/brooklyn-bridge.jpg", tiles:"images/brooklyn-bridge.jpg",
-    prompts:[
-      "Just look up. You're standing right in the middle of a giant bridge, at night.",
-      "Find the two tall pointed arches. Do they remind you of a castle, or a church?",
-      "Follow the long curving cables with your eyes. What do they look like to you?",
-      "Look for lights: windows, stars, glowing circles. Where is it brightest?",
-      "How does it feel to stand here? Do you feel tiny, or huge?"
-    ],
-    stops:[
-      {find:"Can you find the two giant pointed arches?", cx:0.5, cy:0.2, box:{x:0.12, y:0.09, w:0.76, h:0.28}, title:"Castle arches", body:"The real Brooklyn Bridge has two huge stone towers, each with two tall pointed arches, the same shape as the windows of an old castle or cathedral. Stella made them giant and dark, with the glowing city shining through like stained glass."},
-      {find:"Can you find the long silver cables that look like harp strings?", cx:0.2, cy:0.65, box:{x:0.02, y:0.45, w:0.35, h:0.4}, title:"Silver harp strings", body:"The bridge hangs from thick steel cables, and thinner wires run from them like the strings of a giant harp. Stella painted them shining silver and blue, sweeping down toward you, so you feel like you're standing right underneath."},
-      {find:"Inside one arch, can you find a skyscraper with a glowing golden top?", cx:0.71, cy:0.17, box:{x:0.66, y:0.12, w:0.1, h:0.12}, title:"The city beyond", body:"Through the arches you can see the skyscrapers of Manhattan, lit up at night. Stella stacked them like crystals and blocks of light, crowded together and climbing toward the sky."},
-      {find:"Can you find a red window, glowing like stained glass?", cx:0.2, cy:0.74, box:{x:0.14, y:0.69, w:0.14, h:0.11}, title:"Stained glass", body:"Deep inside the bridge, a red shape glows like a stained-glass window in a church. Stella wanted the bridge to feel like a holy place. He called it a 'shrine' for the new America."},
-      {find:"Look along the bottom of the painting. Can you find a tiny bridge?", cx:0.2, cy:0.86, box:{x:0.03, y:0.82, w:0.36, h:0.07}, title:"A bridge inside the bridge", body:"Along the bottom there's a whole little picture of its own: a bridge seen from far away, stretching across the river toward the glittering lights of the city. Old church altarpieces often had a row of small pictures like this along the bottom."},
-      {find:"Can you count the glowing circles along the very bottom?", cx:0.5, cy:0.955, box:{x:0.0, y:0.92, w:1.0, h:0.07}, title:"A row of lights", body:"Did you count ten? They glow like lamps, or jewels, or the lights along the front of a stage. A grand finale for the whole painting."}
-    ],
-    done:[
-      "Joseph Stella came to New York from Italy when he was nineteen. The city amazed him: the noise, the lights, the steel. And nothing amazed him more than the Brooklyn Bridge.",
-      "He loved to stand on the bridge alone at night, with the trains rumbling and the cables humming above him. He painted it again and again for more than twenty years. This one, from 1939, is called <em>The Brooklyn Bridge: Variation on an Old Theme</em>: an old favorite, played one more time, like a song.",
-      "It's almost six feet tall, taller than most grown-ups, and it feels like an altar in a cathedral. When you see it at the Whitney, stand right in front of it, look up at the arches, and follow the silver strings down. Then, if you can, go and see the real bridge."
     ]
   }
 ];
