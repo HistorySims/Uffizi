@@ -409,6 +409,35 @@ window.WORKS = [
     ]
   },
   {
+    id:"johns", museum:"whitney", title:"Three Flags", artist:"Jasper Johns",
+    role:"The Look-Again",
+    card:"A flag you've seen a thousand times, stacked up three times over.",
+    subtitle:"You know this flag. But have you ever really looked at it?",
+    alt:"Three Flags by Jasper Johns: three American flags stacked on top of each other, each one smaller and closer than the last",
+    intro:"You've looked at the whole stack. Now let's look again, really closely, at something you thought you already knew.",
+    src:"images/three-flags.jpg", tiles:"images/three-flags.jpg",
+    music:"audio/america-chimes.mp3",
+    prompts:[
+      "Just look. You've seen this flag so many times. Is anything different about this one?",
+      "How many flags can you see? Count them slowly.",
+      "Which flag looks the closest to you? Which one looks farthest away?",
+      "Look at the paint. Is it smooth like a real flag, or bumpy and brushy?",
+      "Why do you think the artist painted the same flag three times?"
+    ],
+    stops:[
+      {find:"Can you find the smallest flag?", cx:0.5, cy:0.48, box:{x:0.23, y:0.23, w:0.54, h:0.52}, title:"The smallest is the closest", body:"Here's something surprising: the smallest flag is actually sticking out the farthest toward you. Johns stacked three separate canvases, like steps, with the biggest at the back and the smallest in front. Usually far-away things look small. Here it's the opposite!"},
+      {find:"Can you find the middle-sized flag, peeking out around the smallest one?", cx:0.5, cy:0.79, box:{x:0.15, y:0.74, w:0.71, h:0.1}, title:"The middle flag", body:"All around the smallest flag you can see a border of the middle one, like a frame. And around that, the biggest flag. Each flag is about one quarter smaller than the one behind it."},
+      {find:"Count the stars in the top row of the biggest flag.", cx:0.25, cy:0.11, box:{x:0.05, y:0.06, w:0.42, h:0.1}, title:"Not fifty stars!", body:"There are 8 stars in each row, and 6 rows. That's 48 stars, not 50! When Johns painted this in 1958, there were only 48 states. Alaska and Hawaii joined the next year, and the flag got more stars."},
+      {find:"Can you find a thin shadow along the bottom edge of the smallest flag?", cx:0.5, cy:0.74, box:{x:0.22, y:0.71, w:0.56, h:0.06}, title:"A painting you can walk around", body:"That shadow is there because the little flag really sticks out, like a box sitting on top of a bigger box. When you see the real painting, look at it from the side. It's almost a sculpture."},
+      {find:"Find a red stripe and look closely. Can you see the little brushstrokes?", cx:0.9, cy:0.4, box:{x:0.84, y:0.3, w:0.12, h:0.2}, title:"Painted with wax", body:"Johns mixed his colors into warm, melted wax. Each brushstroke cooled and hardened right where he put it, so you can see every little mark. It makes the flag look bumpy and handmade, so your eyes slow down and really look."}
+    ],
+    done:[
+      "Jasper Johns said the flag was something people saw but didn't really look at. They knew it so well that they stopped noticing it. So he painted it in a way that makes you look again.",
+      "He painted with warm wax, so every stroke shows. And he stacked three flags so the smallest one pops out toward you, the opposite of what your eyes expect. He painted this in 1958, when the flag had 48 stars.",
+      "When you see it at the Whitney, count the flags, count the stars, and then walk to the side to see how far the little flag sticks out. Then try it at home: pick something you see every day, and look at it like it's brand new."
+    ]
+  },
+  {
     id:"stella", museum:"whitney", title:"The Brooklyn Bridge", artist:"Joseph Stella",
     role:"The Grand Finale",
     card:"Giant glowing castle arches & silver harp strings.",
