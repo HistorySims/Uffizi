@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
 <script src="works.js"></script>
-<title>Looking at The Birth of Venus</title>
+<title>A Looking Game</title>
 <style>
   :root{
     --sea:#07100f; --stage:#04080a;
@@ -42,17 +42,28 @@
   :focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px;border-radius:6px;}
   .hidden{display:none !important;}
 
-  /* ---------- HOME ---------- */
-  #home{align-items:center;justify-content:center;text-align:center;padding:30px 24px;overflow-y:auto;}
+  /* ---------- HOME (museums) & GALLERY (works) ---------- */
+  #home,#gallery{text-align:center;padding:30px 24px;overflow-y:auto;}
+  /* margin:auto centers vertically but still lets a long list scroll from the top */
+  .screen-inner{margin:auto;width:100%;display:flex;flex-direction:column;align-items:center;}
   .home-copy{font-family:var(--serif);font-size:1.12rem;line-height:1.45;color:var(--foam-dim);max-width:560px;margin:0 auto 26px;}
+  .back-link{align-self:flex-start;margin:-14px 0 6px -6px;text-decoration:none;}
+  .card-role{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:600;margin:0 0 6px;}
+  .grid-heading{grid-column:1/-1;margin:22px 0 0;text-align:left;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);font-weight:600;}
+  .painting-card.off-view{border-style:dashed;}
+  .painting-card.off-view .painting-thumb{filter:grayscale(.85) brightness(.4);}
+  .painting-card.off-view h2,.painting-card.off-view p,.painting-card.off-view .card-artist,.painting-card.off-view .card-role{opacity:.5;}
+  .off-badge{align-self:flex-start;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--rose);
+    border:1px solid rgba(217,140,122,.5);border-radius:999px;padding:3px 9px;margin:0 0 8px;}
+  .card-artist{font-family:var(--serif);font-style:italic;font-size:.95rem;color:var(--foam-dim);margin:-2px 0 8px;}
   .painting-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;width:min(720px,100%);}
-  .painting-card{border:1.5px solid var(--foam-faint);border-radius:14px;padding:14px;background:rgba(255,255,255,.04);text-align:left;
+  .painting-card{border:1.5px solid var(--foam-faint);border-radius:14px;padding:14px;background:rgba(255,255,255,.04);text-align:left;display:flex;flex-direction:column;
     transition:transform .16s ease,border-color .2s ease,background .2s ease;}
   .painting-card:hover{border-color:var(--gold);background:rgba(201,162,75,.09);transform:translateY(-2px);}
   .painting-thumb{width:100%;aspect-ratio:1.45/1;border-radius:9px;object-fit:cover;background:#0c1614;margin-bottom:12px;display:block;}
   .painting-card h2{font-family:var(--serif);font-size:1.35rem;margin:0 0 5px;color:var(--foam);}
   .painting-card p{font-family:var(--serif);font-size:1rem;line-height:1.35;color:var(--foam-dim);margin:0 0 12px;}
-  .painting-card .btn{width:100%;min-height:46px;font-size:.95rem;}
+  .painting-card .btn{width:100%;min-height:46px;font-size:.95rem;margin-top:auto;}
 
   /* ---------- START ---------- */
   #start{align-items:center;justify-content:center;text-align:center;padding:30px 26px;overflow-y:auto;}
@@ -73,6 +84,7 @@
   .pill[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-bright);background:rgba(201,162,75,.12);}
   .status{min-height:1.4em;font-size:.9rem;color:var(--foam-dim);margin:16px 0 2px;font-family:var(--serif);font-style:italic;}
   .start-actions{display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .start-back{position:absolute;left:16px;top:10px;margin:0;}
   .tune-entry{margin-top:24px;}
   .tune-entry .link{font-size:.82rem;color:rgba(242,235,221,.42);}
 
@@ -170,17 +182,27 @@
 <body>
 <div class="app" id="app">
 
-  <!-- HOME -->
-  <section class="screen active" id="home">
+  <!-- HOME: choose a museum -->
+  <section class="screen active" id="home"><div class="screen-inner">
     <div class="eyebrow">A looking game</div>
-    <h1>Choose a painting</h1>
-    <p class="home-copy">Pick one painting, spend a quiet minute with it, then follow clues to discover its secrets.</p>
+    <h1>Choose a museum</h1>
+    <p class="home-copy">Where are we going? Pick a museum, then choose one work of art, spend a quiet minute with it, and follow clues to discover its secrets.</p>
+    <div class="painting-grid" id="museumGrid"></div>
+  </div></section>
+
+  <!-- GALLERY: choose a work in that museum -->
+  <section class="screen" id="gallery"><div class="screen-inner">
+    <button class="link back-link" id="galleryBack">‹ All museums</button>
+    <div class="eyebrow" id="galleryCity"></div>
+    <h1 id="galleryTitle"></h1>
+    <p class="home-copy" id="galleryCopy"></p>
     <div class="painting-grid" id="paintingGrid"></div>
-  </section>
+  </div></section>
 
   <!-- START -->
   <section class="screen" id="start">
-    <div class="eyebrow">A looking game</div>
+    <button class="link back-link start-back" id="startBack">‹ Back</button>
+    <div class="eyebrow" id="startEyebrow">A looking game</div>
     <div class="hero-frame" id="heroFrame">
       <span class="hero-placeholder">getting ready…</span>
       <img id="heroImg" alt="" />
@@ -283,13 +305,15 @@
 (function(){
   "use strict";
   var PAINTINGS = window.WORKS || [];
+  var MUSEUMS = window.MUSEUMS || [];
 
+  var currentMuseum = MUSEUMS[0];
   var currentPainting = PAINTINGS[0];
   var PROMPTS = currentPainting.prompts;
   var STOPS = currentPainting.stops;
 
   var $ = function(id){ return document.getElementById(id); };
-  var screens = { home:$("home"), start:$("start"), looking:$("looking"), find:$("find"), done:$("done"), tune:$("tune") };
+  var screens = { home:$("home"), gallery:$("gallery"), start:$("start"), looking:$("looking"), find:$("find"), done:$("done"), tune:$("tune") };
   var prog = $("prog"), R = 27, C = 2*Math.PI*R;
   prog.style.strokeDasharray = C; prog.style.strokeDashoffset = 0;
 
@@ -303,6 +327,12 @@
   var osd = null, osdLook = null, osdTune = null, osdOverlays = [], tuneOverlays = [];
 
   /* ---------- image ---------- */
+  // Size the hero frame to the work's shape so tall works aren't cropped to a strip.
+  $("heroImg").addEventListener("load", function(){
+    var r = this.naturalWidth / this.naturalHeight; if(!r) return;
+    $("heroFrame").style.aspectRatio = r;
+    $("heroFrame").style.width = "min(74vw,300px," + Math.round(250*r) + "px)";
+  });
   function applySrc(src){
     $("heroImg").src = src; $("heroImg").alt = currentPainting.alt;
     $("heroFrame").classList.add("ready");
@@ -327,6 +357,7 @@
     $("beginBtn").disabled = true;
     $("heroFrame").classList.remove("ready");
     $("status").textContent = "Getting the painting ready…";
+    $("startEyebrow").textContent = roleLabel(painting) || "A looking game";
     $("startTitle").textContent = painting.title;
     $("startSubtitle").textContent = painting.subtitle;
     $("findIntroText").textContent = painting.intro;
@@ -335,20 +366,80 @@
     applySrc(painting.src);
     show("start");
   }
-  function renderHome(){
+  function worksIn(museum){ return PAINTINGS.filter(function(p){ return p.museum === museum.id; }); }
+  // Works on view are numbered in visit order; works off view keep their role but no number.
+  function roleLabel(painting){
+    if(!painting.role) return "";
+    if(painting.onView === false) return painting.role;
+    var onView = worksIn(currentMuseum).filter(function(p){ return p.onView !== false; });
+    return (onView.indexOf(painting)+1) + " · " + painting.role;
+  }
+  function makeCard(o){
+    var card = document.createElement("article");
+    card.className = "painting-card";
+    card.innerHTML = '<img class="painting-thumb" alt="" loading="lazy" />'
+      + '<div class="card-role"></div><h2></h2><div class="card-artist"></div><p></p>'
+      + '<button class="btn btn-primary" type="button"></button>';
+    card.querySelector("img").src = o.img;
+    card.querySelector("img").alt = o.alt;
+    if(o.role){ card.querySelector(".card-role").textContent = o.role; } else { card.querySelector(".card-role").remove(); }
+    card.querySelector("h2").textContent = o.title;
+    card.querySelector(".card-artist").textContent = o.sub;
+    card.querySelector("p").textContent = o.text;
+    card.querySelector("button").textContent = o.button;
+    card.querySelector("button").addEventListener("click", o.onChoose);
+    if(o.offView){
+      card.classList.add("off-view");
+      var badge = document.createElement("div"); badge.className = "off-badge"; badge.textContent = "Not on view right now";
+      card.insertBefore(badge, card.querySelector("img").nextSibling);
+      card.querySelector("button").classList.replace("btn-primary","btn-ghost");
+    }
+    return card;
+  }
+  function renderGallery(){
     var grid = $("paintingGrid");
     grid.innerHTML = "";
-    PAINTINGS.forEach(function(painting){
-      var card = document.createElement("article");
-      card.className = "painting-card";
-      card.innerHTML = '<img class="painting-thumb" alt="" />'
-        + '<h2></h2><p></p><button class="btn btn-primary" type="button">Choose painting</button>';
-      card.querySelector("img").src = painting.src;
-      card.querySelector("img").alt = painting.alt;
-      card.querySelector("h2").textContent = painting.title;
-      card.querySelector("p").textContent = painting.card;
-      card.querySelector("button").addEventListener("click", function(){ selectPainting(painting); });
-      grid.appendChild(card);
+    var works = worksIn(currentMuseum);
+    var ordered = works.filter(function(p){ return p.onView !== false; })
+      .concat(works.filter(function(p){ return p.onView === false; }));
+    ordered.forEach(function(painting, idx){
+      if(painting.onView === false && (idx === 0 || ordered[idx-1].onView !== false)){
+        var h = document.createElement("h3"); h.className = "grid-heading"; h.textContent = "Not on view right now";
+        grid.appendChild(h);
+      }
+      grid.appendChild(makeCard({
+        img:painting.src, alt:painting.alt,
+        role: roleLabel(painting),
+        title:painting.title, sub:painting.artist, text:painting.card,
+        button:"Choose " + (painting.kind || "painting"),
+        offView: painting.onView === false,
+        onChoose:function(){ selectPainting(painting); }
+      }));
+    });
+  }
+  function selectMuseum(museum){
+    currentMuseum = museum;
+    $("galleryCity").textContent = museum.city;
+    $("galleryTitle").textContent = museum.name;
+    $("galleryCopy").textContent = museum.intro;
+    renderGallery();
+    showGallery();
+  }
+  function showGallery(){
+    document.title = currentMuseum.name + " · A Looking Game";
+    show("gallery");
+    screens.gallery.scrollTop = 0;
+  }
+  function renderHome(){
+    var grid = $("museumGrid");
+    grid.innerHTML = "";
+    MUSEUMS.forEach(function(museum){
+      grid.appendChild(makeCard({
+        img:museum.cover, alt:"",
+        title:museum.name, sub:museum.city + " · " + worksIn(museum).length + " works", text:museum.card,
+        button:"Let's go",
+        onChoose:function(){ selectMuseum(museum); }
+      }));
     });
   }
   renderHome();
@@ -668,7 +759,9 @@
 
   /* ---------- wiring ---------- */
   $("beginBtn").addEventListener("click", startLooking);
-  $("quitLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); stopBgAudio(); show("home"); });
+  $("galleryBack").addEventListener("click", function(){ document.title = "A Looking Game"; show("home"); });
+  $("startBack").addEventListener("click", showGallery);
+  $("quitLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); stopBgAudio(); showGallery(); });
   $("skipLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); $("promptText").classList.remove("show"); enterFind(); });
   $("muteLook").addEventListener("click", function(){
     if(!state.bgAudio) return;
@@ -679,9 +772,9 @@
   $("startFindBtn").addEventListener("click", function(){ beginSeeking(0); });
   $("showMeBtn").addEventListener("click", function(){ revealStop(state.findIndex, false); });
   $("nextFindBtn").addEventListener("click", nextFind);
-  $("quitFind").addEventListener("click", function(){ show("home"); });
+  $("quitFind").addEventListener("click", showGallery);
   $("againBtn").addEventListener("click", startLooking);
-  $("doneBtn").addEventListener("click", function(){ show("home"); });
+  $("doneBtn").addEventListener("click", showGallery);
   $("tuneLink").addEventListener("click", enterTune);
   $("quitTune").addEventListener("click", function(){ show("start"); });
 
