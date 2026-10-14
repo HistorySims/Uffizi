@@ -206,6 +206,7 @@ window.WORKS = [
     alt:"Gettin' Religion by Archibald J. Motley Jr.: a crowded street at night in deep blue light, with brass musicians, dancers, and neighbors watching from porches and windows",
     intro:"You've soaked up the whole noisy night. Now let's find the people and the tiny details hiding in the blue.",
     src:"images/gettin-religion.jpg", tiles:"images/gettin-religion.jpg",
+    music:"audio/st-louis-blues.mp3",
     prompts:[
       "Just look. It's nighttime, and the whole street is full of people. Can you almost hear it?",
       "Everything is blue and purple, like the night is glowing. Where is the brightest light?",
@@ -236,6 +237,7 @@ window.WORKS = [
     alt:"Seven A.M. by Edward Hopper: a white corner shop with a clock and a few bottles in the window, next to a dark green wood, in early morning light",
     intro:"You've watched the morning light. Now let's look closely at this quiet little shop.",
     src:"images/seven-am.jpg", tiles:"images/seven-am.jpg",
+    music:"audio/wild-rose.mp3",
     prompts:[
       "Just look. It's very early. The sun is just coming up, and nobody is here yet.",
       "Where is the light coming from? Find the brightest spot, and the darkest.",
@@ -264,6 +266,7 @@ window.WORKS = [
     alt:"Early Sunday Morning by Edward Hopper: a row of red brick shops and apartments on an empty street in morning sun",
     intro:"You've let the quiet street settle around you. Now let's walk along it slowly and notice the small things.",
     src:"images/early-sunday-morning.jpg", tiles:"images/early-sunday-morning.jpg",
+    music:"audio/gymnopedie-1.mp3",
     prompts:[
       "Shh. It's very early on a Sunday morning. The whole street is still asleep.",
       "Count the windows upstairs, slowly. One… two… three… Take your time.",
@@ -293,6 +296,7 @@ window.WORKS = [
     alt:"Pie Counter by Wayne Thiebaud: rows of cake and pie slices on white plates along a counter",
     intro:"You've looked at every slice. Now let's find a few special ones, and look at how the paint itself is made like frosting.",
     src:"images/pie-counter.jpg", tiles:"images/pie-counter.jpg",
+    music:"audio/waltz-of-the-flowers.mp3",
     prompts:[
       "Just look. Rows and rows of cake and pie, all lined up and waiting for you.",
       "Which slice would you choose? Don't say it yet. Just pick it with your eyes.",
@@ -322,6 +326,7 @@ window.WORKS = [
     alt:"Backyards, Greenwich Village by John Sloan: children build a snowman in a snowy backyard under clotheslines, while two cats play and a girl watches from a window",
     intro:"You've felt the cold, bright afternoon. Now let's find everyone who's out in the snow.",
     src:"images/backyards-greenwich-village.jpg", tiles:"images/backyards-greenwich-village.jpg",
+    music:"audio/skaters-waltz.mp3",
     prompts:[
       "Just look. It snowed in the city! Feel how cold and bright it is.",
       "Look at all the laundry hanging on the lines. Is it blowing in the wind?",
@@ -351,6 +356,7 @@ window.WORKS = [
     alt:"Sea Change by Agnes Pelton: a glowing white teardrop rises above soft mint-green waves under a deep blue sky",
     intro:"You've let the colors float. Now let's find a few of the shapes in this dream.",
     src:"images/sea-change.jpg", tiles:"images/sea-change.jpg",
+    music:"audio/arabesque-harp.mp3",
     prompts:[
       "Just look. Nothing here is a real thing you know. Let it float in front of you.",
       "Breathe in slowly… and out. Does the glowing shape seem to rise when you breathe in?",
@@ -379,6 +385,7 @@ window.WORKS = [
     alt:"New York/Liberty by Florine Stettheimer: a golden Statue of Liberty, a harbor full of ships and flags, and the city skyline, in a frame topped by a carved eagle",
     intro:"You've taken in the whole celebration. Now let's go and find the guests at this party.",
     src:"images/new-york-liberty.jpg", tiles:"images/new-york-liberty.jpg",
+    music:"audio/entertainer.mp3",
     prompts:[
       "Just look. This is New York City, and it's having a party. Can you feel it?",
       "Find the colors of the flag: red, white, and blue. How many places can you spot them?",
@@ -409,6 +416,7 @@ window.WORKS = [
     alt:"The Brooklyn Bridge: Variation on an Old Theme by Joseph Stella: the bridge's pointed arches and curving cables glow against a city at night",
     intro:"You've stood under the bridge. Now let's find what Stella hid inside it.",
     src:"images/brooklyn-bridge.jpg", tiles:"images/brooklyn-bridge.jpg",
+    music:"audio/rhapsody-in-blue.mp3",
     prompts:[
       "Just look up. You're standing right in the middle of a giant bridge, at night.",
       "Find the two tall pointed arches. Do they remind you of a castle, or a church?",
@@ -438,6 +446,7 @@ window.WORKS = [
     alt:"Calder's Circus by Alexander Calder: tiny wire and cloth performers around a little circus ring",
     intro:"You've looked over the whole circus. Now let's find the performers. Every one of them was made by hand from bits and scraps.",
     src:"images/calder-circus.jpg", tiles:"images/calder-circus.jpg",
+    music:"audio/wooden-soldiers.mp3",
     prompts:[
       "Just look. A whole circus is waiting for you: tents, a ring, and a crowd of tiny performers.",
       "Everything here is small enough to hold in your hand. Which one would you pick up first?",
@@ -468,6 +477,7 @@ window.WORKS = [
     alt:"The Buffalo Hunt by Horace Pippin: dark buffalo charge through deep snow beside a bare tree in a blizzard",
     intro:"You've felt the storm. Now let's look closer at what's happening out there in the snow.",
     src:"images/buffalo-hunt.jpg", tiles:"images/buffalo-hunt.jpg",
+    music:"audio/new-world-largo.mp3",
     prompts:[
       "Just look. Everything is black, white, and gray. Brrr. Feel how cold it is.",
       "See all the little slanting lines? That's snow blowing sideways in the wind.",
@@ -497,6 +507,7 @@ window.WORKS = [
     alt:"Music, Pink and Blue No. 2 by Georgia O'Keeffe: soft pink, purple and orange curves fold around a deep blue shape",
     intro:"You've let the colors move around you. Now let's find some of the different 'notes' in this painting.",
     src:"images/music-pink-blue.jpg", tiles:"images/music-pink-blue.jpg",
+    music:"audio/humoresque.mp3",
     prompts:[
       "Just look. You don't have to find anything. Let the colors float in front of you.",
       "Breathe in slowly… and out. Do the curves seem to breathe with you?",
@@ -526,6 +537,7 @@ window.WORKS = [
     alt:"La Fortune by Man Ray: a long green billiard table stretches across a desert under brightly colored clouds",
     intro:"You've looked at this strange dream. Now let's hunt for the clues.",
     src:"images/la-fortune.jpg", tiles:"images/la-fortune.jpg",
+    music:"audio/solace.mp3",
     prompts:[
       "Just look. Something in this painting is very, very strange. What is it?",
       "Where would you usually see a table like this? Where is it now?",
