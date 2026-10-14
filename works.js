@@ -16,7 +16,8 @@ window.MUSEUMS = [
 
 // Each work is one self-contained object. Add a new painting by appending a block here.
 // stops: cx/cy = point (0-1). box{x,y,w,h} = reveal+tap rectangle (0-1). Tune via the grown-ups tool.
-// Optional: role = its part in the visit (shown on the card), kind = "sculpture" etc. (default "painting").
+// Optional: role = its part in the visit (shown on the card), kind = "sculpture" etc. (default "painting"),
+// onView:false = not on display right now (card is darkened; still playable).
 window.WORKS = [
   {
     id:"venus", museum:"uffizi", title:"The Birth of Venus", artist:"Sandro Botticelli",
@@ -198,7 +199,7 @@ window.WORKS = [
 
   /* ---------- The Whitney, New York: in visit order ---------- */
   {
-    id:"calder", museum:"whitney", title:"Calder's Circus", artist:"Alexander Calder",
+    id:"calder", museum:"whitney", onView:false, title:"Calder's Circus", artist:"Alexander Calder",
     role:"The Hook", kind:"sculpture",
     card:"Real miniature toys & recycled creatures.",
     subtitle:"A whole circus small enough to pack in a suitcase.",
@@ -286,7 +287,7 @@ window.WORKS = [
     ]
   },
   {
-    id:"pippin", museum:"whitney", title:"The Buffalo Hunt", artist:"Horace Pippin",
+    id:"pippin", museum:"whitney", onView:false, title:"The Buffalo Hunt", artist:"Horace Pippin",
     role:"The Winter Action",
     card:"Charging herds & snow pillows on branches.",
     subtitle:"A snowstorm, a dark forest, and something big on the run.",
@@ -315,7 +316,7 @@ window.WORKS = [
     ]
   },
   {
-    id:"okeeffe", museum:"whitney", title:"Music, Pink and Blue No. 2", artist:"Georgia O'Keeffe",
+    id:"okeeffe", museum:"whitney", onView:false, title:"Music, Pink and Blue No. 2", artist:"Georgia O'Keeffe",
     role:"The Color Cloud",
     card:"Soft breathing curves & visual music.",
     subtitle:"No people, no places. Just color, curving like music.",
@@ -344,7 +345,7 @@ window.WORKS = [
     ]
   },
   {
-    id:"manray", museum:"whitney", title:"La Fortune", artist:"Man Ray",
+    id:"manray", museum:"whitney", onView:false, title:"La Fortune", artist:"Man Ray",
     role:"The Dream Riddle",
     card:"A giant green billiard table in the desert.",
     subtitle:"Something is very strange here. Can you figure out what?",
