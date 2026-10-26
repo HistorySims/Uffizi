@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
-<script src="works.js"></script>
+<script src="works.js?v=2026-10-26"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -152,6 +152,13 @@
   .caption h2{font-family:var(--serif);font-weight:600;font-size:1.5rem;margin:0 0 8px;color:var(--gold-bright);}
   .caption p{font-family:var(--serif);font-size:1.18rem;line-height:1.45;margin:0 auto 16px;max-width:520px;color:var(--foam);}
   .caption .btn{min-width:150px;}
+
+  /* exact tap area (hint and found highlight) for clues with areas */
+  .osd-area{opacity:0;pointer-events:none;transition:opacity .45s ease;}
+  .osd-area.show{opacity:1;}
+  .osd-area svg{width:100%;height:100%;display:block;overflow:visible;}
+  .osd-area path{fill:rgba(217,140,122,.2);fill-rule:evenodd;stroke:var(--rose);stroke-width:3;stroke-dasharray:9 7;vector-effect:non-scaling-stroke;}
+  .osd-area.found path{fill:rgba(201,162,75,.14);stroke:var(--gold-bright);stroke-dasharray:none;filter:drop-shadow(0 0 6px rgba(201,162,75,.6));}
 
   /* paint-along stop */
   .paint-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;touch-action:none;cursor:crosshair;transition:opacity .25s ease;}
@@ -656,6 +663,24 @@
     osdOverlays.push(el);
     return el;
   }
+  // Outline the exact tap area (areas minus anything covering them) instead of a circle.
+  function addAreaOverlay(s, cls){
+    var sz = osdImgSize(); if(!sz) return null;
+    var all = s.areas.concat(s.exclude || []);
+    var x0 = Math.min.apply(null, s.areas.map(function(r){ return r.x; })), y0 = Math.min.apply(null, s.areas.map(function(r){ return r.y; }));
+    var x1 = Math.max.apply(null, s.areas.map(function(r){ return r.x + r.w; })), y1 = Math.max.apply(null, s.areas.map(function(r){ return r.y + r.h; }));
+    var bw = x1 - x0, bh = y1 - y0;
+    var d = all.map(function(r){
+      var x = (r.x - x0) / bw * 1000, y = (r.y - y0) / bh * 1000, w = r.w / bw * 1000, h = r.h / bh * 1000;
+      return "M"+x+" "+y+"h"+w+"v"+h+"h"+(-w)+"z";
+    }).join("");
+    var el = document.createElement("div"); el.className = cls;
+    el.innerHTML = '<svg viewBox="0 0 1000 1000" preserveAspectRatio="none"><path d="'+d+'"/></svg>';
+    var rect = new OpenSeadragon.Rect(x0*sz.x, y0*sz.y, bw*sz.x, bh*sz.y);
+    osd.addOverlay({ element: el, location: osd.viewport.imageToViewportRectangle(rect) });
+    osdOverlays.push(el);
+    return el;
+  }
   function fitToStop(s){
     var sz = osdImgSize(); if(!sz) return;
     var rect;
@@ -836,9 +861,9 @@
     if(inside){ revealStop(state.findIndex, true); return; }
     state.misses++;
     if(state.misses>=2){
-      setFeedback("Here's a hint — look " + hintWord(s) + ".", "try");
+      setFeedback("Here's a hint — look " + (s.hint || hintWord(s)) + ".", "try");
       clearOverlays();
-      var h = addCircleOverlay(s, "osd-hint", ringDia(s)*1.3);
+      var h = s.areas ? addAreaOverlay(s, "osd-area") : addCircleOverlay(s, "osd-hint", ringDia(s)*1.3);
       if(h){ requestAnimationFrame(function(){ h.classList.add("show"); }); }
       $("showMeBtn").classList.remove("hidden");
     } else {
@@ -852,7 +877,7 @@
     $("showMeBtn").classList.add("hidden");
     setFeedback(celebrate ? (currentPainting.freeTap ? "Let's look closer." : "You found it!") : "", celebrate ? "good" : "");
     fitToStop(s);
-    var ring = addCircleOverlay(s, "osd-ring", ringDia(s));
+    var ring = s.areas ? addAreaOverlay(s, "osd-area found") : addCircleOverlay(s, "osd-ring", ringDia(s));
     if(ring){ requestAnimationFrame(function(){ ring.classList.add("show"); }); }
     $("findQ").textContent="";
     $("capTitle").textContent=s.title; $("capBody").textContent=s.body;

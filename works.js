@@ -16,6 +16,8 @@ window.MUSEUMS = [
 
 // Each work is one self-contained object. Add a new painting by appending a block here.
 // stops: cx/cy = point (0-1). box{x,y,w,h} = reveal+tap rectangle (0-1). Tune via the grown-ups tool.
+// Optional per stop: areas/exclude = exact tap region (tap anywhere inside areas, outside exclude), hint = custom hint wording,
+//   paint:true = paint-along activity instead of a tap-to-find.
 // Optional: role = its part in the visit (shown on the card), kind = "sculpture" etc. (default "painting"),
 // onView:false = not on display right now (card is darkened; still playable).
 window.WORKS = [
@@ -426,9 +428,9 @@ window.WORKS = [
       "Why do you think the artist painted the same flag three times?"
     ],
     stops:[
-      {find:"Can you find the smallest flag?", cx:0.503, cy:0.49, box:{x:0.238, y:0.236, w:0.53, h:0.511}, title:"The smallest is the closest", body:"Here's something surprising: the smallest flag actually sticks out the farthest toward you. Johns stacked three separate canvases, like steps, with the biggest at the back and the smallest in front. Usually far-away things look small. Here it's the opposite!"},
-      {find:"Can you find the middle-sized flag, peeking out around the smallest one?", cx:0.5, cy:0.79, box:{x:0.153, y:0.161, w:0.701, h:0.674}, areas:[{x:0.153, y:0.161, w:0.701, h:0.674}], exclude:[{x:0.238, y:0.236, w:0.53, h:0.511}], title:"The middle flag", body:"All around the smallest flag you can see a border of the middle one, like a picture frame. Each flag is about one quarter smaller than the one behind it."},
-      {find:"Now find the biggest flag, all the way at the back.", cx:0.5, cy:0.9, box:{x:0.044, y:0.059, w:0.917, h:0.881}, areas:[{x:0.044, y:0.059, w:0.917, h:0.881}], exclude:[{x:0.153, y:0.161, w:0.701, h:0.674}], title:"Not fifty stars!", body:"Look at the biggest flag's stars. The top row has 8, and there are 6 rows. That's 48 stars, not 50! When Johns painted this in 1958, there were only 48 states. Alaska and Hawaii joined the next year, and the flag got more stars."},
+      {find:"Can you find the smallest flag?", cx:0.503, cy:0.49, box:{x:0.238, y:0.236, w:0.53, h:0.511}, areas:[{x:0.238, y:0.236, w:0.53, h:0.511}], title:"The smallest is the closest", body:"Here's something surprising: the smallest flag actually sticks out the farthest toward you. Johns stacked three separate canvases, like steps, with the biggest at the back and the smallest in front. Usually far-away things look small. Here it's the opposite!"},
+      {find:"Can you find the middle-sized flag, peeking out around the smallest one?", cx:0.5, cy:0.79, box:{x:0.153, y:0.161, w:0.701, h:0.674}, areas:[{x:0.153, y:0.161, w:0.701, h:0.674}], exclude:[{x:0.238, y:0.236, w:0.53, h:0.511}], hint:"all around the edges of the smallest flag", title:"The middle flag", body:"All around the smallest flag you can see a border of the middle one, like a picture frame. Each flag is about one quarter smaller than the one behind it."},
+      {find:"Now find the biggest flag, all the way at the back.", cx:0.5, cy:0.9, box:{x:0.044, y:0.059, w:0.917, h:0.881}, areas:[{x:0.044, y:0.059, w:0.917, h:0.881}], exclude:[{x:0.153, y:0.161, w:0.701, h:0.674}], hint:"all around the outside edges", title:"Not fifty stars!", body:"Look at the biggest flag's stars. The top row has 8, and there are 6 rows. That's 48 stars, not 50! When Johns painted this in 1958, there were only 48 states. Alaska and Hawaii joined the next year, and the flag got more stars."},
       {paint:true, find:"Now you be the painter! Pick a brush and a color, and paint some strokes right on the flag.", cx:0.87, cy:0.38, box:{x:0.78, y:0.24, w:0.18, h:0.28}, title:"Painting with wax", body:"Johns mixed his colors into warm, melted wax. Each stroke cooled and hardened in a few seconds, right where he put it. That's why his flag is covered in short, broad dabs, and why it looks bumpy and handmade up close."}
     ],
     done:[
