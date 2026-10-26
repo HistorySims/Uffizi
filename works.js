@@ -16,8 +16,14 @@ window.MUSEUMS = [
 
 // Each work is one self-contained object. Add a new painting by appending a block here.
 // stops: cx/cy = point (0-1). box{x,y,w,h} = reveal+tap rectangle (0-1). Tune via the grown-ups tool.
-// Optional per stop: areas/exclude = exact tap region (tap anywhere inside areas, outside exclude), hint = custom hint wording,
-//   paint:true = paint-along activity instead of a tap-to-find.
+// Optional per stop: areas/exclude = exact tap region (tap anywhere inside areas, outside exclude), hint = custom hint wording.
+// Activity stops (instead of tap-to-find), zoomed to box:
+//   paint:{look, check, brushes, brush, colors, say, mirror?, wobble?} = paint along. look = how strokes look
+//     (wax, oil, frosting, gold, wire, soft, glow, streak); check = how the painting is judged
+//     (any, shortBroad, broadSwoosh, thinLong, colorUsed, oneLine, sameSlant, smoothLong); say = words for each result.
+//   light:{hopper, horizon, objects, patches} = drag the sun; objects cast shadows that match the painted ones at the
+//     artist's sun (hopper, in degrees); patches cover the painted shadows with nearby clean background
+//     (copied from sx,sy; a narrower source width sw is repeated across).
 // Optional: role = its part in the visit (shown on the card), kind = "sculpture" etc. (default "painting"),
 // onView:false = not on display right now (card is darkened; still playable).
 window.WORKS = [
@@ -42,7 +48,15 @@ window.WORKS = [
       {find:"Can you find the two flying friends blowing the wind?", cx:0.356, cy:0.2, hit:0.19, z:2.1, r:0.3, title:"The breath that carries her", body:"These two are the wind. The West Wind holds his flower-wife close, and together they breathe out a soft spring breeze — puff out your cheeks like them! Their gentle breath carries Venus safely to land."},
       {find:"Can you find the pink roses falling through the air?", cx:0.423, cy:0.347, hit:0.16, z:2.3, r:0.22, title:"The very first roses", body:"Watch the flowers fall. The old story says these were the first roses that ever bloomed in the whole world — they opened the moment Venus was born, and the wind sends them tumbling after her."},
       {find:"Can you find her long, flowing hair?", cx:0.622, cy:0.32, hit:0.16, z:2.2, r:0.24, title:"Rivers of gold", body:"See how her hair flows on and on, like rivers of gold in the wind? The painter brushed it with real gold so it would shine — as if Venus glows with a light from somewhere deep inside."},
-      {find:"Can you find the lady holding a cloak full of flowers?", cx:0.784, cy:0.403, hit:0.19, z:2, r:0.3, title:"Spring comes to greet her", body:"This is Spring herself, hurrying to meet Venus. Her dress is sprinkled with tiny flowers, and she holds out a soft cloak — covered in blossoms — to wrap around the new goddess and keep her warm."}
+      {find:"Can you find the lady holding a cloak full of flowers?", cx:0.784, cy:0.403, hit:0.19, z:2, r:0.3, title:"Spring comes to greet her", body:"This is Spring herself, hurrying to meet Venus. Her dress is sprinkled with tiny flowers, and she holds out a soft cloak — covered in blossoms — to wrap around the new goddess and keep her warm."},
+      {find:"Botticelli brushed real gold into Venus's hair. Pick a brush and paint some golden strands!", cx:0.565, cy:0.25, box:{x:0.49, y:0.08, w:0.15, h:0.34},
+        paint:{ look:"gold", check:"thinLong", brushes:[0.008, 0.018, 0.04], brush:0,
+          colors:[{name:"Gold", hex:"#d4a63a"}, {name:"Pale gold", hex:"#ead18a"}, {name:"Copper", hex:"#b5652e"}],
+          say:{ good:"Beautiful! Long, thin, flowing strands, just like Botticelli's golden hair.",
+                notThin:"Try the thinnest brush. Botticelli painted each golden strand as a fine line.",
+                notLong:"Try long, flowing lines, like hair blowing in the wind.",
+                more:"Lovely! Add a few more long, flowing strands." } },
+        title:"Real gold", body:"Botticelli painted Venus's hair with thin lines of real gold, so it would shimmer and catch the light. Each strand flows and curls, as if the sea breeze is blowing it."}
     ],
     done:[
       "Here's a secret. This painting isn't really about a lady in the sea. Long ago, people believed Venus <em>was</em> beauty itself — and this is the moment beauty first arrives in the whole world, carried on the wind, with the very first flowers blooming to welcome her.",
@@ -283,7 +297,14 @@ window.WORKS = [
       {find:"Can you find the fire hydrant on the sidewalk?", cx:0.262, cy:0.87, box:{x:0.22, y:0.8, w:0.08, h:0.14}, title:"A long morning shadow", body:"Look at the hydrant's shadow stretching across the sidewalk. Shadows get long when the sun is low, just after it comes up. That's how Hopper tells you what time it is without painting a single clock."},
       {find:"Near the top left, can you find a big slanting shadow on the bricks?", cx:0.17, cy:0.42, box:{x:0.07, y:0.36, w:0.19, h:0.12}, title:"A shadow from somewhere else", body:"Something we can't see, maybe a taller building across the street, is blocking the sun and laying this big shadow across the bricks. Hopper loved how light and shadow could make an ordinary street look like a stage just before the show begins."},
       {find:"Can you find some letters on a shop window? Try to read them.", cx:0.47, cy:0.695, box:{x:0.42, y:0.64, w:0.1, h:0.11}, title:"Signs you can't read", body:"Try to read the sign... you can't! Hopper painted the letters as smudges on purpose. If you could read them, you'd start thinking about what the shop sells. Instead, you just feel the quiet."},
-      {find:"Can you find the tall dark building peeking in at the top right corner?", cx:0.95, cy:0.08, box:{x:0.89, y:0.0, w:0.11, h:0.17}, title:"A big city waiting", body:"A tall dark building pokes up behind the shops. It reminds you that this little street is part of a huge city. In a few hours it will be busy and loud. But not yet."}
+      {find:"Can you find the tall dark building peeking in at the top right corner?", cx:0.95, cy:0.08, box:{x:0.89, y:0.0, w:0.11, h:0.17}, title:"A big city waiting", body:"A tall dark building pokes up behind the shops. It reminds you that this little street is part of a huge city. In a few hours it will be busy and loud. But not yet."},
+      {find:"Now you be the sun! Drag it across the sky and watch the shadows move.", cx:0.45, cy:0.5, box:{x:0.2, y:0.0, w:0.5, h:1.0},
+        light:{ hopper:18, horizon:0.93,
+          objects:[ {name:"fire hydrant", x:0.262, y:0.923, t:0.012, w:0.04, len:0.194},
+                    {name:"barber pole", x:0.641, y:0.8875, t:0.009, w:0.027, len:0.225} ],
+          patches:[ {x:0.055, y:0.912, w:0.192, h:0.022, sx:0.29, sy:0.912},
+                    {x:0.355, y:0.881, w:0.273, h:0.015, sx:0.285, sy:0.881, sw:0.07} ] },
+        title:"Hopper's sun", body:"When the sun is low, shadows stretch out long. When it's high at noon, they shrink to almost nothing. Hopper chose a low morning sun so the long, quiet shadows would make the street feel sleepy. Here's a secret: on the real Seventh Avenue, the sun could never make shadows like these. Hopper made up the light to get the feeling he wanted."}
     ],
     done:[
       "Did you notice? There isn't a single person in this whole painting. No cars, no dogs, no birds. Just sunlight, shadows, and windows. Hopper made it that quiet on purpose, so you would slow down and feel it.",
@@ -313,7 +334,15 @@ window.WORKS = [
       {find:"Can you find a pie with a fluffy white cloud on top?", cx:0.77, cy:0.92, box:{x:0.69, y:0.84, w:0.15, h:0.15}, title:"Meringue mountains", body:"That fluffy top might be meringue, whipped egg whites baked until they're light as a cloud, with a bright yellow filling underneath. Thiebaud swooped the white paint around just the way a baker swoops meringue with a spoon."},
       {find:"Can you find a plain brown pie with no topping at all?", cx:0.84, cy:0.62, box:{x:0.77, y:0.56, w:0.15, h:0.12}, title:"Just pie", body:"Pumpkin, maybe, or pecan. No frosting, no cream, just a smooth brown filling and a golden crust. See how the crust is painted with little ridges of thick paint, like a real crimped edge?"},
       {find:"Can you find a plate with a bright blue shadow underneath it?", cx:0.63, cy:0.65, box:{x:0.52, y:0.58, w:0.22, h:0.13}, title:"Rainbow edges", body:"Thiebaud's shadows aren't gray, they're bright blue! And if you look really closely, the edges of the plates and slices have thin lines of orange, green, and pink. It makes everything glow, like a bakery case under bright lights."},
-      {find:"Can you find where the artist signed his name?", cx:0.9, cy:0.02, box:{x:0.82, y:0.0, w:0.17, h:0.05}, title:"Signed and dated", body:"Up in the top corner Thiebaud signed his name and the year, 1963. All that empty space above the counter is part of the plan, too. It makes the rows of desserts below feel even fuller, like a diner counter just before the doors open."}
+      {find:"Can you find where the artist signed his name?", cx:0.9, cy:0.02, box:{x:0.82, y:0.0, w:0.17, h:0.05}, title:"Signed and dated", body:"Up in the top corner Thiebaud signed his name and the year, 1963. All that empty space above the counter is part of the plan, too. It makes the rows of desserts below feel even fuller, like a diner counter just before the doors open."},
+      {find:"Now you be the baker! Pick a brush and a frosting color, and frost this slice of cake.", cx:0.165, cy:0.895, box:{x:0.07, y:0.79, w:0.19, h:0.21},
+        paint:{ look:"frosting", check:"broadSwoosh", brushes:[0.02, 0.045, 0.08], brush:1,
+          colors:[{name:"Vanilla", hex:"#f3ead6"}, {name:"Pink", hex:"#f1b3bd"}, {name:"Chocolate", hex:"#5b3421"}, {name:"Lemon", hex:"#f3d667"}],
+          say:{ good:"Mmm, that looks like real frosting! Big, thick swooshes, just like Thiebaud's.",
+                notBroad:"Load up the biggest brush! Thiebaud's paint is thick, like frosting.",
+                notLong:"Try a big swoosh, like spreading frosting with a knife.",
+                more:"Keep frosting! Try a few big, thick swooshes." } },
+        title:"Paint like frosting", body:"Thiebaud loaded his brush with thick, creamy paint and swooped it on, just like a baker spreading frosting. Up close, the paint on his cakes really is thick and swirly, so it looks good enough to eat."}
     ],
     done:[
       "Every slice on this counter is a little bit different, and a little bit the same. Thiebaud said pie felt 'very magical, very special.' You make it out of ordinary things like apples or squash, then wrap it up in a crust like a present.",
@@ -343,7 +372,14 @@ window.WORKS = [
       {find:"Can you find another cat sitting on the fence?", cx:0.51, cy:0.89, box:{x:0.45, y:0.82, w:0.13, h:0.14}, title:"The watching cat", body:"This black-and-white cat isn't jumping anywhere. It's curled up on the fence, keeping its paws out of the snow and watching the other cat play. Two cats, two very different ideas about snow!"},
       {find:"Can you find a girl watching from a window?", cx:0.97, cy:0.37, box:{x:0.93, y:0.29, w:0.07, h:0.15}, title:"Watching from inside", body:"At the very edge, a girl with a bow in her hair peeks out of a window, smiling. Maybe she wishes she were outside too. Sloan painted this scene by watching his neighbors from his own window."},
       {find:"Can you find one red shirt hanging on the line?", cx:0.645, cy:0.17, box:{x:0.62, y:0.12, w:0.05, h:0.1}, title:"Laundry day", body:"Among all the white sheets and shirts, one red one hangs on the line. People in the city hung their washing between the buildings to dry, even in winter. Sloan thought everyday things like laundry were worth painting."},
-      {find:"Can you find where the painter signed his name?", cx:0.08, cy:0.95, box:{x:0.02, y:0.92, w:0.12, h:0.07}, title:"John Sloan, '14", body:"Down in the corner it says John Sloan, and under it, 14, for 1914. That's more than a hundred years ago, but kids building snowmen and cats in the snow look almost exactly the same today."}
+      {find:"Can you find where the painter signed his name?", cx:0.08, cy:0.95, box:{x:0.02, y:0.92, w:0.12, h:0.07}, title:"John Sloan, '14", body:"Down in the corner it says John Sloan, and under it, 14, for 1914. That's more than a hundred years ago, but kids building snowmen and cats in the snow look almost exactly the same today."},
+      {find:"Snow has shadows too. Pick a color and paint a shadow on the snow. What color should it be?", cx:0.51, cy:0.63, box:{x:0.3, y:0.48, w:0.42, h:0.3},
+        paint:{ look:"oil", check:"colorUsed", want:["Blue", "Purple"], avoid:["Gray"], brushes:[0.015, 0.035, 0.065], brush:1,
+          colors:[{name:"White", hex:"#f7f4ec"}, {name:"Gray", hex:"#8c8c8c"}, {name:"Blue", hex:"#7f97cf"}, {name:"Purple", hex:"#a397cf"}],
+          say:{ good:"Yes! Sloan's snow shadows are blue and purple, just like yours.",
+                avoid:"Look closely at Sloan's snow. His shadows aren't gray. They're blue and purple! Try painting one in blue.",
+                other:"Now try painting a shadow on the snow. What color are Sloan's shadows?" } },
+        title:"Blue snow shadows", body:"Look closely at Sloan's snow: the shadows aren't gray at all. They're blue and purple! On a sunny day, snow reflects the blue sky, so its shadows really do look blue. Sloan noticed, and painted what he saw."}
     ],
     done:[
       "John Sloan lived in Greenwich Village, a neighborhood in New York. He made sketches from the window of his apartment on West 4th Street, then turned them into this painting in 1914.",
@@ -431,7 +467,14 @@ window.WORKS = [
       {find:"Can you find the smallest flag?", cx:0.503, cy:0.49, box:{x:0.238, y:0.236, w:0.53, h:0.511}, areas:[{x:0.238, y:0.236, w:0.53, h:0.511}], title:"The smallest is the closest", body:"Here's something surprising: the smallest flag actually sticks out the farthest toward you. Johns stacked three separate canvases, like steps, with the biggest at the back and the smallest in front. Usually far-away things look small. Here it's the opposite!"},
       {find:"Can you find the middle-sized flag, peeking out around the smallest one?", cx:0.5, cy:0.79, box:{x:0.153, y:0.161, w:0.701, h:0.674}, areas:[{x:0.153, y:0.161, w:0.701, h:0.674}], exclude:[{x:0.238, y:0.236, w:0.53, h:0.511}], hint:"all around the edges of the smallest flag", title:"The middle flag", body:"All around the smallest flag you can see a border of the middle one, like a picture frame. Each flag is about one quarter smaller than the one behind it."},
       {find:"Now find the biggest flag, all the way at the back.", cx:0.5, cy:0.9, box:{x:0.044, y:0.059, w:0.917, h:0.881}, areas:[{x:0.044, y:0.059, w:0.917, h:0.881}], exclude:[{x:0.153, y:0.161, w:0.701, h:0.674}], hint:"all around the outside edges", title:"Not fifty stars!", body:"Look at the biggest flag's stars. The top row has 8, and there are 6 rows. That's 48 stars, not 50! When Johns painted this in 1958, there were only 48 states. Alaska and Hawaii joined the next year, and the flag got more stars."},
-      {paint:true, find:"Now you be the painter! Pick a brush and a color, and paint some strokes right on the flag.", cx:0.87, cy:0.38, box:{x:0.78, y:0.24, w:0.18, h:0.28}, title:"Painting with wax", body:"Johns mixed his colors into warm, melted wax. Each stroke cooled and hardened in a few seconds, right where he put it. That's why his flag is covered in short, broad dabs, and why it looks bumpy and handmade up close."}
+      {find:"Now you be the painter! Pick a brush and a color, and paint some strokes right on the flag.", cx:0.87, cy:0.38, box:{x:0.78, y:0.24, w:0.18, h:0.28},
+        paint:{ look:"wax", check:"shortBroad", brushes:[0.012, 0.03, 0.065], brush:1,
+          colors:[{name:"Red", hex:"#c9392b"}, {name:"White", hex:"#efe6d1"}, {name:"Blue", hex:"#2e5f9e"}],
+          say:{ good:"Those look a lot like Johns's strokes! Short and broad, one dab next to another.",
+                notBroad:"Try the big brush! Johns's strokes are wide and chunky, not thin and careful.",
+                notShort:"Try short little dabs instead of long lines. That's how Johns had to paint.",
+                more:"Nice painting! Try a few more short, broad dabs and see how close you can get." } },
+        title:"Painting with wax", body:"Johns mixed his colors into warm, melted wax. Each stroke cooled and hardened in a few seconds, right where he put it. That's why his flag is covered in short, broad dabs, and why it looks bumpy and handmade up close."}
     ],
     done:[
       "Jasper Johns said the flag was something people saw but didn't really look at. They knew it so well that they stopped noticing it. So he painted it in a way that makes you look again.",
@@ -461,7 +504,12 @@ window.WORKS = [
       {find:"Inside one arch, can you find a skyscraper with a glowing golden top?", cx:0.71, cy:0.17, box:{x:0.66, y:0.12, w:0.1, h:0.12}, title:"The city beyond", body:"Through the arches you can see the skyscrapers of Manhattan, lit up at night. Stella stacked them like crystals and blocks of light, crowded together and climbing toward the sky."},
       {find:"Can you find a red window, glowing like stained glass?", cx:0.2, cy:0.74, box:{x:0.14, y:0.69, w:0.14, h:0.11}, title:"Stained glass", body:"Deep inside the bridge, a red shape glows like a stained-glass window in a church. Stella wanted the bridge to feel like a holy place. He called it a 'shrine' for the new America."},
       {find:"Look along the bottom of the painting. Can you find a tiny bridge?", cx:0.2, cy:0.86, box:{x:0.03, y:0.82, w:0.36, h:0.07}, title:"A bridge inside the bridge", body:"Along the bottom there's a whole little picture of its own: a bridge seen from far away, stretching across the river toward the glittering lights of the city. Old church altarpieces often had a row of small pictures like this along the bottom."},
-      {find:"Can you count the glowing circles along the very bottom?", cx:0.5, cy:0.955, box:{x:0.0, y:0.92, w:1.0, h:0.07}, title:"A row of lights", body:"Did you count ten? They glow like lamps, or jewels, or the lights along the front of a stage. A grand finale for the whole painting."}
+      {find:"Can you count the glowing circles along the very bottom?", cx:0.5, cy:0.955, box:{x:0.0, y:0.92, w:1.0, h:0.07}, title:"A row of lights", body:"Did you count ten? They glow like lamps, or jewels, or the lights along the front of a stage. A grand finale for the whole painting."},
+      {find:"Paint on one side of the bridge, and watch what happens on the other side!", cx:0.5, cy:0.27, box:{x:0.04, y:0.03, w:0.92, h:0.48},
+        paint:{ look:"glow", check:"any", mirror:true, brushes:[0.012, 0.03, 0.06], brush:1,
+          colors:[{name:"Blue", hex:"#3a7be0"}, {name:"Gold", hex:"#f2c230"}, {name:"Red", hex:"#d2402f"}, {name:"Silver", hex:"#dfe6f2"}],
+          say:{ good:"Look, both sides match! Your painting is balanced, just like Stella's bridge." } },
+        title:"Both sides match", body:"Stella built his bridge like a giant church window: the left side and the right side are almost the same, like a reflection in a mirror. That balance makes the bridge feel calm, strong, and grand."}
     ],
     done:[
       "Joseph Stella came to New York from Italy when he was nineteen. The city amazed him: the noise, the lights, the steel. And nothing amazed him more than the Brooklyn Bridge.",
@@ -492,7 +540,14 @@ window.WORKS = [
       {find:"Can you find someone with big, fluffy legs?", cx:0.635, cy:0.67, box:{x:0.595, y:0.59, w:0.08, h:0.17}, title:"Fluffy legs", body:"Those shaggy legs look like woolly chaps, the furry leggings cowboys wore on cold days, and that long wire could be his lasso. Calder didn't try to make his performers look real. He made them look fun, and ready to move."},
       {find:"Can you find the musician with a giant horn?", cx:0.845, cy:0.71, box:{x:0.79, y:0.6, w:0.12, h:0.22}, title:"The big horn", body:"A huge horn curls around this musician, and a long hose loops all over the floor. That hose is real rubber tubing. Calder's circus had sound, too: he brought whistles, noisemakers, and records, and the audience got to make noise along with him."},
       {find:"Can you find a tiny street lamp with a sign on it?", cx:0.09, cy:0.7, box:{x:0.05, y:0.6, w:0.09, h:0.23}, title:"ONE WAY", body:"Read the little sign: ONE WAY! Calder made a whole street lamp out of wire and metal, like one you'd pass on a city sidewalk. Even the scenery in this circus is homemade."},
-      {find:"Can you find a tiny American flag?", cx:0.385, cy:0.7, box:{x:0.355, y:0.64, w:0.06, h:0.13}, title:"A little piece of home", body:"Calder was an American who moved to Paris in 1926, and that's where he built this circus. Somebody in the show is proudly waving the Stars and Stripes."}
+      {find:"Can you find a tiny American flag?", cx:0.385, cy:0.7, box:{x:0.355, y:0.64, w:0.06, h:0.13}, title:"A little piece of home", body:"Calder was an American who moved to Paris in 1926, and that's where he built this circus. Somebody in the show is proudly waving the Stars and Stripes."},
+      {find:"Calder drew with wire! Draw a person or an animal without lifting your finger.", cx:0.14, cy:0.31, box:{x:0.0, y:0.1, w:0.3, h:0.42},
+        paint:{ look:"wire", check:"oneLine", wobble:true, brushes:[0.008, 0.014], brush:0,
+          colors:[{name:"Black wire", hex:"#2a2a2a"}, {name:"Silver wire", hex:"#9aa0a8"}, {name:"Brass wire", hex:"#b8913a"}],
+          say:{ good:"One line, one wire, just like Calder! Now watch it wobble.",
+                tooMany:"Calder used one long wire. Tap Try again, then Start over, and draw your whole figure without lifting your finger!",
+                tooShort:"Make it bigger! Tap Try again and draw one long line that loops around into a shape." } },
+        title:"Drawing in the air", body:"Calder bent and twisted wire into people and animals, like drawing a picture with one long line, right in the air. And he loved things that move: later he invented mobiles, sculptures that sway and turn."}
     ],
     done:[
       "Here's the secret: Calder's Circus was a real show. In Paris, around 1926, a young American named Alexander Calder started making tiny performers out of wire, cloth, cork, string, buttons, and bottle caps. Then he invited friends over to watch.",
@@ -522,7 +577,14 @@ window.WORKS = [
       {find:"Can you find snow piled like pillows on the big tree's branches?", cx:0.08, cy:0.54, box:{x:0.0, y:0.45, w:0.2, h:0.2}, title:"Snow pillows", body:"Look at the branches near the trunk: thick, soft lumps of snow are piled on top of them like pillows. Pippin used his white paint thick and heavy, so you can almost feel how cold and wet it is."},
       {find:"Can you find little bushes being blown flat by the wind?", cx:0.66, cy:0.5, box:{x:0.55, y:0.4, w:0.23, h:0.19}, title:"Which way is the wind?", body:"These little bushes are all bent the same way, pushed by the wind. The snow streaks all slant the same way too. Pippin made the whole painting feel windy without ever painting the wind itself."},
       {find:"Can you find a tiny bare bush near the bottom?", cx:0.62, cy:0.9, box:{x:0.57, y:0.85, w:0.1, h:0.11}, title:"Hoofprints in the snow", body:"One little bush hangs on in the snow, right in the buffalo's path. Look at all the gray marks scattered around it. They could be hoofprints, left behind by the herd as it thundered past."},
-      {find:"Can you find the painter's name, written in yellow?", cx:0.945, cy:0.975, box:{x:0.89, y:0.94, w:0.11, h:0.06}, title:"H. PIPPIN", body:"The only bright color in the whole painting is the artist's name: H. PIPPIN, in yellow letters down in the corner. It's like he's saying 'I made this' in the warmest color he had."}
+      {find:"Can you find the painter's name, written in yellow?", cx:0.945, cy:0.975, box:{x:0.89, y:0.94, w:0.11, h:0.06}, title:"H. PIPPIN", body:"The only bright color in the whole painting is the artist's name: H. PIPPIN, in yellow letters down in the corner. It's like he's saying 'I made this' in the warmest color he had."},
+      {find:"Pippin made the wind blow with slanting snow. Paint some snow streaks across the dark rocks!", cx:0.31, cy:0.53, box:{x:0.14, y:0.36, w:0.34, h:0.34},
+        paint:{ look:"streak", check:"sameSlant", brushes:[0.008, 0.018, 0.035], brush:1,
+          colors:[{name:"White", hex:"#f4f1e8"}, {name:"Pale gray", hex:"#c9c9c4"}],
+          say:{ good:"Whoosh! All your snow is slanting the same way. Now it's windy!",
+                mixed:"Your snow is swirling every which way! Try making every streak slant the same direction, like Pippin's.",
+                more:"Paint a few more snow streaks, all slanting the same way." } },
+        title:"Painting the wind", body:"You can't see wind. So how do you paint it? Pippin slanted every snow streak the same way, so your eyes feel the storm blowing across the whole picture."}
     ],
     done:[
       "Horace Pippin painted this in 1933. He had never seen buffalo running across the snowy plains. He imagined the whole thing, the storm, the herd, the cold, and painted it so strongly that you can almost feel the wind.",
@@ -552,7 +614,15 @@ window.WORKS = [
       {find:"Can you find the darkest, deepest purple?", cx:0.38, cy:0.33, box:{x:0.28, y:0.26, w:0.17, h:0.2}, title:"A deep, low sound", body:"Here the pink folds into a dark, rich purple, like the low hum of a cello. O'Keeffe blended her colors so smoothly you can hardly see a brushstroke. One color just melts into the next."},
       {find:"Can you find the softest, palest color, like air on a cool morning?", cx:0.07, cy:0.3, box:{x:0.0, y:0.05, w:0.17, h:0.55}, title:"Breathing room", body:"Along the left side, the pale blue is soft and calm, like sky, or a quiet breath between notes. Music needs silence too. This is the painting's pause."},
       {find:"Can you find a stripe of cool mint green?", cx:0.47, cy:0.68, box:{x:0.4, y:0.44, w:0.13, h:0.5}, title:"A cool surprise", body:"Tucked between the white and the blue is a stripe of mint green, a surprise among all the pinks. When warm colors and cool colors sit side by side, both of them look brighter."},
-      {find:"Can you find curves at the top that float right off the edge?", cx:0.83, cy:0.12, box:{x:0.66, y:0.0, w:0.34, h:0.25}, title:"Out of the frame", body:"Up in the corner, soft white and gray curves flow right off the edge of the canvas, as if the painting keeps going beyond what we can see. Like music you can still hear after you've left the room."}
+      {find:"Can you find curves at the top that float right off the edge?", cx:0.83, cy:0.12, box:{x:0.66, y:0.0, w:0.34, h:0.25}, title:"Out of the frame", body:"Up in the corner, soft white and gray curves flow right off the edge of the canvas, as if the painting keeps going beyond what we can see. Like music you can still hear after you've left the room."},
+      {find:"Listen to the music, and draw what you hear with long, smooth curves.", cx:0.3, cy:0.27, box:{x:0.0, y:0.0, w:0.6, h:0.55},
+        paint:{ look:"soft", check:"smoothLong", brushes:[0.02, 0.045, 0.08], brush:1,
+          colors:[{name:"Pink", hex:"#ef9fbf"}, {name:"Lavender", hex:"#b79ad8"}, {name:"Blue", hex:"#4aa3d8"}, {name:"Coral", hex:"#f07f62"}, {name:"Mint", hex:"#a8e0cf"}],
+          say:{ good:"Those curves flow like music! Long and smooth, just like O'Keeffe's.",
+                notLong:"Try long, slow curves, like a melody that keeps on going.",
+                jaggy:"Try round, smooth curves instead of zigzags. O'Keeffe's shapes swell and flow.",
+                more:"Keep going! Long, smooth curves, like the music." } },
+        title:"Smooth as music", body:"O'Keeffe blended her colors so smoothly that you can hardly see a single brushstroke. Her curves swell and flow like a melody, the opposite of short, bumpy dabs."}
     ],
     done:[
       "This painting doesn't show a person or a place. Georgia O'Keeffe wanted to find out whether colors and shapes alone could make you feel something, the way music does without any words.",

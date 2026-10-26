@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
-<script src="works.js?v=2026-10-26"></script>
+<script src="works.js?v=2026-10-26b"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -164,8 +164,12 @@
   .paint-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;touch-action:none;cursor:crosshair;transition:opacity .25s ease;}
   .paint-canvas.locked{pointer-events:none;}
   .paint-canvas.peek{opacity:0;}
+  .paint-canvas.sun{cursor:grab;}
+  .paint-group{display:flex;gap:8px;align-items:center;}
+  .light-status{font-family:var(--serif);font-style:italic;font-size:1.12rem;color:var(--gold-bright);min-height:1.5em;text-align:center;}
+  .caption-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
   .paint-panel{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;padding-top:4px;}
-  .paint-row{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;}
+  .paint-row{display:flex;gap:8px 14px;justify-content:center;align-items:center;flex-wrap:wrap;}
   .brush-btn{width:46px;height:44px;border-radius:12px;border:1.5px solid var(--foam-faint);display:inline-flex;align-items:center;justify-content:center;}
   .brush-btn span{display:block;width:26px;background:var(--foam);border-radius:999px;}
   .brush-btn[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.15);}
@@ -269,21 +273,16 @@
     <div class="stage">
       <div class="frame" id="frameFind">
         <div id="osd"></div>
-        <canvas class="paint-canvas hidden" id="paintCanvas" aria-label="Paint on the painting"></canvas>
+        <canvas class="paint-canvas hidden" id="actCanvas" aria-label="Activity on the painting"></canvas>
       </div>
     </div>
     <div class="find-bottom">
       <div class="feedback" id="feedback"></div>
       <button class="btn btn-ghost showme hidden" id="showMeBtn">Show me</button>
       <div class="paint-panel hidden" id="paintPanel">
-        <div class="paint-row" role="group" aria-label="Choose a brush">
-          <button class="brush-btn" data-size="0.012" aria-pressed="false" aria-label="Thin brush"><span style="height:3px"></span></button>
-          <button class="brush-btn" data-size="0.03" aria-pressed="true" aria-label="Medium brush"><span style="height:9px"></span></button>
-          <button class="brush-btn" data-size="0.065" aria-pressed="false" aria-label="Big brush"><span style="height:20px"></span></button>
-          <span style="width:4px"></span>
-          <button class="swatch" data-color="red" aria-pressed="true" aria-label="Red" style="background:#c9392b"></button>
-          <button class="swatch" data-color="cream" aria-pressed="false" aria-label="White" style="background:#efe6d1"></button>
-          <button class="swatch" data-color="blue" aria-pressed="false" aria-label="Blue" style="background:#2e5f9e"></button>
+        <div class="paint-row">
+          <div class="paint-group" id="paintBrushes" role="group" aria-label="Choose a brush"></div>
+          <div class="paint-group" id="paintColors" role="group" aria-label="Choose a color"></div>
         </div>
         <div class="paint-row paint-actions">
           <button class="btn btn-ghost" id="paintClear">Start over</button>
@@ -291,9 +290,19 @@
           <button class="btn btn-primary" id="paintDone" disabled>I'm done</button>
         </div>
       </div>
+      <div class="paint-panel hidden" id="lightPanel">
+        <div class="light-status" id="lightStatus" aria-live="polite"></div>
+        <div class="paint-row paint-actions">
+          <button class="btn btn-ghost" id="lightHopper">Back to Hopper's sun</button>
+          <button class="btn btn-primary" id="lightDone">I'm done</button>
+        </div>
+      </div>
       <div class="caption hidden" id="findCaption">
         <h2 id="capTitle"></h2><p id="capBody"></p>
-        <button class="btn btn-primary" id="nextFindBtn">Next</button>
+        <div class="caption-actions">
+          <button class="btn btn-ghost hidden" id="actAgainBtn">Try again</button>
+          <button class="btn btn-primary" id="nextFindBtn">Next</button>
+        </div>
       </div>
       <div class="caption" id="findIntro">
         <h2>Let's go exploring</h2>
@@ -489,6 +498,7 @@
   function show(name){
     Object.keys(screens).forEach(function(k){ screens[k].classList.toggle("active", k===name); });
     if(name !== "looking" && name !== "find"){ stopBgAudio(); }
+    if(name !== "find" && act.mode){ exitActivity(); }
   }
 
   /* ---------- keep guiding text a constant size & place on screen while the painting is pinch-zoomed ---------- */
@@ -635,7 +645,7 @@
     if(osd || typeof OpenSeadragon === "undefined") return osd;
     osd = OpenSeadragon(osdConfig("osd"));
     osd.addHandler("canvas-click", onOsdTap);
-    osd.addHandler("update-viewport", redrawPaint);
+    osd.addHandler("update-viewport", redrawActivity);
     osd.addHandler("open", function(){ try{ osd.viewport.goHome(true); }catch(_){} });
     return osd;
   }
@@ -690,7 +700,7 @@
   }
   function ringDia(s){ return s.box ? Math.max(s.box.w, s.box.h) : s.r; }
   function resetReveal(){
-    exitPaint();
+    exitActivity();
     clearOverlays();
     osdHome();
     $("frameFind").classList.remove("seeking");
@@ -703,135 +713,464 @@
     $("showMeBtn").classList.add("hidden");
     setFeedback("", "");
     resetReveal();
-    $("findProgress").textContent = (currentPainting.freeTap || s.paint ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
-    if(s.paint){ enterPaint(s); updateGuides(); return; }
+    $("findProgress").textContent = (currentPainting.freeTap || s.paint || s.light ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
+    if(s.paint){ enterPaint(s); return; }
+    if(s.light){ enterLight(s); return; }
     $("frameFind").classList.add("seeking");
     $("findQ").textContent = currentPainting.freeTap ? s.find : (s.find + " Tap it!");
     updateGuides();
   }
 
-  /* ---------- paint-along stop: zoom in, pick a brush and a color, paint on the painting ---------- */
-  var PAINT_COLORS = {
-    red:   { base:"#c9392b", shades:["#e2553f","#a82a22","#d8644f"] },
-    cream: { base:"#efe6d1", shades:["#fff8e8","#d9cdb3","#f6eedd"] },
-    blue:  { base:"#2e5f9e", shades:["#4878b5","#22497c","#3a6cab"] }
-  };
-  // Strokes are stored in image coordinates and redrawn whenever the view moves,
-  // so they stay attached to the painting through any re-layout or zoom.
-  var paint = { size:0.03, color:"red", strokes:[], cur:null, ctx:null, dpr:1 };
-  function sizePaintCanvas(){
-    var c = $("paintCanvas"), f = $("frameFind"), dpr = window.devicePixelRatio || 1;
+  /* ---------- hands-on activity stops: paint along (s.paint) and move the sun (s.light) ----------
+     Both draw on one canvas over the viewer. Everything is stored in image coordinates and
+     redrawn whenever the view moves, so it stays attached to the painting. */
+  var act = { ctx:null, dpr:1, mode:null, raf:0 };
+  function actCanvas(){ return $("actCanvas"); }
+  function sizeActCanvas(){
+    var c = actCanvas(), f = $("frameFind"), dpr = window.devicePixelRatio || 1;
     var w = Math.round(f.clientWidth * dpr), h = Math.round(f.clientHeight * dpr);
     if(c.width !== w || c.height !== h){ c.width = w; c.height = h; }
-    paint.dpr = dpr; paint.ctx = c.getContext("2d");
+    act.dpr = dpr; act.ctx = c.getContext("2d");
   }
-  function enterPaint(s){
-    state.findPhase = "painting";
-    $("findQ").textContent = s.find;
-    if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
-    paint.strokes = []; paint.cur = null;
-    var c = $("paintCanvas");
+  function showActCanvas(mode){
+    var c = actCanvas();
     c.classList.remove("hidden","locked","peek");
-    sizePaintCanvas(); redrawPaint();
-    $("paintPeek").textContent = "Peek under";
-    $("paintDone").disabled = true;
-    $("paintPanel").classList.remove("hidden");
+    c.classList.toggle("sun", mode === "light");
+    sizeActCanvas();
   }
-  function exitPaint(){
-    $("paintCanvas").classList.add("hidden"); $("paintPanel").classList.add("hidden");
-    paint.strokes = []; paint.cur = null;
-    if(paint.ctx){ paint.ctx.clearRect(0,0,$("paintCanvas").width,$("paintCanvas").height); }
+  function exitActivity(){
+    cancelAnimationFrame(act.raf); act.raf = 0; act.mode = null;
+    actCanvas().classList.add("hidden");
+    $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden");
+    $("actAgainBtn").classList.add("hidden");
+    paint.strokes = []; paint.cur = null; paint.wobble = false; light.drag = false;
+    if(act.ctx){ act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height); }
     if(osd){ osd.setMouseNavEnabled(true); }
   }
+  function redrawActivity(){
+    if(!act.ctx || !osd || !act.mode || actCanvas().classList.contains("hidden")) return;
+    sizeActCanvas();
+    act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height);
+    if(act.mode === "paint"){ drawPaintLayer(); } else { drawLightLayer(); }
+  }
+  function canvasPoint(e){
+    var r = actCanvas().getBoundingClientRect();
+    return { x:(e.clientX - r.left) * act.dpr, y:(e.clientY - r.top) * act.dpr };
+  }
   function toImage(e){
-    var r = $("paintCanvas").getBoundingClientRect();
+    var r = actCanvas().getBoundingClientRect();
     return osd.viewport.viewerElementToImageCoordinates(new OpenSeadragon.Point(e.clientX - r.left, e.clientY - r.top));
   }
   function toScreen(p){
     var q = osd.viewport.imageToViewerElementCoordinates(new OpenSeadragon.Point(p.x, p.y));
-    return { x:q.x * paint.dpr, y:q.y * paint.dpr };
+    return { x:q.x * act.dpr, y:q.y * act.dpr };
   }
   function imgPxToScreen(){ // canvas pixels per image pixel at the current zoom
     var a = toScreen({x:0,y:0}), b = toScreen({x:1000,y:0});
     return (b.x - a.x) / 1000;
   }
-  function drawStroke(st){
-    var ctx = paint.ctx, k = imgPxToScreen(), w = st.w * k, pts = st.pts.map(toScreen);
-    if(pts.length === 1){ pts.push({ x:pts[0].x+0.5, y:pts[0].y+0.5 }); }
-    ctx.lineCap = "round"; ctx.lineJoin = "round";
-    ctx.globalAlpha = 0.86; ctx.strokeStyle = st.col.base; ctx.lineWidth = w;
-    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
-    for(var i=1;i<pts.length;i++){ ctx.lineTo(pts[i].x, pts[i].y); }
-    ctx.stroke();
-    // bristle streaks give the dragged, waxy texture
-    ctx.lineWidth = Math.max(1, w * 0.09); ctx.globalAlpha = 0.3;
-    st.bristles.forEach(function(b){
-      ctx.strokeStyle = b.shade; ctx.beginPath();
-      for(var i=0;i<pts.length;i++){
-        var p0 = pts[Math.max(0,i-1)], p1 = pts[Math.min(pts.length-1,i+1)];
-        var dx = p1.x-p0.x, dy = p1.y-p0.y, len = Math.hypot(dx,dy) || 1;
-        var x = pts[i].x - dy/len * b.off * w, y = pts[i].y + dx/len * b.off * w;
-        if(i===0){ ctx.moveTo(x,y); } else { ctx.lineTo(x,y); }
-      }
-      ctx.stroke();
+  function showActivityCaption(s, lead){
+    $("findQ").textContent = "";
+    $("capTitle").textContent = s.title;
+    $("capBody").textContent = (lead ? lead + " " : "") + s.body;
+    $("nextFindBtn").textContent = (state.findIndex===STOPS.length-1) ? "Finish" : "Next";
+    $("actAgainBtn").classList.remove("hidden");
+    $("findCaption").classList.remove("hidden");
+    $("findProgress").textContent = (state.findIndex+1) + " of " + STOPS.length;
+    updateGuides();
+  }
+
+  /* ----- paint along: pick a brush and a color, paint on the painting, get feedback ----- */
+  function mixHex(hex, to, t){ // blend a #rrggbb color toward white (to=255) or black (to=0)
+    var n = parseInt(hex.slice(1), 16), f = function(v){ return Math.round(v + (to - v) * t); };
+    return "rgb(" + f(n>>16 & 255) + "," + f(n>>8 & 255) + "," + f(n & 255) + ")";
+  }
+  // How a stroke looks. bristles = dragged-brush texture, ridge = thick paint with a lit edge,
+  // core = bright center line, blur = soft or glowing edge, taper = thins out like a flick.
+  var BRUSH_LOOKS = {
+    wax:      { alpha:0.86, bristles:0.3 },
+    oil:      { alpha:0.82, bristles:0.22 },
+    frosting: { alpha:0.97, bristles:0.2, ridge:true },
+    gold:     { alpha:0.92, core:"rgba(255,244,190,.8)", sparkle:true },
+    wire:     { alpha:1,    core:"rgba(255,255,255,.4)" },
+    soft:     { alpha:0.62, blur:0.7, passes:2 },
+    glow:     { alpha:0.92, blur:1.1, core:"rgba(255,255,255,.6)" },
+    streak:   { alpha:0.9,  bristles:0.3, taper:true }
+  };
+  var paint = { cfg:null, colors:[], size:0.03, color:0, strokes:[], cur:null, wobble:false, t0:0 };
+  function enterPaint(s){
+    var cfg = s.paint;
+    act.mode = "paint"; paint.cfg = cfg;
+    paint.colors = cfg.colors.map(function(c){
+      return { name:c.name, hex:c.hex, light:mixHex(c.hex,255,0.45), dark:mixHex(c.hex,0,0.3),
+               shades:[mixHex(c.hex,255,0.25), mixHex(c.hex,0,0.2), mixHex(c.hex,255,0.1)] };
     });
+    paint.size = cfg.brushes[cfg.brush || 0]; paint.color = 0;
+    paint.strokes = []; paint.cur = null;
+    buildPaintPanel(cfg);
+    resumePaint(s);
+  }
+  function resumePaint(s){
+    state.findPhase = "painting";
+    paint.wobble = false; cancelAnimationFrame(act.raf);
+    $("findQ").textContent = s.find;
+    $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
+    if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
+    showActCanvas("paint"); redrawActivity();
+    $("paintPeek").textContent = "Peek under";
+    $("paintDone").disabled = !paint.strokes.length;
+    $("paintPanel").classList.remove("hidden");
+    updateGuides();
+  }
+  function pressOnly(group, btn){
+    Array.prototype.forEach.call(group.children, function(x){ x.setAttribute("aria-pressed", String(x === btn)); });
+  }
+  function buildPaintPanel(cfg){
+    var n = cfg.brushes.length, names = n === 3 ? ["Thin","Medium","Big"] : (n === 2 ? ["Thin","Big"] : ["Paint"]);
+    var max = Math.max.apply(null, cfg.brushes);
+    $("paintBrushes").innerHTML = ""; $("paintColors").innerHTML = "";
+    cfg.brushes.forEach(function(size, i){
+      var b = document.createElement("button"); b.type = "button"; b.className = "brush-btn";
+      b.setAttribute("aria-label", names[i] + " brush"); b.setAttribute("aria-pressed", String(size === paint.size));
+      var sp = document.createElement("span"); sp.style.height = Math.max(3, Math.round(size / max * 20)) + "px";
+      b.appendChild(sp);
+      b.addEventListener("click", function(){ pressOnly($("paintBrushes"), b); paint.size = size; });
+      $("paintBrushes").appendChild(b);
+    });
+    paint.colors.forEach(function(c, i){
+      var b = document.createElement("button"); b.type = "button"; b.className = "swatch";
+      b.style.background = c.hex; b.setAttribute("aria-label", c.name); b.setAttribute("aria-pressed", String(i === paint.color));
+      b.addEventListener("click", function(){ pressOnly($("paintColors"), b); paint.color = i; });
+      $("paintColors").appendChild(b);
+    });
+  }
+  function strokePath(ctx, pts, shift){
+    ctx.beginPath();
+    pts.forEach(function(p, i){ var q = shift ? shift(p, i) : p; if(i === 0){ ctx.moveTo(q.x, q.y); } else { ctx.lineTo(q.x, q.y); } });
+    ctx.stroke();
+  }
+  function normalAt(pts, i){
+    var p0 = pts[Math.max(0,i-1)], p1 = pts[Math.min(pts.length-1,i+1)], dx = p1.x-p0.x, dy = p1.y-p0.y, len = Math.hypot(dx,dy) || 1;
+    return { x:-dy/len, y:dx/len };
+  }
+  function drawStroke(st, mirrorX){
+    var ctx = act.ctx, look = BRUSH_LOOKS[paint.cfg.look] || BRUSH_LOOKS.wax, w = st.w * imgPxToScreen();
+    var pts = st.pts.map(function(p){ return toScreen(mirrorX == null ? p : { x:mirrorX - p.x, y:p.y }); });
+    if(pts.length === 1){ pts.push({ x:pts[0].x+0.5, y:pts[0].y+0.5 }); }
+    var along = function(d){ return function(p, i){ var n = normalAt(pts, i); return { x:p.x + n.x*d, y:p.y + n.y*d }; }; };
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.strokeStyle = st.col.hex; ctx.globalAlpha = look.alpha;
+    if(look.blur){ ctx.shadowColor = st.col.hex; ctx.shadowBlur = w * look.blur; }
+    if(look.taper){
+      for(var i=1;i<pts.length;i++){
+        ctx.lineWidth = Math.max(1, w * (1 - 0.75 * i / pts.length));
+        ctx.beginPath(); ctx.moveTo(pts[i-1].x, pts[i-1].y); ctx.lineTo(pts[i].x, pts[i].y); ctx.stroke();
+      }
+    } else {
+      for(var pass=0; pass<(look.passes || 1); pass++){ ctx.lineWidth = w * (look.passes ? 0.9 - pass*0.3 : 1); strokePath(ctx, pts); }
+    }
+    ctx.shadowBlur = 0; ctx.shadowColor = "transparent";
+    if(look.ridge){
+      ctx.globalAlpha = 0.55; ctx.strokeStyle = st.col.light; ctx.lineWidth = w * 0.28; strokePath(ctx, pts, along(-w * 0.22));
+      ctx.globalAlpha = 0.35; ctx.strokeStyle = st.col.dark; ctx.lineWidth = w * 0.2; strokePath(ctx, pts, along(w * 0.32));
+    }
+    if(look.bristles){
+      ctx.lineWidth = Math.max(1, w * 0.09); ctx.globalAlpha = look.bristles;
+      st.bristles.forEach(function(b){ ctx.strokeStyle = b.shade; strokePath(ctx, pts, along(b.off * w)); });
+    }
+    if(look.core){
+      ctx.globalAlpha = 1; ctx.strokeStyle = look.core; ctx.lineWidth = Math.max(1, w * 0.3); strokePath(ctx, pts, along(-w * 0.12));
+    }
+    if(look.sparkle){
+      ctx.globalAlpha = 0.95; ctx.fillStyle = "#fffbe6";
+      st.sparkles.forEach(function(sp){
+        var i = Math.min(sp.i, pts.length-1), n = normalAt(pts, i), r = Math.max(1.2, w * sp.r);
+        var x = pts[i].x + n.x * sp.off * w, y = pts[i].y + n.y * sp.off * w;
+        ctx.beginPath(); // a little four-pointed twinkle
+        ctx.moveTo(x, y - r*2); ctx.lineTo(x + r*0.45, y - r*0.45); ctx.lineTo(x + r*2, y); ctx.lineTo(x + r*0.45, y + r*0.45);
+        ctx.lineTo(x, y + r*2); ctx.lineTo(x - r*0.45, y + r*0.45); ctx.lineTo(x - r*2, y); ctx.lineTo(x - r*0.45, y - r*0.45);
+        ctx.closePath(); ctx.fill();
+      });
+    }
     ctx.globalAlpha = 1;
   }
-  function redrawPaint(){
-    if(!paint.ctx || !osd || $("paintCanvas").classList.contains("hidden")) return;
-    sizePaintCanvas();
-    paint.ctx.clearRect(0,0,$("paintCanvas").width,$("paintCanvas").height);
-    paint.strokes.forEach(drawStroke);
-    if(paint.cur){ drawStroke(paint.cur); }
+  function drawPaintLayer(){
+    var ctx = act.ctx, cfg = paint.cfg, sz = osdImgSize(), all = paint.strokes.concat(paint.cur ? [paint.cur] : []);
+    if(cfg.mirror && sz && state.findPhase === "painting"){
+      var top = toScreen({x:sz.x/2, y:0}), bot = toScreen({x:sz.x/2, y:sz.y});
+      ctx.save(); ctx.setLineDash([8*act.dpr, 8*act.dpr]); ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.lineWidth = 2*act.dpr;
+      ctx.beginPath(); ctx.moveTo(top.x, top.y); ctx.lineTo(bot.x, bot.y); ctx.stroke(); ctx.restore();
+    }
+    ctx.save();
+    if(paint.wobble && all.length){
+      // sway like something hanging from a wire, pivoting at the top of the drawing
+      var xs = [], ys = [];
+      all.forEach(function(st){ st.pts.forEach(function(p){ var q = toScreen(p); xs.push(q.x); ys.push(q.y); }); });
+      var cx = (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2, top2 = Math.min.apply(null, ys);
+      var ang = 0.1 * Math.sin((performance.now() - paint.t0) / 1000 * 2.4);
+      ctx.translate(cx, top2); ctx.rotate(ang); ctx.translate(-cx, -top2);
+    }
+    all.forEach(function(st){ drawStroke(st); if(cfg.mirror && sz){ drawStroke(st, sz.x); } });
+    ctx.restore();
   }
   function paintDown(e){
     if(state.findPhase !== "painting" || !osd) return;
     e.preventDefault();
-    var c = $("paintCanvas"), col = PAINT_COLORS[paint.color], bristles = [];
-    // brush width is a fraction of the visible canvas, stored in image pixels
-    var w = paint.size * c.width / imgPxToScreen();
+    var c = actCanvas(), col = paint.colors[paint.color], bristles = [];
     for(var i=0;i<7;i++){ bristles.push({ off:(Math.random()-0.5)*0.85, shade:col.shades[i % col.shades.length] }); }
     try{ c.setPointerCapture(e.pointerId); }catch(_){}
-    paint.cur = { w:w, col:col, bristles:bristles, pts:[toImage(e)], screenLen:0, screenW:paint.size * c.width, last:{x:e.clientX,y:e.clientY} };
-    redrawPaint();
+    // brush width is a fraction of the visible canvas, stored in image pixels
+    paint.cur = { w:paint.size * c.width / imgPxToScreen(), col:col, bristles:bristles, sparkles:[],
+                  pts:[toImage(e)], spts:[canvasPoint(e)], screenLen:0, screenW:paint.size * c.width };
+    redrawActivity();
   }
   function paintMove(e){
-    if(!paint.cur) return;
+    var st = paint.cur; if(!st) return;
     e.preventDefault();
-    var st = paint.cur;
-    st.screenLen += Math.hypot(e.clientX-st.last.x, e.clientY-st.last.y) * paint.dpr;
-    st.last = { x:e.clientX, y:e.clientY };
-    st.pts.push(toImage(e));
-    redrawPaint();
+    var sp = canvasPoint(e), last = st.spts[st.spts.length-1];
+    st.screenLen += Math.hypot(sp.x - last.x, sp.y - last.y);
+    st.spts.push(sp); st.pts.push(toImage(e));
+    if(Math.random() < 0.18){ st.sparkles.push({ i:st.pts.length-1, off:(Math.random()-0.5)*0.9, r:0.12 + Math.random()*0.18 }); }
+    redrawActivity();
   }
   function paintUp(){
     if(!paint.cur) return;
-    paint.strokes.push(paint.cur);
-    paint.cur = null;
+    paint.strokes.push(paint.cur); paint.cur = null;
     $("paintDone").disabled = false;
   }
-  function paintVerdict(){
-    var cw = $("paintCanvas").width, n = paint.strokes.length;
-    var isBroad = function(st){ return st.screenW >= 0.05*cw; }, isShort = function(st){ return st.screenLen <= 0.3*cw; };
-    var broad = paint.strokes.filter(isBroad).length, short = paint.strokes.filter(isShort).length;
-    var match = paint.strokes.filter(function(st){ return isBroad(st) && isShort(st); }).length;
-    if(n >= 3 && match/n >= 0.6) return "Those look a lot like Johns's strokes! Short and broad, one dab next to another.";
-    if(broad/n < 0.5) return "Try the big brush! Johns's strokes are wide and chunky, not thin and careful.";
-    if(short/n < 0.5) return "Try short little dabs instead of long lines. That's how Johns had to paint.";
-    return "Nice painting! Try a few more short, broad dabs and see how close you can get.";
+  // What each stroke was like, measured on screen as a fraction of the canvas width.
+  function strokeInfo(st, cw){
+    var pts = [], step = 10 * act.dpr, turns = 0;
+    st.spts.forEach(function(p){ if(!pts.length || Math.hypot(p.x - pts[pts.length-1].x, p.y - pts[pts.length-1].y) >= step){ pts.push(p); } });
+    for(var i=2;i<pts.length;i++){
+      var a1 = Math.atan2(pts[i-1].y - pts[i-2].y, pts[i-1].x - pts[i-2].x), a2 = Math.atan2(pts[i].y - pts[i-1].y, pts[i].x - pts[i-1].x);
+      var d = Math.abs(a2 - a1); if(d > Math.PI){ d = 2*Math.PI - d; }
+      if(d > 1.1){ turns++; } // a sharp corner, like a zigzag
+    }
+    var first = st.spts[0], last = st.spts[st.spts.length-1];
+    return { w:st.screenW / cw, len:st.screenLen / cw, turns:turns, color:st.col.name,
+             angle:Math.atan2(last.y - first.y, last.x - first.x) };
   }
+  function share(S, fn){ return S.length ? S.filter(fn).length / S.length : 0; }
+  // Each check returns a key; the painting's own words for that key come from works.js (paint.say).
+  var PAINT_CHECKS = {
+    any: function(){ return "good"; },
+    shortBroad: function(S){ // Johns: short, broad dabs of wax
+      if(S.length >= 3 && share(S, function(s){ return s.w >= 0.05 && s.len <= 0.3; }) >= 0.6) return "good";
+      if(share(S, function(s){ return s.w >= 0.05; }) < 0.5) return "notBroad";
+      if(share(S, function(s){ return s.len <= 0.3; }) < 0.5) return "notShort";
+      return "more";
+    },
+    broadSwoosh: function(S){ // Thiebaud: big, thick swooshes like frosting
+      if(S.length >= 2 && share(S, function(s){ return s.w >= 0.05 && s.len >= 0.15; }) >= 0.5) return "good";
+      if(share(S, function(s){ return s.w >= 0.05; }) < 0.5) return "notBroad";
+      if(share(S, function(s){ return s.len >= 0.15; }) < 0.5) return "notLong";
+      return "more";
+    },
+    thinLong: function(S){ // Botticelli: long, fine, flowing strands
+      if(S.length >= 2 && share(S, function(s){ return s.w <= 0.02 && s.len >= 0.25; }) >= 0.6) return "good";
+      if(share(S, function(s){ return s.w <= 0.02; }) < 0.5) return "notThin";
+      if(share(S, function(s){ return s.len >= 0.25; }) < 0.5) return "notLong";
+      return "more";
+    },
+    colorUsed: function(S, cfg){ // Sloan: snow shadows in blue or purple
+      if(S.some(function(s){ return cfg.want.indexOf(s.color) >= 0; })) return "good";
+      if(S.some(function(s){ return (cfg.avoid || []).indexOf(s.color) >= 0; })) return "avoid";
+      return "other";
+    },
+    oneLine: function(S){ // Calder: one long wire
+      if(S.length === 1 && S[0].len >= 0.5) return "good";
+      return S.length > 1 ? "tooMany" : "tooShort";
+    },
+    sameSlant: function(S){ // Pippin: every snow streak slanting the same way
+      var streaks = S.filter(function(s){ return s.len >= 0.04; });
+      if(streaks.length < 3) return "more";
+      var c = 0, sn = 0;
+      streaks.forEach(function(s){ c += Math.cos(2*s.angle); sn += Math.sin(2*s.angle); });
+      return Math.hypot(c, sn) / streaks.length >= 0.85 ? "good" : "mixed";
+    },
+    smoothLong: function(S){ // O'Keeffe: long, smooth curves
+      if(share(S, function(s){ return s.len >= 0.3 && s.turns <= 1; }) >= 0.6) return "good";
+      if(share(S, function(s){ return s.len >= 0.3; }) < 0.5) return "notLong";
+      if(share(S, function(s){ return s.turns <= 1; }) < 0.5) return "jaggy";
+      return "more";
+    }
+  };
   function finishPaint(){
-    var s = STOPS[state.findIndex];
+    var s = STOPS[state.findIndex], cfg = s.paint, cw = actCanvas().width;
+    var S = paint.strokes.map(function(st){ return strokeInfo(st, cw); });
+    var key = (PAINT_CHECKS[cfg.check] || PAINT_CHECKS.any)(S, cfg);
     state.findPhase = "revealed";
-    $("paintCanvas").classList.add("locked"); $("paintCanvas").classList.remove("peek");
+    actCanvas().classList.add("locked"); actCanvas().classList.remove("peek");
     $("paintPanel").classList.add("hidden");
-    $("findQ").textContent = "";
-    $("capTitle").textContent = s.title;
-    $("capBody").textContent = paintVerdict() + " " + s.body;
-    $("nextFindBtn").textContent = (state.findIndex===STOPS.length-1) ? "Finish" : "Next";
-    $("findCaption").classList.remove("hidden");
-    $("findProgress").textContent = (state.findIndex+1) + " of " + STOPS.length;
+    showActivityCaption(s, (cfg.say && (cfg.say[key] || cfg.say.more)) || "");
+    if(cfg.wobble){ startWobble(); }
   }
+  function startWobble(){
+    paint.wobble = true; paint.t0 = performance.now();
+    var tick = function(){ if(!paint.wobble) return; redrawActivity(); act.raf = requestAnimationFrame(tick); };
+    act.raf = requestAnimationFrame(tick);
+  }
+
+  /* ----- move the sun: drag it across the sky and watch the shadows swing and stretch ----- */
+  var light = { cfg:null, theta:18, img:null, patches:[], drag:false, tween:0 };
+  function enterLight(s){
+    var cfg = s.light;
+    act.mode = "light"; light.cfg = cfg; light.theta = cfg.hopper; light.patches = [];
+    light.img = new Image();
+    light.img.onload = function(){ buildLightPatches(); redrawActivity(); };
+    light.img.src = currentPainting.src;
+    resumeLight(s);
+  }
+  function resumeLight(s){
+    state.findPhase = "lighting";
+    $("findQ").textContent = s.find;
+    $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
+    if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
+    showActCanvas("light"); redrawActivity();
+    updateLightStatus();
+    $("lightPanel").classList.remove("hidden");
+    updateGuides();
+  }
+  // The artist's own painted shadows are covered with clean sidewalk copied from nearby,
+  // with soft edges, so the moving shadows can replace them.
+  function buildLightPatches(){
+    var img = light.img, W = img.naturalWidth, H = img.naturalHeight;
+    light.patches = (light.cfg.patches || []).map(function(p){
+      var w = Math.max(1, Math.round(p.w * W)), h = Math.max(1, Math.round(p.h * H)), c = document.createElement("canvas");
+      var sw = Math.max(1, Math.round((p.sw || p.w) * W)); // a narrower source is repeated across
+      c.width = w; c.height = h;
+      var g = c.getContext("2d");
+      for(var x0=0; x0<w; x0+=sw){ g.drawImage(img, Math.round(p.sx * W), Math.round(p.sy * H), sw, h, x0, 0, sw, h); }
+      g.globalCompositeOperation = "destination-in";
+      var fx = Math.min(0.5, 10 / w), fy = Math.min(0.5, 3 / h);
+      var gx = g.createLinearGradient(0, 0, w, 0), gy = g.createLinearGradient(0, 0, 0, h);
+      [[gx, fx], [gy, fy]].forEach(function(pair){
+        pair[0].addColorStop(0, "rgba(0,0,0,0)"); pair[0].addColorStop(pair[1], "#000");
+        pair[0].addColorStop(1 - pair[1], "#000"); pair[0].addColorStop(1, "rgba(0,0,0,0)");
+        g.fillStyle = pair[0]; g.fillRect(0, 0, w, h);
+      });
+      return { canvas:c, x:p.x * W, y:p.y * H, w:w, h:h };
+    });
+  }
+  function sunFrame(){ // the sun travels on a half-ellipse from the low right to the low left
+    var c = actCanvas(), sz = osdImgSize(), d = act.dpr;
+    var ground = sz ? toScreen({ x:0, y:light.cfg.horizon * sz.y }).y : c.height * 0.8;
+    var cy = Math.min(ground, c.height - 22*d);
+    return { cx:c.width/2, cy:cy, rx:Math.max(40*d, c.width/2 - 30*d), ry:Math.max(40*d, cy - 30*d) };
+  }
+  function elevation(theta){ return Math.max(6, theta <= 90 ? theta : 180 - theta); }
+  function drawCastShadow(ctx, o, sz){
+    var th = light.theta, e = elevation(th) * Math.PI/180, e0 = elevation(light.cfg.hopper) * Math.PI/180;
+    // shadow length scales with 1/tan(height of the sun); matches the painted one at Hopper's sun
+    var len = Math.abs(th - 90) < 0.5 ? 0 : o.len * sz.x * Math.tan(e0) / Math.tan(e);
+    var dir = th < 90 ? -1 : 1, bx = o.x * sz.x, cy = o.y * sz.y, t = o.t * sz.y, hw = o.w * sz.x / 2;
+    var b = toScreen({x:bx, y:cy}), tip = toScreen({x:bx + dir*len, y:cy}), k = imgPxToScreen(), T = t * k, HW = hw * k;
+    ctx.save();
+    ctx.shadowColor = "rgba(10,40,60,.6)"; ctx.shadowBlur = Math.max(2, T * 0.5);
+    var grad = ctx.createLinearGradient(b.x, 0, tip.x === b.x ? b.x + 1 : tip.x, 0);
+    grad.addColorStop(0, "rgba(14,58,82,.9)"); grad.addColorStop(1, "rgba(14,58,82,.62)");
+    ctx.fillStyle = grad;
+    if(Math.abs(tip.x - b.x) > 1){
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y - T/2); ctx.lineTo(tip.x, b.y - T*0.35);
+      ctx.quadraticCurveTo(tip.x + dir*T*0.5, b.y, tip.x, b.y + T*0.35);
+      ctx.lineTo(b.x, b.y + T/2); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = "rgba(14,58,82,.85)";
+    ctx.beginPath(); ctx.ellipse(b.x, b.y, HW * 1.15, T * 0.55, 0, 0, Math.PI*2); ctx.fill(); // contact shadow
+    ctx.restore();
+  }
+  function drawLightLayer(){
+    var ctx = act.ctx, cfg = light.cfg, sz = osdImgSize(); if(!sz) return;
+    var tl = toScreen({x:0, y:0}), br = toScreen({x:sz.x, y:sz.y});
+    ctx.save();
+    ctx.beginPath(); ctx.rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y); ctx.clip();
+    light.patches.forEach(function(p){
+      var a = toScreen({x:p.x, y:p.y}), b = toScreen({x:p.x + p.w, y:p.y + p.h});
+      ctx.drawImage(p.canvas, a.x, a.y, b.x - a.x, b.y - a.y);
+    });
+    cfg.objects.forEach(function(o){ drawCastShadow(ctx, o, sz); });
+    // daylight: brighter when the sun is high, dimmer near the horizon, golden in the evening.
+    // (plain translucent layers: this canvas sits on top of the painting, so blend modes can't reach it)
+    var s = Math.sin(light.theta * Math.PI/180), s0 = Math.sin(cfg.hopper * Math.PI/180);
+    var tint = function(rgb, a){ if(a > 0.002){ ctx.fillStyle = "rgba(" + rgb + "," + a.toFixed(3) + ")"; ctx.fillRect(tl.x, tl.y, br.x - tl.x, br.y - tl.y); } };
+    if(s > s0){ tint("255,250,236", 0.14 * (s - s0) / (1 - s0)); }
+    if(s < s0){ tint("40,18,8", 0.3 * (s0 - s) / s0); }
+    if(light.theta > 90){ tint("190,90,25", 0.2 * (light.theta - 90) / 90); }
+    ctx.restore();
+    drawSun(ctx);
+  }
+  function drawSun(ctx){
+    var f = sunFrame(), d = act.dpr, th = light.theta * Math.PI/180, h0 = light.cfg.hopper * Math.PI/180;
+    ctx.save();
+    ctx.setLineDash([7*d, 7*d]); ctx.strokeStyle = "rgba(255,228,160,.5)"; ctx.lineWidth = 2*d;
+    ctx.beginPath(); ctx.ellipse(f.cx, f.cy, f.rx, f.ry, 0, Math.PI, 2*Math.PI); ctx.stroke();
+    ctx.setLineDash([]);
+    // where Hopper put the sun
+    var hx = f.cx + f.rx*Math.cos(h0), hy = f.cy - f.ry*Math.sin(h0);
+    ctx.fillStyle = "rgba(224,189,106,.95)"; ctx.beginPath(); ctx.arc(hx, hy, 4*d, 0, Math.PI*2); ctx.fill();
+    ctx.font = "600 " + (11*d) + "px " + getComputedStyle(document.body).fontFamily;
+    ctx.textAlign = "right"; ctx.fillText("Hopper's sun", hx - 9*d, hy + 4*d);
+    // the sun
+    var sx = f.cx + f.rx*Math.cos(th), sy = f.cy - f.ry*Math.sin(th);
+    var glow = ctx.createRadialGradient(sx, sy, 4*d, sx, sy, 34*d);
+    glow.addColorStop(0, "rgba(255,226,120,.85)"); glow.addColorStop(1, "rgba(255,226,120,0)");
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(sx, sy, 34*d, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = "#ffd75e"; ctx.lineWidth = 2.5*d; ctx.lineCap = "round";
+    for(var i=0;i<8;i++){
+      var a = i * Math.PI/4;
+      ctx.beginPath(); ctx.moveTo(sx + Math.cos(a)*17*d, sy + Math.sin(a)*17*d); ctx.lineTo(sx + Math.cos(a)*24*d, sy + Math.sin(a)*24*d); ctx.stroke();
+    }
+    ctx.fillStyle = "#ffd75e"; ctx.beginPath(); ctx.arc(sx, sy, 13*d, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  function setSunFromPointer(e){
+    var f = sunFrame(), p = canvasPoint(e), dx = (p.x - f.cx) / f.rx, dy = (f.cy - p.y) / f.ry;
+    var th = Math.atan2(dy, dx) * 180/Math.PI;
+    if(dy < 0){ th = dx >= 0 ? 0 : 180; } // below the horizon: stick to the nearest end
+    light.theta = Math.min(174, Math.max(6, th));
+    cancelAnimationFrame(light.tween);
+    updateLightStatus(); redrawActivity();
+  }
+  function lightDown(e){
+    if(state.findPhase !== "lighting" || !osd) return;
+    e.preventDefault();
+    try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
+    light.drag = true; setSunFromPointer(e);
+  }
+  function lightMove(e){ if(!light.drag) return; e.preventDefault(); setSunFromPointer(e); }
+  function lightUp(){ light.drag = false; }
+  function updateLightStatus(){
+    var th = light.theta, msg;
+    if(Math.abs(th - light.cfg.hopper) < 5){ msg = "This is where Hopper put the sun."; }
+    else if(th < 12){ msg = "Sunrise: the longest shadows!"; }
+    else if(th < 60){ msg = "Morning: long shadows"; }
+    else if(th <= 120){ msg = "Noon: tiny shadows"; }
+    else if(th <= 168){ msg = "Afternoon: the shadows swing the other way"; }
+    else { msg = "Sunset: long shadows again"; }
+    $("lightStatus").textContent = msg;
+  }
+  function sunBackToHopper(){
+    var from = light.theta, to = light.cfg.hopper, t0 = performance.now();
+    cancelAnimationFrame(light.tween);
+    var step = function(now){
+      var k = Math.min(1, (now - t0) / 700), ease = k < 0.5 ? 2*k*k : 1 - Math.pow(-2*k + 2, 2)/2;
+      light.theta = from + (to - from) * ease; updateLightStatus(); redrawActivity();
+      if(k < 1){ light.tween = requestAnimationFrame(step); }
+    };
+    light.tween = requestAnimationFrame(step);
+  }
+  function finishLight(){
+    var s = STOPS[state.findIndex];
+    state.findPhase = "revealed"; light.drag = false;
+    actCanvas().classList.add("locked");
+    $("lightPanel").classList.add("hidden");
+    showActivityCaption(s, "");
+  }
+  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } }
+  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } }
+  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } }
   function setFeedback(txt, cls){
     var f=$("feedback"); f.textContent=txt; f.className="feedback";
     if(txt){ if(cls) f.classList.add(cls); void f.offsetWidth; f.classList.add("show"); }
@@ -994,30 +1333,24 @@
   $("startFindBtn").addEventListener("click", function(){ beginSeeking(0); });
   $("showMeBtn").addEventListener("click", function(){ revealStop(state.findIndex, false); });
   $("nextFindBtn").addEventListener("click", nextFind);
-  $("paintCanvas").addEventListener("pointerdown", paintDown);
-  $("paintCanvas").addEventListener("pointermove", paintMove);
-  $("paintCanvas").addEventListener("pointerup", paintUp);
-  $("paintCanvas").addEventListener("pointercancel", paintUp);
-  Array.prototype.forEach.call(document.querySelectorAll(".brush-btn"), function(b){
-    b.addEventListener("click", function(){
-      document.querySelectorAll(".brush-btn").forEach(function(x){ x.setAttribute("aria-pressed","false"); });
-      b.setAttribute("aria-pressed","true"); paint.size = parseFloat(b.dataset.size);
-    });
-  });
-  Array.prototype.forEach.call(document.querySelectorAll(".swatch"), function(b){
-    b.addEventListener("click", function(){
-      document.querySelectorAll(".swatch").forEach(function(x){ x.setAttribute("aria-pressed","false"); });
-      b.setAttribute("aria-pressed","true"); paint.color = b.dataset.color;
-    });
-  });
+  $("actCanvas").addEventListener("pointerdown", activityDown);
+  $("actCanvas").addEventListener("pointermove", activityMove);
+  $("actCanvas").addEventListener("pointerup", activityUp);
+  $("actCanvas").addEventListener("pointercancel", activityUp);
   $("paintClear").addEventListener("click", function(){
-    paint.strokes = []; redrawPaint(); $("paintDone").disabled = true;
+    paint.strokes = []; redrawActivity(); $("paintDone").disabled = true;
   });
   $("paintPeek").addEventListener("click", function(){
-    var on = $("paintCanvas").classList.toggle("peek");
+    var on = $("actCanvas").classList.toggle("peek");
     $("paintPeek").textContent = on ? "Show mine" : "Peek under";
   });
   $("paintDone").addEventListener("click", finishPaint);
+  $("lightHopper").addEventListener("click", sunBackToHopper);
+  $("lightDone").addEventListener("click", finishLight);
+  $("actAgainBtn").addEventListener("click", function(){
+    var s = STOPS[state.findIndex];
+    if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); }
+  });
   $("quitFind").addEventListener("click", showGallery);
   $("againBtn").addEventListener("click", startLooking);
   $("doneBtn").addEventListener("click", showGallery);
