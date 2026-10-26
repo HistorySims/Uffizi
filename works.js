@@ -21,8 +21,11 @@ window.MUSEUMS = [
 //   paint:{look, check, brushes, brush, colors, say, mirror?, wobble?} = paint along. look = how strokes look
 //     (wax, oil, frosting, gold, wire, soft, glow, streak); check = how the painting is judged
 //     (any, shortBroad, broadSwoosh, thinLong, colorUsed, oneLine, sameSlant, smoothLong); say = words for each result.
-//   light:{hopper, horizon, objects, patches} = drag the sun; objects cast shadows that match the painted ones at the
-//     artist's sun (hopper, in degrees); patches cover the painted shadows with nearby clean background
+//   light:{hopper, horizon, objects, walls, patches, relight} = drag the sun. objects stand on the ground and cast
+//     shadows along it (len = painted shadow length at the artist's sun, hopper in degrees; back = how much a long
+//     shadow drifts up; offscreen = standing outside the painting); walls = flat signs sticking straight out of the
+//     wall (dx, dy = where the painted shadow's far edge is at the artist's sun). The painted shadows are hidden:
+//     relight brightens a shadow's shape back to the lit color; patches cover it with nearby clean background
 //     (copied from sx,sy; a narrower source width sw is repeated across).
 // Optional: role = its part in the visit (shown on the card), kind = "sculpture" etc. (default "painting"),
 // onView:false = not on display right now (card is darkened; still playable).
@@ -295,16 +298,23 @@ window.WORKS = [
       {find:"Can you find a window with its blind pulled all the way down?", cx:0.31, cy:0.37, box:{x:0.22, y:0.26, w:0.18, h:0.21}, title:"Still asleep", body:"These two windows have dark green blinds pulled all the way down. Whoever lives there is still fast asleep! Did you count all the windows upstairs? There are ten, and every one is a little different: blinds up, blinds halfway, curtains, no curtains. Hopper wants you to wonder about the people inside."},
       {find:"Can you find the striped barber pole?", cx:0.633, cy:0.76, box:{x:0.6, y:0.63, w:0.07, h:0.27}, title:"The barber pole", body:"Red, white and blue stripes mean there's a barber shop here. Barbers put these poles outside so you could find them from far down the street. But it's Sunday morning. No haircuts today, so the pole stands all alone."},
       {find:"Can you find the fire hydrant on the sidewalk?", cx:0.262, cy:0.87, box:{x:0.22, y:0.8, w:0.08, h:0.14}, title:"A long morning shadow", body:"Look at the hydrant's shadow stretching across the sidewalk. Shadows get long when the sun is low, just after it comes up. That's how Hopper tells you what time it is without painting a single clock."},
-      {find:"Near the top left, can you find a big slanting shadow on the bricks?", cx:0.17, cy:0.42, box:{x:0.07, y:0.36, w:0.19, h:0.12}, title:"A shadow from somewhere else", body:"Something we can't see, maybe a taller building across the street, is blocking the sun and laying this big shadow across the bricks. Hopper loved how light and shadow could make an ordinary street look like a stage just before the show begins."},
+      {find:"Near the top left, a big slanting shadow lies across the bricks. Can you find it?", cx:0.17, cy:0.42, box:{x:0.028, y:0.363, w:0.217, h:0.115}, areas:[{poly:[[0.245,0.363],[0.245,0.478],[0.028,0.478],[0.028,0.452]]}], hint:"on the bricks near the top left, just under the windows", title:"A sign you can barely see", body:"That shadow comes from a sign sticking straight out from the wall, right beside the third window. We're looking at the sign from its thin edge, so it almost disappears. But its shadow gives it away! The yellow sign hanging lower down sticks out the same way, and it casts a slanting shadow too."},
+      {find:"Can you find a long, dark shadow stretching all the way across the sidewalk?", cx:0.5, cy:0.945, box:{x:0.32, y:0.62, w:0.68, h:0.38}, areas:[{poly:[[0,0.922],[1,0.929],[1,0.962],[0,0.955]]}], hint:"near the bottom, along the edge of the sidewalk", title:"A shadow from somewhere else", body:"That long shadow comes from something we can't see: a telephone pole standing just past the right edge of the painting. Hopper lets the street keep going beyond the frame, so you can imagine the rest of the block."},
       {find:"Can you find some letters on a shop window? Try to read them.", cx:0.47, cy:0.695, box:{x:0.42, y:0.64, w:0.1, h:0.11}, title:"Signs you can't read", body:"Try to read the sign... you can't! Hopper painted the letters as smudges on purpose. If you could read them, you'd start thinking about what the shop sells. Instead, you just feel the quiet."},
       {find:"Can you find the tall dark building peeking in at the top right corner?", cx:0.95, cy:0.08, box:{x:0.89, y:0.0, w:0.11, h:0.17}, title:"A big city waiting", body:"A tall dark building pokes up behind the shops. It reminds you that this little street is part of a huge city. In a few hours it will be busy and loud. But not yet."},
-      {find:"Now you be the sun! Drag it across the sky and watch the shadows move.", cx:0.45, cy:0.5, box:{x:0.2, y:0.0, w:0.5, h:1.0},
+      {find:"Now you be the sun! Drag it across the sky and watch every shadow move, even the ones from things you can't see.", cx:0.36, cy:0.5, box:{x:0.0, y:0.0, w:0.72, h:1.0},
         light:{ hopper:18, horizon:0.93,
-          objects:[ {name:"fire hydrant", x:0.262, y:0.923, t:0.012, w:0.04, len:0.194},
-                    {name:"barber pole", x:0.641, y:0.8875, t:0.009, w:0.027, len:0.225} ],
+          objects:[ {name:"fire hydrant", x:0.262, y:0.923, t:0.012, w:0.04, len:0.194, back:0.02},
+                    {name:"barber pole", x:0.641, y:0.8875, t:0.009, w:0.027, len:0.225},
+                    {name:"telephone pole (just past the right edge)", x:1.12, y:0.9475, t:0.016, w:0.02, len:1.3, back:0.006, color:"57,66,44", alpha:0.85, offscreen:true} ],
+          walls:[ {name:"sign beside the third window, seen edge-on", x:0.2375, top:0.371, bottom:0.476, dx:-0.21, dy:0.081, clip:{x:0, y:0.23, w:1, h:0.246}, color:"40,25,25", alpha:0.5},
+                  {name:"yellow hanging sign", x:0.1405, top:0.486, bottom:0.6, dx:-0.16, dy:0.0704, clip:{x:0, y:0.5135, w:1, h:0.036}, color:"40,40,15", alpha:0.42} ],
           patches:[ {x:0.055, y:0.912, w:0.192, h:0.022, sx:0.29, sy:0.912},
-                    {x:0.355, y:0.881, w:0.273, h:0.015, sx:0.285, sy:0.881, sw:0.07} ] },
-        title:"Hopper's sun", body:"When the sun is low, shadows stretch out long. When it's high at noon, they shrink to almost nothing. Hopper chose a low morning sun so the long, quiet shadows would make the street feel sleepy. Here's a secret: on the real Seventh Avenue, the sun could never make shadows like these. Hopper made up the light to get the feeling he wanted."}
+                    {x:0.355, y:0.881, w:0.273, h:0.015, sx:0.285, sy:0.881, sw:0.07},
+                    {x:0.0, y:0.9295, w:1.0, h:0.029, sx:0.0, sy:0.9585} ],
+          relight:[ {poly:[[0.2375,0.369],[0.2375,0.474],[0.03,0.474],[0.03,0.456],[0.077,0.456],[0.077,0.433]], lit:{x:0.19, y:0.335, w:0.04, h:0.025}, dark:{x:0.19, y:0.43, w:0.04, h:0.035}},
+                    {poly:[[0.1405,0.5135],[0.1405,0.5495],[0.0,0.5495],[0.0,0.5455],[0.078,0.5135]], lit:{x:0.003, y:0.52, w:0.04, h:0.015}, dark:{x:0.09, y:0.52, w:0.04, h:0.025}} ] },
+        title:"Hopper's sun", body:"When the sun is low, shadows stretch out long, like the telephone pole's shadow reaching across the whole sidewalk. When it's high at noon, they shrink to almost nothing. Hopper chose a low morning sun so the long, quiet shadows would make the street feel sleepy. Here's a secret: on the real Seventh Avenue, the sun could never make shadows like these. Hopper made up the light to get the feeling he wanted."}
     ],
     done:[
       "Did you notice? There isn't a single person in this whole painting. No cars, no dogs, no birds. Just sunlight, shadows, and windows. Hopper made it that quiet on purpose, so you would slow down and feel it.",

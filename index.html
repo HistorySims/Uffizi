@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
-<script src="works.js?v=2026-10-26b"></script>
+<script src="works.js?v=2026-10-26c"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -673,16 +673,28 @@
     osdOverlays.push(el);
     return el;
   }
+  function inPoly(x, y, poly){ // is the point inside this polygon? (ray casting)
+    var inside = false;
+    for(var i=0, j=poly.length-1; i<poly.length; j=i++){
+      var xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+      if(((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)){ inside = !inside; }
+    }
+    return inside;
+  }
+  // Each tap area is a rectangle {x,y,w,h} or a polygon {poly:[[x,y],...]}, as fractions of the image.
+  function areaPoints(r){ return r.poly || [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]]; }
   // Outline the exact tap area (areas minus anything covering them) instead of a circle.
   function addAreaOverlay(s, cls){
     var sz = osdImgSize(); if(!sz) return null;
     var all = s.areas.concat(s.exclude || []);
-    var x0 = Math.min.apply(null, s.areas.map(function(r){ return r.x; })), y0 = Math.min.apply(null, s.areas.map(function(r){ return r.y; }));
-    var x1 = Math.max.apply(null, s.areas.map(function(r){ return r.x + r.w; })), y1 = Math.max.apply(null, s.areas.map(function(r){ return r.y + r.h; }));
+    var pts = [].concat.apply([], s.areas.map(areaPoints));
+    var x0 = Math.min.apply(null, pts.map(function(p){ return p[0]; })), y0 = Math.min.apply(null, pts.map(function(p){ return p[1]; }));
+    var x1 = Math.max.apply(null, pts.map(function(p){ return p[0]; })), y1 = Math.max.apply(null, pts.map(function(p){ return p[1]; }));
     var bw = x1 - x0, bh = y1 - y0;
     var d = all.map(function(r){
-      var x = (r.x - x0) / bw * 1000, y = (r.y - y0) / bh * 1000, w = r.w / bw * 1000, h = r.h / bh * 1000;
-      return "M"+x+" "+y+"h"+w+"v"+h+"h"+(-w)+"z";
+      return areaPoints(r).map(function(p, i){
+        return (i ? "L" : "M") + ((p[0] - x0) / bw * 1000).toFixed(1) + " " + ((p[1] - y0) / bh * 1000).toFixed(1);
+      }).join("") + "Z";
     }).join("");
     var el = document.createElement("div"); el.className = cls;
     el.innerHTML = '<svg viewBox="0 0 1000 1000" preserveAspectRatio="none"><path d="'+d+'"/></svg>';
@@ -1032,11 +1044,13 @@
     $("lightPanel").classList.remove("hidden");
     updateGuides();
   }
-  // The artist's own painted shadows are covered with clean sidewalk copied from nearby,
-  // with soft edges, so the moving shadows can replace them.
+  // The artist's own painted shadows are hidden so the moving shadows can replace them.
+  // patches: copy clean background from nearby, with soft edges.
+  // relight: brighten a painted shadow back toward the lit color, more where it's darker,
+  //   so the brushwork stays (gain = lit sample / shaded sample).
   function buildLightPatches(){
-    var img = light.img, W = img.naturalWidth, H = img.naturalHeight;
-    light.patches = (light.cfg.patches || []).map(function(p){
+    var img = light.img, W = img.naturalWidth, H = img.naturalHeight, cfg = light.cfg;
+    light.patches = (cfg.patches || []).map(function(p){
       var w = Math.max(1, Math.round(p.w * W)), h = Math.max(1, Math.round(p.h * H)), c = document.createElement("canvas");
       var sw = Math.max(1, Math.round((p.sw || p.w) * W)); // a narrower source is repeated across
       c.width = w; c.height = h;
@@ -1045,40 +1059,96 @@
       g.globalCompositeOperation = "destination-in";
       var fx = Math.min(0.5, 10 / w), fy = Math.min(0.5, 3 / h);
       var gx = g.createLinearGradient(0, 0, w, 0), gy = g.createLinearGradient(0, 0, 0, h);
-      [[gx, fx], [gy, fy]].forEach(function(pair){
-        pair[0].addColorStop(0, "rgba(0,0,0,0)"); pair[0].addColorStop(pair[1], "#000");
-        pair[0].addColorStop(1 - pair[1], "#000"); pair[0].addColorStop(1, "rgba(0,0,0,0)");
-        g.fillStyle = pair[0]; g.fillRect(0, 0, w, h);
+      // soft edges, except where the patch meets the edge of the painting
+      [[gx, fx, p.x <= 0, p.x + p.w >= 1], [gy, fy, p.y <= 0, p.y + p.h >= 1]].forEach(function(f){
+        f[0].addColorStop(0, f[2] ? "#000" : "rgba(0,0,0,0)"); f[0].addColorStop(f[1], "#000");
+        f[0].addColorStop(1 - f[1], "#000"); f[0].addColorStop(1, f[3] ? "#000" : "rgba(0,0,0,0)");
+        g.fillStyle = f[0]; g.fillRect(0, 0, w, h);
       });
       return { canvas:c, x:p.x * W, y:p.y * H, w:w, h:h };
+    });
+    if(!(cfg.relight || []).length) return;
+    var full = document.createElement("canvas"); full.width = W; full.height = H;
+    var fg = full.getContext("2d"); fg.drawImage(img, 0, 0);
+    var mean = function(r){
+      var d = fg.getImageData(Math.round(r.x*W), Math.round(r.y*H), Math.max(1, Math.round(r.w*W)), Math.max(1, Math.round(r.h*H))).data;
+      var t = [0,0,0], n = d.length / 4;
+      for(var i=0;i<d.length;i+=4){ t[0] += d[i]; t[1] += d[i+1]; t[2] += d[i+2]; }
+      return [t[0]/n, t[1]/n, t[2]/n];
+    };
+    var lum = function(r, g, b){ return 0.3*r + 0.59*g + 0.11*b; };
+    cfg.relight.forEach(function(rl){
+      var xs = rl.poly.map(function(p){ return p[0]; }), ys = rl.poly.map(function(p){ return p[1]; });
+      var x0 = Math.floor(Math.min.apply(null, xs) * W), y0 = Math.floor(Math.min.apply(null, ys) * H);
+      var w = Math.ceil(Math.max.apply(null, xs) * W) - x0 + 1, h = Math.ceil(Math.max.apply(null, ys) * H) - y0 + 1;
+      var L = mean(rl.lit), D = mean(rl.dark), gain = [L[0]/D[0], L[1]/D[1], L[2]/D[2]];
+      var lL = lum(L[0], L[1], L[2]), lD = lum(D[0], D[1], D[2]);
+      var c = document.createElement("canvas"); c.width = w; c.height = h;
+      var g = c.getContext("2d");
+      g.beginPath();
+      rl.poly.forEach(function(p, i){ var px = p[0]*W - x0, py = p[1]*H - y0; if(i === 0){ g.moveTo(px, py); } else { g.lineTo(px, py); } });
+      g.closePath(); g.fillStyle = "#000"; g.fill();
+      var mask = g.getImageData(0, 0, w, h).data, data = fg.getImageData(x0, y0, w, h), d = data.data;
+      for(var i=0;i<d.length;i+=4){
+        if(!mask[i+3]){ d[i+3] = 0; continue; }
+        var sh = Math.max(0, Math.min(1, (lL - lum(d[i], d[i+1], d[i+2])) / (lL - lD))); // how shaded this pixel is
+        d[i]   = Math.min(255, d[i]   * (1 + (gain[0]-1) * sh));
+        d[i+1] = Math.min(255, d[i+1] * (1 + (gain[1]-1) * sh));
+        d[i+2] = Math.min(255, d[i+2] * (1 + (gain[2]-1) * sh));
+        d[i+3] = mask[i+3];
+      }
+      g.putImageData(data, 0, 0);
+      light.patches.push({ canvas:c, x:x0, y:y0, w:w, h:h });
     });
   }
   function sunFrame(){ // the sun travels on a half-ellipse from the low right to the low left
     var c = actCanvas(), sz = osdImgSize(), d = act.dpr;
+    // keep the whole path inside the part of the canvas you can actually see (the stage clips it on small screens)
+    var cr = c.getBoundingClientRect(), sr = c.parentNode.parentNode.getBoundingClientRect();
+    var visTop = Math.max(0, sr.top - cr.top) * d, visBot = Math.min(cr.height, sr.bottom - cr.top) * d;
     var ground = sz ? toScreen({ x:0, y:light.cfg.horizon * sz.y }).y : c.height * 0.8;
-    var cy = Math.min(ground, c.height - 22*d);
-    return { cx:c.width/2, cy:cy, rx:Math.max(40*d, c.width/2 - 30*d), ry:Math.max(40*d, cy - 30*d) };
+    var cy = Math.min(ground, visBot - 22*d);
+    return { cx:c.width/2, cy:cy, rx:Math.max(40*d, c.width/2 - 30*d), ry:Math.max(40*d, cy - visTop - 34*d) };
   }
   function elevation(theta){ return Math.max(6, theta <= 90 ? theta : 180 - theta); }
+  // Something standing on the ground: its shadow lies along the sidewalk, longer when the sun is lower.
   function drawCastShadow(ctx, o, sz){
     var th = light.theta, e = elevation(th) * Math.PI/180, e0 = elevation(light.cfg.hopper) * Math.PI/180;
     // shadow length scales with 1/tan(height of the sun); matches the painted one at Hopper's sun
     var len = Math.abs(th - 90) < 0.5 ? 0 : o.len * sz.x * Math.tan(e0) / Math.tan(e);
     var dir = th < 90 ? -1 : 1, bx = o.x * sz.x, cy = o.y * sz.y, t = o.t * sz.y, hw = o.w * sz.x / 2;
-    var b = toScreen({x:bx, y:cy}), tip = toScreen({x:bx + dir*len, y:cy}), k = imgPxToScreen(), T = t * k, HW = hw * k;
+    var rise = (o.back || 0) * (len / sz.x) * sz.y; // long shadows drift slightly back toward the buildings
+    var b = toScreen({x:bx, y:cy}), tip = toScreen({x:bx + dir*len, y:cy - rise}), k = imgPxToScreen(), T = t * k, HW = hw * k;
+    var col = o.color || "14,58,82", a0 = o.alpha || 0.9;
     ctx.save();
-    ctx.shadowColor = "rgba(10,40,60,.6)"; ctx.shadowBlur = Math.max(2, T * 0.5);
+    ctx.shadowColor = "rgba(" + col + ",.6)"; ctx.shadowBlur = Math.max(2, T * 0.5);
     var grad = ctx.createLinearGradient(b.x, 0, tip.x === b.x ? b.x + 1 : tip.x, 0);
-    grad.addColorStop(0, "rgba(14,58,82,.9)"); grad.addColorStop(1, "rgba(14,58,82,.62)");
+    grad.addColorStop(0, "rgba(" + col + "," + a0 + ")"); grad.addColorStop(1, "rgba(" + col + "," + (a0 * 0.7).toFixed(2) + ")");
     ctx.fillStyle = grad;
     if(Math.abs(tip.x - b.x) > 1){
       ctx.beginPath();
-      ctx.moveTo(b.x, b.y - T/2); ctx.lineTo(tip.x, b.y - T*0.35);
-      ctx.quadraticCurveTo(tip.x + dir*T*0.5, b.y, tip.x, b.y + T*0.35);
+      ctx.moveTo(b.x, b.y - T/2); ctx.lineTo(tip.x, tip.y - T*0.35);
+      ctx.quadraticCurveTo(tip.x + dir*T*0.5, tip.y, tip.x, tip.y + T*0.35);
       ctx.lineTo(b.x, b.y + T/2); ctx.closePath(); ctx.fill();
     }
-    ctx.fillStyle = "rgba(14,58,82,.85)";
-    ctx.beginPath(); ctx.ellipse(b.x, b.y, HW * 1.15, T * 0.55, 0, 0, Math.PI*2); ctx.fill(); // contact shadow
+    if(!o.offscreen){ // the little pool of shadow right at its feet
+      ctx.fillStyle = "rgba(" + col + "," + (a0 * 0.95).toFixed(2) + ")";
+      ctx.beginPath(); ctx.ellipse(b.x, b.y, HW * 1.15, T * 0.55, 0, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+  // A flat sign sticking straight out from the wall, seen edge-on. Its shadow is a slanted
+  // shape on the wall; dx, dy = where the painted shadow's far edge sits at Hopper's sun.
+  function drawWallShadow(ctx, wl, sz){
+    var th = light.theta * Math.PI/180, h0 = light.cfg.hopper * Math.PI/180;
+    var dx = wl.dx * Math.cos(th) / Math.cos(h0), dy = wl.dy * Math.sin(th) / Math.sin(h0);
+    var P = function(x, y){ return toScreen({ x:x * sz.x, y:y * sz.y }); };
+    var a = P(wl.x, wl.top), b = P(wl.x + dx, wl.top + dy), c = P(wl.x + dx, wl.bottom + dy), d = P(wl.x, wl.bottom);
+    var c0 = P(wl.clip.x, wl.clip.y), c1 = P(wl.clip.x + wl.clip.w, wl.clip.y + wl.clip.h);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(c0.x, c0.y, c1.x - c0.x, c1.y - c0.y); ctx.clip(); // only on that part of the wall
+    ctx.fillStyle = "rgba(" + (wl.color || "40,25,25") + "," + (wl.alpha || 0.5) + ")";
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath(); ctx.fill();
     ctx.restore();
   }
   function drawLightLayer(){
@@ -1090,6 +1160,7 @@
       var a = toScreen({x:p.x, y:p.y}), b = toScreen({x:p.x + p.w, y:p.y + p.h});
       ctx.drawImage(p.canvas, a.x, a.y, b.x - a.x, b.y - a.y);
     });
+    (cfg.walls || []).forEach(function(wl){ drawWallShadow(ctx, wl, sz); });
     cfg.objects.forEach(function(o){ drawCastShadow(ctx, o, sz); });
     // daylight: brighter when the sun is high, dimmer near the horizon, golden in the evening.
     // (plain translucent layers: this canvas sits on top of the painting, so blend modes can't reach it)
@@ -1192,7 +1263,7 @@
     var inside;
     if(s.areas){
       // Every visible part of the object counts: inside any area, outside anything covering it.
-      var inR = function(r){ return px>=r.x && px<=r.x+r.w && py>=r.y && py<=r.y+r.h; };
+      var inR = function(r){ return r.poly ? inPoly(px, py, r.poly) : (px>=r.x && px<=r.x+r.w && py>=r.y && py<=r.y+r.h); };
       inside = s.areas.some(inR) && !(s.exclude||[]).some(inR);
     }
     else if(s.box){ inside = px>=s.box.x && px<=s.box.x+s.box.w && py>=s.box.y && py<=s.box.y+s.box.h; }
