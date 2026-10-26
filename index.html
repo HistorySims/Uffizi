@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
-<script src="works.js?v=2026-10-26c"></script>
+<script src="works.js?v=2026-10-26d"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -106,7 +106,10 @@
   .skip:hover{border-color:var(--gold);color:var(--gold-bright);}
 
   /* OpenSeadragon find viewer */
-  #frameFind,#frameLook{width:min(100%,1100px);height:74vh;display:block;background:#04080a;}
+  #frameLook{width:min(100%,1100px);height:74vh;display:block;background:#04080a;}
+  /* the find view fills exactly the space between the question and the controls, so a zoomed-in
+     detail is never hidden behind them (and tall paintings fit) */
+  #frameFind{width:min(100%,1100px);height:100%;display:block;background:#04080a;}
   #frameTune{width:min(100%,1100px);height:50vh;display:block;background:#04080a;margin:0 auto;}
   #osd,#osdLook,#osdTune{width:100%;height:100%;touch-action:none;}
   .tune-point{width:18px;height:18px;border-radius:50%;background:rgba(224,189,106,.95);
@@ -118,7 +121,7 @@
   .osd-hint{border:3px dashed var(--rose);border-radius:50%;opacity:0;pointer-events:none;transition:opacity .3s ease;}
   .osd-hint.show{opacity:.85;}
 
-  .stage{flex:1 1 auto;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;padding:6px 10px;}
+  .stage{flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;padding:6px 10px;}
   .stage::after{content:"";position:absolute;inset:0;pointer-events:none;
     background:radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(0,0,0,.55) 100%);}
   .frame{position:relative;display:inline-block;overflow:hidden;line-height:0;border-radius:2px;
@@ -176,6 +179,17 @@
   .swatch{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.3);}
   .swatch[aria-pressed="true"]{outline:3px solid var(--gold-bright);outline-offset:2px;}
   .paint-actions .btn{min-height:44px;padding:0 14px;font-size:.9rem;}
+  .paint-actions .btn[disabled]{opacity:.4;cursor:default;}
+  .paint-actions .btn-ghost[disabled]:hover{border-color:var(--foam-faint);color:var(--foam);}
+  #stickerPanel{gap:8px;}
+  #stickerPanel .paint-actions{flex-wrap:nowrap;gap:6px;}
+  #stickerPanel .paint-actions .btn{padding:0 12px;}
+  #stickerPanel .light-status{font-size:1rem;min-height:1.3em;}
+  .sticker-tray{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:400px;}
+  .sticker-btn{width:44px;height:44px;border-radius:11px;border:1.5px solid var(--foam-faint);background:#0b1210;
+    display:inline-flex;align-items:center;justify-content:center;padding:4px;transition:transform .12s ease;}
+  .sticker-btn img{max-width:100%;max-height:100%;display:block;pointer-events:none;}
+  .sticker-btn[aria-pressed="true"]{border-color:var(--gold-bright);background:rgba(201,162,75,.16);box-shadow:0 0 0 2px rgba(224,189,106,.35);transform:scale(1.06);}
 
   /* ---------- DONE ---------- */
   #done{align-items:center;justify-content:center;text-align:center;padding:36px 28px;overflow-y:auto;}
@@ -295,6 +309,16 @@
         <div class="paint-row paint-actions">
           <button class="btn btn-ghost" id="lightHopper">Back to Hopper's sun</button>
           <button class="btn btn-primary" id="lightDone">I'm done</button>
+        </div>
+      </div>
+      <div class="paint-panel hidden" id="stickerPanel">
+        <div class="light-status" id="stickerStatus" aria-live="polite"></div>
+        <div class="sticker-tray" id="stickerTray" role="group" aria-label="Choose a sticker"></div>
+        <div class="paint-row paint-actions">
+          <button class="btn btn-ghost" id="stickerUndo">Undo</button>
+          <button class="btn btn-ghost" id="stickerClear">Start over</button>
+          <button class="btn btn-ghost" id="stickerPeek">Peek</button>
+          <button class="btn btn-primary" id="stickerDone" disabled>I'm done</button>
         </div>
       </div>
       <div class="caption hidden" id="findCaption">
@@ -624,6 +648,7 @@
     $("showMeBtn").classList.add("hidden");
     $("findQ").textContent="";
     $("findProgress").textContent="Exploring";
+    preloadStickers(currentPainting);
     osdLoad();
     resetReveal();
   }
@@ -647,6 +672,18 @@
     osd.addHandler("canvas-click", onOsdTap);
     osd.addHandler("update-viewport", redrawActivity);
     osd.addHandler("open", function(){ try{ osd.viewport.goHome(true); }catch(_){} });
+    // The view fills the space between the question and the controls, and that space changes
+    // (a hint, a caption, an activity's tools). Re-fit so the right thing stays fully in view.
+    // (OpenSeadragon adjusts the zoom itself right after this event, so re-fit just after that.)
+    var refit = 0;
+    osd.addHandler("resize", function(){
+      clearTimeout(refit);
+      refit = setTimeout(function(){
+        var s = STOPS[state.findIndex];
+        if(state.findPhase === "intro" || state.findPhase === "seeking"){ osdHome(); }
+        else if(s){ fitToStop(s, true); }
+      }, 0);
+    });
     return osd;
   }
   function osdLoad(){ if(ensureOSD()){ osd.open({ type:"image", url: currentPainting.tiles }); } }
@@ -703,12 +740,12 @@
     osdOverlays.push(el);
     return el;
   }
-  function fitToStop(s){
+  function fitToStop(s, now){
     var sz = osdImgSize(); if(!sz) return;
     var rect;
     if(s.box){ rect = new OpenSeadragon.Rect(s.box.x*sz.x, s.box.y*sz.y, s.box.w*sz.x, s.box.h*sz.y); }
     else { var bw = sz.x / s.z; rect = new OpenSeadragon.Rect(s.cx*sz.x - bw/2, s.cy*sz.y - bw/2, bw, bw); }
-    osd.viewport.fitBounds(osd.viewport.imageToViewportRectangle(rect), false);
+    osd.viewport.fitBounds(osd.viewport.imageToViewportRectangle(rect), !!now);
   }
   function ringDia(s){ return s.box ? Math.max(s.box.w, s.box.h) : s.r; }
   function resetReveal(){
@@ -725,8 +762,9 @@
     $("showMeBtn").classList.add("hidden");
     setFeedback("", "");
     resetReveal();
-    $("findProgress").textContent = (currentPainting.freeTap || s.paint || s.light ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
+    $("findProgress").textContent = (currentPainting.freeTap || s.paint || s.light || s.stickers ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
     if(s.paint){ enterPaint(s); return; }
+    if(s.stickers){ enterStickers(s); return; }
     if(s.light){ enterLight(s); return; }
     $("frameFind").classList.add("seeking");
     $("findQ").textContent = currentPainting.freeTap ? s.find : (s.find + " Tap it!");
@@ -753,9 +791,10 @@
   function exitActivity(){
     cancelAnimationFrame(act.raf); act.raf = 0; act.mode = null;
     actCanvas().classList.add("hidden");
-    $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden");
+    $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden");
     $("actAgainBtn").classList.add("hidden");
     paint.strokes = []; paint.cur = null; paint.wobble = false; light.drag = false;
+    stk.items = []; stk.press = null; clearTimeout(stk.msgTimer);
     if(act.ctx){ act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height); }
     if(osd){ osd.setMouseNavEnabled(true); }
   }
@@ -763,7 +802,7 @@
     if(!act.ctx || !osd || !act.mode || actCanvas().classList.contains("hidden")) return;
     sizeActCanvas();
     act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height);
-    if(act.mode === "paint"){ drawPaintLayer(); } else { drawLightLayer(); }
+    if(act.mode === "paint"){ drawPaintLayer(); } else if(act.mode === "light"){ drawLightLayer(); } else { drawStickerLayer(); }
   }
   function canvasPoint(e){
     var r = actCanvas().getBoundingClientRect();
@@ -1239,9 +1278,183 @@
     $("lightPanel").classList.add("hidden");
     showActivityCaption(s, "");
   }
-  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } }
-  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } }
-  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } }
+  /* ----- stickers: pick one from the tray, tap the painting to place it, drag to move it -----
+     A tap always places a new sticker; pressing on a placed one and sliding moves it instead.
+     Stickers are stored in image pixels (x, y = where its anchor sits) and drawn lowest-last,
+     so nearer things overlap farther ones. An optional ground image covers part of the painting
+     first (e.g. the meadow with Botticelli's own flowers cleared away). */
+  var stk = { cfg:null, imgs:{}, kind:0, items:[], press:null, seq:0, msgTimer:0 };
+  function stickerImg(src){
+    if(!stk.imgs[src]){
+      var im = new Image();
+      im.onload = function(){ if(act.mode === "stickers"){ redrawActivity(); } };
+      im.src = src; stk.imgs[src] = im;
+    }
+    return stk.imgs[src];
+  }
+  function preloadStickers(painting){
+    painting.stops.forEach(function(s){
+      if(!s.stickers) return;
+      if(s.stickers.ground){ stickerImg(s.stickers.ground.src); }
+      s.stickers.set.forEach(function(k){ stickerImg(k.src); });
+    });
+  }
+  function enterStickers(s){
+    var cfg = s.stickers;
+    act.mode = "stickers"; stk.cfg = cfg; stk.items = []; stk.kind = 0; stk.press = null;
+    preloadStickers(currentPainting);
+    buildStickerTray(cfg);
+    resumeStickers(s);
+  }
+  function resumeStickers(s){
+    state.findPhase = "stickers";
+    stk.press = null;
+    $("findQ").textContent = s.find;
+    $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
+    if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
+    showActCanvas("stickers"); redrawActivity();
+    setStickerPeek(false);
+    updateStickerButtons(); stickerStatus();
+    $("stickerPanel").classList.remove("hidden");
+    updateGuides();
+  }
+  function buildStickerTray(cfg){
+    var tray = $("stickerTray"); tray.innerHTML = "";
+    cfg.set.forEach(function(k, i){
+      var b = document.createElement("button"); b.type = "button"; b.className = "sticker-btn";
+      b.setAttribute("aria-label", k.name); b.setAttribute("aria-pressed", String(i === stk.kind));
+      var im = document.createElement("img"); im.src = k.src; im.alt = ""; b.appendChild(im);
+      b.addEventListener("click", function(){ pressOnly(tray, b); stk.kind = i; });
+      tray.appendChild(b);
+    });
+  }
+  function stickerStatus(msg){
+    clearTimeout(stk.msgTimer);
+    var n = stk.items.length, word = stk.cfg.word || ["sticker", "stickers"];
+    $("stickerStatus").textContent = msg || (n ? n + " " + word[n === 1 ? 0 : 1] + " so far" : (stk.cfg.start || "Pick one, then tap to place it."));
+    if(msg){ stk.msgTimer = setTimeout(function(){ stickerStatus(); }, 2200); }
+  }
+  function updateStickerButtons(){
+    var n = stk.items.length;
+    $("stickerUndo").disabled = !n; $("stickerClear").disabled = !n; $("stickerDone").disabled = !n;
+  }
+  function areaPx(){ var a = stk.cfg.area, sz = osdImgSize(); return { x0:a.x*sz.x, y0:a.y*sz.y, x1:(a.x+a.w)*sz.x, y1:(a.y+a.h)*sz.y }; }
+  function inStickerArea(p){ var a = areaPx(); return p.x >= a.x0 && p.x <= a.x1 && p.y >= a.y0 && p.y <= a.y1; }
+  function clampToArea(p){ var a = areaPx(); return { x:Math.min(a.x1, Math.max(a.x0, p.x)), y:Math.min(a.y1, Math.max(a.y0, p.y)) }; }
+  function stickerOrder(){ return stk.items.slice().sort(function(a, b){ return (a.y - b.y) || (a.n - b.n); }); }
+  function stickerAt(p){ // the topmost sticker under this point (generous enough for small fingers)
+    var order = stickerOrder(), k = imgPxToScreen(), minR = 16 * act.dpr / k;
+    for(var i=order.length-1; i>=0; i--){
+      var it = order[i], kd = stk.cfg.set[it.kind];
+      var cx = it.x + (0.5 - kd.ax) * kd.w * it.s, cy = it.y + (0.5 - kd.ay) * kd.h * it.s;
+      var r = Math.max(minR, Math.min(kd.w, kd.h) * it.s * 0.5);
+      if(Math.abs(p.x - cx) <= Math.max(r, kd.w * it.s * 0.45) && Math.abs(p.y - cy) <= Math.max(r, kd.h * it.s * 0.45)) return it;
+    }
+    return null;
+  }
+  function placeSticker(p){
+    var kd = stk.cfg.set[stk.kind], spin = (kd.spin != null ? kd.spin : 8) * Math.PI / 180;
+    var it = { kind:stk.kind, x:p.x, y:p.y, n:++stk.seq,
+               s:(stk.cfg.scale || 1) * (0.88 + Math.random() * 0.27), rot:(Math.random() * 2 - 1) * spin, flip:Math.random() < 0.5 };
+    stk.items.push(it);
+    updateStickerButtons(); stickerStatus(); redrawActivity();
+    return it;
+  }
+  function drawStickerLayer(){
+    var ctx = act.ctx, cfg = stk.cfg, sz = osdImgSize(); if(!sz) return;
+    var k = imgPxToScreen(), tl = toScreen({x:0, y:0}), br = toScreen({x:sz.x, y:sz.y});
+    ctx.save();
+    ctx.beginPath(); ctx.rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y); ctx.clip();
+    var g = cfg.ground, gi = g && stk.imgs[g.src];
+    if(gi && gi.complete && gi.naturalWidth){
+      var a = toScreen({x:g.x*sz.x, y:g.y*sz.y}), b = toScreen({x:(g.x+g.w)*sz.x, y:(g.y+g.h)*sz.y});
+      ctx.drawImage(gi, a.x, a.y, b.x - a.x, b.y - a.y);
+    }
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    var moving = stk.press && stk.press.moving && stk.press.item;
+    stickerOrder().forEach(function(it){
+      var kd = cfg.set[it.kind], im = stk.imgs[kd.src];
+      if(!im || !im.complete || !im.naturalWidth) return;
+      var p = toScreen({x:it.x, y:it.y}), sc = k * it.s * (it === moving ? 1.08 : 1);
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(it.rot); ctx.scale(it.flip ? -sc : sc, sc);
+      if(it === moving){ ctx.shadowColor = "rgba(0,0,0,.7)"; ctx.shadowBlur = 10 * act.dpr; ctx.shadowOffsetY = 4 * act.dpr; }
+      ctx.drawImage(im, -kd.ax * kd.w, -kd.ay * kd.h, kd.w, kd.h);
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+  function stickerDown(e){
+    if(state.findPhase !== "stickers" || !osd) return;
+    e.preventDefault();
+    if(actCanvas().classList.contains("peek")){ setStickerPeek(false); return; } // a tap while peeking just comes back
+    var p = toImage(e);
+    try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
+    var hit = stickerAt(p);
+    if(hit){ stk.press = { start:canvasPoint(e), at:p, item:hit, off:{x:hit.x - p.x, y:hit.y - p.y}, moving:false, fresh:false }; return; }
+    if(!inStickerArea(p)){ stickerStatus(stk.cfg.outside || "Try a spot lower down!"); return; }
+    var it = placeSticker(p);
+    stk.press = { start:canvasPoint(e), at:p, item:it, off:{x:0, y:0}, moving:false, fresh:true };
+  }
+  function stickerMove(e){
+    var pr = stk.press; if(!pr) return;
+    e.preventDefault();
+    var c = canvasPoint(e);
+    if(!pr.moving && Math.hypot(c.x - pr.start.x, c.y - pr.start.y) < 8 * act.dpr) return;
+    pr.moving = true;
+    var p = toImage(e), q = clampToArea({ x:p.x + pr.off.x, y:p.y + pr.off.y });
+    pr.item.x = q.x; pr.item.y = q.y;
+    redrawActivity();
+  }
+  function stickerUp(){
+    var pr = stk.press; if(!pr) return;
+    stk.press = null;
+    // pressed on a sticker without sliding: that's a tap, so place a new one there
+    if(!pr.moving && !pr.fresh){
+      if(inStickerArea(pr.at)){ placeSticker(pr.at); } else { stickerStatus(stk.cfg.outside || "Try a spot lower down!"); }
+    }
+    redrawActivity();
+  }
+  function setStickerPeek(on){ // hide your stickers for a moment to see the real painting
+    actCanvas().classList.toggle("peek", on);
+    $("stickerPeek").textContent = on ? "Back" : "Peek";
+    $("stickerPeek").setAttribute("aria-label", on ? "Back to mine" : (stk.cfg.peek || "Peek at the real painting"));
+    $("stickerPeek").setAttribute("aria-pressed", String(on));
+  }
+  // Each check returns a key; the painting's own words for that key come from works.js (stickers.say).
+  var STICKER_CHECKS = {
+    any: function(){ return "good"; },
+    meadow: function(items, cfg){ // Botticelli: lots of flowers, many kinds, spread all over like a carpet
+      if(items.length < (cfg.min || 12)) return "few";
+      var kinds = {}; items.forEach(function(it){ kinds[it.kind] = 1; });
+      if(Object.keys(kinds).length < (cfg.kinds || 4)) return "kinds";
+      var sp = cfg.spread;
+      if(sp){
+        // split the part of the meadow you can see into a grid; most squares should have a flower
+        var a = areaPx(), v = osd.viewport.viewportToImageRectangle(osd.viewport.getBounds(true));
+        var gx0 = Math.max(a.x0, v.x), gy0 = Math.max(a.y0, v.y), gx1 = Math.min(a.x1, v.x + v.width), gy1 = Math.min(a.y1, v.y + v.height);
+        var cw = (gx1 - gx0) / sp.cols, ch = (gy1 - gy0) / sp.rows, filled = 0;
+        for(var r=0; r<sp.rows; r++){ for(var c=0; c<sp.cols; c++){
+          var x0 = gx0 + c*cw, y0 = gy0 + r*ch, x1 = x0 + cw, y1 = y0 + ch;
+          if(items.some(function(it){ return it.x >= x0 && it.x < x1 && it.y >= y0 && it.y < y1; })){ filled++; }
+        } }
+        if(filled / (sp.rows * sp.cols) < (sp.need || 0.75)) return "spread";
+      }
+      return "good";
+    }
+  };
+  function finishStickers(){
+    var s = STOPS[state.findIndex], cfg = s.stickers;
+    var key = (STICKER_CHECKS[cfg.check] || STICKER_CHECKS.any)(stk.items, cfg);
+    state.findPhase = "revealed"; stk.press = null;
+    setStickerPeek(false);
+    actCanvas().classList.add("locked");
+    $("stickerPanel").classList.add("hidden");
+    showActivityCaption(s, (cfg.say && (cfg.say[key] || cfg.say.good)) || "");
+  }
+  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } }
+  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } }
+  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } else if(act.mode === "stickers"){ stickerUp(e); } }
   function setFeedback(txt, cls){
     var f=$("feedback"); f.textContent=txt; f.className="feedback";
     if(txt){ if(cls) f.classList.add(cls); void f.offsetWidth; f.classList.add("show"); }
@@ -1416,11 +1629,22 @@
     $("paintPeek").textContent = on ? "Show mine" : "Peek under";
   });
   $("paintDone").addEventListener("click", finishPaint);
+  $("stickerUndo").addEventListener("click", function(){
+    if(!stk.items.length) return;
+    var last = stk.items.reduce(function(a, b){ return b.n > a.n ? b : a; });
+    stk.items.splice(stk.items.indexOf(last), 1);
+    updateStickerButtons(); stickerStatus(); redrawActivity();
+  });
+  $("stickerClear").addEventListener("click", function(){
+    stk.items = []; updateStickerButtons(); stickerStatus(); redrawActivity();
+  });
+  $("stickerPeek").addEventListener("click", function(){ setStickerPeek(!actCanvas().classList.contains("peek")); });
+  $("stickerDone").addEventListener("click", finishStickers);
   $("lightHopper").addEventListener("click", sunBackToHopper);
   $("lightDone").addEventListener("click", finishLight);
   $("actAgainBtn").addEventListener("click", function(){
     var s = STOPS[state.findIndex];
-    if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); }
+    if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); } else if(s.stickers){ resumeStickers(s); }
   });
   $("quitFind").addEventListener("click", showGallery);
   $("againBtn").addEventListener("click", startLooking);
