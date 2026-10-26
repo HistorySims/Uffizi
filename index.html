@@ -102,6 +102,7 @@
     letter-spacing:.12em;text-transform:uppercase;display:inline-flex;align-items:center;gap:7px;}
   .quit:hover{border-color:var(--rose);color:var(--rose);}
   .skip{left:16px;right:auto;}
+  #muteLook,#muteFind{right:124px;padding:0 14px;}
   .skip:hover{border-color:var(--gold);color:var(--gold-bright);}
 
   /* OpenSeadragon find viewer */
@@ -151,6 +152,19 @@
   .caption h2{font-family:var(--serif);font-weight:600;font-size:1.5rem;margin:0 0 8px;color:var(--gold-bright);}
   .caption p{font-family:var(--serif);font-size:1.18rem;line-height:1.45;margin:0 auto 16px;max-width:520px;color:var(--foam);}
   .caption .btn{min-width:150px;}
+
+  /* paint-along stop */
+  .paint-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;touch-action:none;cursor:crosshair;transition:opacity .25s ease;}
+  .paint-canvas.locked{pointer-events:none;}
+  .paint-canvas.peek{opacity:0;}
+  .paint-panel{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;padding-top:4px;}
+  .paint-row{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;}
+  .brush-btn{width:46px;height:44px;border-radius:12px;border:1.5px solid var(--foam-faint);display:inline-flex;align-items:center;justify-content:center;}
+  .brush-btn span{display:block;width:26px;background:var(--foam);border-radius:999px;}
+  .brush-btn[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.15);}
+  .swatch{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.3);}
+  .swatch[aria-pressed="true"]{outline:3px solid var(--gold-bright);outline-offset:2px;}
+  .paint-actions .btn{min-height:44px;padding:0 14px;font-size:.9rem;}
 
   /* ---------- DONE ---------- */
   #done{align-items:center;justify-content:center;text-align:center;padding:36px 28px;overflow-y:auto;}
@@ -241,17 +255,35 @@
   <section class="screen viewer" id="find">
     <div class="topbar">
       <div class="find-progress" id="findProgress">Exploring</div>
+      <button class="quit mute-find" id="muteFind" aria-label="Mute music" style="display:none">♫</button>
       <button class="quit" id="quitFind">✕ Quit</button>
     </div>
     <div class="q-bar vv-pin" data-vv-anchor="top"><p id="findQ"></p></div>
     <div class="stage">
       <div class="frame" id="frameFind">
         <div id="osd"></div>
+        <canvas class="paint-canvas hidden" id="paintCanvas" aria-label="Paint on the painting"></canvas>
       </div>
     </div>
     <div class="find-bottom">
       <div class="feedback" id="feedback"></div>
       <button class="btn btn-ghost showme hidden" id="showMeBtn">Show me</button>
+      <div class="paint-panel hidden" id="paintPanel">
+        <div class="paint-row" role="group" aria-label="Choose a brush">
+          <button class="brush-btn" data-size="0.012" aria-pressed="false" aria-label="Thin brush"><span style="height:3px"></span></button>
+          <button class="brush-btn" data-size="0.03" aria-pressed="true" aria-label="Medium brush"><span style="height:9px"></span></button>
+          <button class="brush-btn" data-size="0.065" aria-pressed="false" aria-label="Big brush"><span style="height:20px"></span></button>
+          <span style="width:4px"></span>
+          <button class="swatch" data-color="red" aria-pressed="true" aria-label="Red" style="background:#c9392b"></button>
+          <button class="swatch" data-color="cream" aria-pressed="false" aria-label="White" style="background:#efe6d1"></button>
+          <button class="swatch" data-color="blue" aria-pressed="false" aria-label="Blue" style="background:#2e5f9e"></button>
+        </div>
+        <div class="paint-row paint-actions">
+          <button class="btn btn-ghost" id="paintClear">Start over</button>
+          <button class="btn btn-ghost" id="paintPeek">Peek under</button>
+          <button class="btn btn-primary" id="paintDone" disabled>I'm done</button>
+        </div>
+      </div>
       <div class="caption hidden" id="findCaption">
         <h2 id="capTitle"></h2><p id="capBody"></p>
         <button class="btn btn-primary" id="nextFindBtn">Next</button>
@@ -447,7 +479,10 @@
   applySrc(currentPainting.src);
 
   /* ---------- screens ---------- */
-  function show(name){ Object.keys(screens).forEach(function(k){ screens[k].classList.toggle("active", k===name); }); }
+  function show(name){
+    Object.keys(screens).forEach(function(k){ screens[k].classList.toggle("active", k===name); });
+    if(name !== "looking" && name !== "find"){ stopBgAudio(); }
+  }
 
   /* ---------- keep guiding text a constant size & place on screen while the painting is pinch-zoomed ---------- */
   var vv = window.visualViewport;
@@ -480,13 +515,64 @@
   });
 
   /* ---------- looking ---------- */
+  /* Background music. Volume runs through a Web Audio gain node because iOS ignores
+     audio.volume (so a volume-based fade there never finishes and the music never stops).
+     Music plays through looking and finding, and fades out on Finish or on leaving. */
+  var BG_VOL = 0.28, audioCtx = null;
+  function getAudioCtx(){
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!audioCtx && AC){ try{ audioCtx = new AC(); }catch(_){} }
+    if(audioCtx && audioCtx.state === "suspended"){ audioCtx.resume().catch(function(){}); }
+    return audioCtx;
+  }
+  function rampBg(b, to, secs){
+    if(b.gain){
+      var g = b.gain.gain, t = audioCtx.currentTime;
+      g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(to, t + secs);
+    } else {
+      clearInterval(b.timer);
+      var step = (to - b.el.volume) / Math.max(1, secs * 1000 / 60);
+      b.timer = setInterval(function(){
+        var v = b.el.volume + step;
+        if((step >= 0 && v >= to) || (step < 0 && v <= to)){ v = to; clearInterval(b.timer); }
+        try{ b.el.volume = Math.max(0, Math.min(1, v)); }catch(_){}
+      }, 60);
+    }
+  }
   function stopBgAudio(){
     if(!state.bgAudio) return;
-    var a = state.bgAudio; state.bgAudio = null;
-    var t = setInterval(function(){
-      if(a.volume > 0.04){ a.volume = Math.max(0, a.volume - 0.04); }
-      else { a.pause(); clearInterval(t); }
-    }, 60);
+    var b = state.bgAudio; state.bgAudio = null;
+    rampBg(b, 0, 1.4);
+    // Always stop after the fade, even where volume changes are ignored.
+    setTimeout(function(){
+      clearInterval(b.timer); b.el.pause();
+      if(b.source){ try{ b.source.disconnect(); b.gain.disconnect(); }catch(_){} }
+    }, 1500);
+    $("muteLook").style.display = "none"; $("muteFind").style.display = "none";
+  }
+  function startBgAudio(){
+    stopBgAudio();
+    if(!currentPainting.music) return;
+    var a = new Audio(currentPainting.music), b = { el:a, gain:null, source:null, timer:0 };
+    a.loop = true;
+    var ctx = getAudioCtx();
+    if(ctx){
+      try{
+        b.source = ctx.createMediaElementSource(a); b.gain = ctx.createGain();
+        b.gain.gain.value = 0; b.source.connect(b.gain); b.gain.connect(ctx.destination);
+      }catch(_){ b.gain = null; b.source = null; }
+    }
+    if(!b.gain){ a.volume = 0; }
+    if(currentPainting.musicStart) a.currentTime = currentPainting.musicStart;
+    a.play().then(function(){ if(state.bgAudio === b && !state.bgMuted) rampBg(b, BG_VOL, 3); }).catch(function(){});
+    state.bgAudio = b;
+    ["muteLook","muteFind"].forEach(function(id){ $(id).style.display = ""; $(id).textContent = state.bgMuted ? "♪" : "♫"; });
+  }
+  function toggleMute(){
+    if(!state.bgAudio) return;
+    state.bgMuted = !state.bgMuted;
+    rampBg(state.bgAudio, state.bgMuted ? 0 : BG_VOL, 0.4);
+    ["muteLook","muteFind"].forEach(function(id){ $(id).textContent = state.bgMuted ? "♪" : "♫"; });
   }
   function startLooking(){
     if(!state.imgReady) return;
@@ -494,22 +580,7 @@
     requestAnimationFrame(osdLookLoad);
     state.lastPrompt=-2; state.startT=performance.now();
     cancelAnimationFrame(state.raf); tickLook();
-    stopBgAudio();
-    if(currentPainting.music){
-      var a = new Audio(currentPainting.music);
-      a.loop = true; a.volume = 0;
-      if(currentPainting.musicStart) a.currentTime = currentPainting.musicStart;
-      a.play().then(function(){
-        var t = setInterval(function(){
-          if(a.volume < 0.28){ a.volume = Math.min(0.28, a.volume + 0.014); }
-          else { clearInterval(t); }
-        }, 80);
-      }).catch(function(){});
-      state.bgAudio = a; state.bgMuted = false;
-      $("muteLook").style.display = ""; $("muteLook").textContent = "♫";
-    } else {
-      $("muteLook").style.display = "none";
-    }
+    startBgAudio();
   }
   function tickLook(){
     var el=(performance.now()-state.startT)/1000, dur=state.durationSec, rem=dur-el;
@@ -530,7 +601,6 @@
   /* ---------- find (seek & find) ---------- */
   function enterFind(){
     cancelAnimationFrame(state.raf);
-    stopBgAudio();
     show("find");
     $("findIntro").classList.remove("hidden");
     $("findCaption").classList.add("hidden");
@@ -558,6 +628,7 @@
     if(osd || typeof OpenSeadragon === "undefined") return osd;
     osd = OpenSeadragon(osdConfig("osd"));
     osd.addHandler("canvas-click", onOsdTap);
+    osd.addHandler("update-viewport", redrawPaint);
     osd.addHandler("open", function(){ try{ osd.viewport.goHome(true); }catch(_){} });
     return osd;
   }
@@ -594,6 +665,7 @@
   }
   function ringDia(s){ return s.box ? Math.max(s.box.w, s.box.h) : s.r; }
   function resetReveal(){
+    exitPaint();
     clearOverlays();
     osdHome();
     $("frameFind").classList.remove("seeking");
@@ -606,10 +678,134 @@
     $("showMeBtn").classList.add("hidden");
     setFeedback("", "");
     resetReveal();
+    $("findProgress").textContent = (currentPainting.freeTap || s.paint ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
+    if(s.paint){ enterPaint(s); updateGuides(); return; }
     $("frameFind").classList.add("seeking");
     $("findQ").textContent = currentPainting.freeTap ? s.find : (s.find + " Tap it!");
-    $("findProgress").textContent = (currentPainting.freeTap ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
     updateGuides();
+  }
+
+  /* ---------- paint-along stop: zoom in, pick a brush and a color, paint on the painting ---------- */
+  var PAINT_COLORS = {
+    red:   { base:"#c9392b", shades:["#e2553f","#a82a22","#d8644f"] },
+    cream: { base:"#efe6d1", shades:["#fff8e8","#d9cdb3","#f6eedd"] },
+    blue:  { base:"#2e5f9e", shades:["#4878b5","#22497c","#3a6cab"] }
+  };
+  // Strokes are stored in image coordinates and redrawn whenever the view moves,
+  // so they stay attached to the painting through any re-layout or zoom.
+  var paint = { size:0.03, color:"red", strokes:[], cur:null, ctx:null, dpr:1 };
+  function sizePaintCanvas(){
+    var c = $("paintCanvas"), f = $("frameFind"), dpr = window.devicePixelRatio || 1;
+    var w = Math.round(f.clientWidth * dpr), h = Math.round(f.clientHeight * dpr);
+    if(c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+    paint.dpr = dpr; paint.ctx = c.getContext("2d");
+  }
+  function enterPaint(s){
+    state.findPhase = "painting";
+    $("findQ").textContent = s.find;
+    if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
+    paint.strokes = []; paint.cur = null;
+    var c = $("paintCanvas");
+    c.classList.remove("hidden","locked","peek");
+    sizePaintCanvas(); redrawPaint();
+    $("paintPeek").textContent = "Peek under";
+    $("paintDone").disabled = true;
+    $("paintPanel").classList.remove("hidden");
+  }
+  function exitPaint(){
+    $("paintCanvas").classList.add("hidden"); $("paintPanel").classList.add("hidden");
+    paint.strokes = []; paint.cur = null;
+    if(paint.ctx){ paint.ctx.clearRect(0,0,$("paintCanvas").width,$("paintCanvas").height); }
+    if(osd){ osd.setMouseNavEnabled(true); }
+  }
+  function toImage(e){
+    var r = $("paintCanvas").getBoundingClientRect();
+    return osd.viewport.viewerElementToImageCoordinates(new OpenSeadragon.Point(e.clientX - r.left, e.clientY - r.top));
+  }
+  function toScreen(p){
+    var q = osd.viewport.imageToViewerElementCoordinates(new OpenSeadragon.Point(p.x, p.y));
+    return { x:q.x * paint.dpr, y:q.y * paint.dpr };
+  }
+  function imgPxToScreen(){ // canvas pixels per image pixel at the current zoom
+    var a = toScreen({x:0,y:0}), b = toScreen({x:1000,y:0});
+    return (b.x - a.x) / 1000;
+  }
+  function drawStroke(st){
+    var ctx = paint.ctx, k = imgPxToScreen(), w = st.w * k, pts = st.pts.map(toScreen);
+    if(pts.length === 1){ pts.push({ x:pts[0].x+0.5, y:pts[0].y+0.5 }); }
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.globalAlpha = 0.86; ctx.strokeStyle = st.col.base; ctx.lineWidth = w;
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+    for(var i=1;i<pts.length;i++){ ctx.lineTo(pts[i].x, pts[i].y); }
+    ctx.stroke();
+    // bristle streaks give the dragged, waxy texture
+    ctx.lineWidth = Math.max(1, w * 0.09); ctx.globalAlpha = 0.3;
+    st.bristles.forEach(function(b){
+      ctx.strokeStyle = b.shade; ctx.beginPath();
+      for(var i=0;i<pts.length;i++){
+        var p0 = pts[Math.max(0,i-1)], p1 = pts[Math.min(pts.length-1,i+1)];
+        var dx = p1.x-p0.x, dy = p1.y-p0.y, len = Math.hypot(dx,dy) || 1;
+        var x = pts[i].x - dy/len * b.off * w, y = pts[i].y + dx/len * b.off * w;
+        if(i===0){ ctx.moveTo(x,y); } else { ctx.lineTo(x,y); }
+      }
+      ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+  }
+  function redrawPaint(){
+    if(!paint.ctx || !osd || $("paintCanvas").classList.contains("hidden")) return;
+    sizePaintCanvas();
+    paint.ctx.clearRect(0,0,$("paintCanvas").width,$("paintCanvas").height);
+    paint.strokes.forEach(drawStroke);
+    if(paint.cur){ drawStroke(paint.cur); }
+  }
+  function paintDown(e){
+    if(state.findPhase !== "painting" || !osd) return;
+    e.preventDefault();
+    var c = $("paintCanvas"), col = PAINT_COLORS[paint.color], bristles = [];
+    // brush width is a fraction of the visible canvas, stored in image pixels
+    var w = paint.size * c.width / imgPxToScreen();
+    for(var i=0;i<7;i++){ bristles.push({ off:(Math.random()-0.5)*0.85, shade:col.shades[i % col.shades.length] }); }
+    try{ c.setPointerCapture(e.pointerId); }catch(_){}
+    paint.cur = { w:w, col:col, bristles:bristles, pts:[toImage(e)], screenLen:0, screenW:paint.size * c.width, last:{x:e.clientX,y:e.clientY} };
+    redrawPaint();
+  }
+  function paintMove(e){
+    if(!paint.cur) return;
+    e.preventDefault();
+    var st = paint.cur;
+    st.screenLen += Math.hypot(e.clientX-st.last.x, e.clientY-st.last.y) * paint.dpr;
+    st.last = { x:e.clientX, y:e.clientY };
+    st.pts.push(toImage(e));
+    redrawPaint();
+  }
+  function paintUp(){
+    if(!paint.cur) return;
+    paint.strokes.push(paint.cur);
+    paint.cur = null;
+    $("paintDone").disabled = false;
+  }
+  function paintVerdict(){
+    var cw = $("paintCanvas").width, n = paint.strokes.length;
+    var isBroad = function(st){ return st.screenW >= 0.05*cw; }, isShort = function(st){ return st.screenLen <= 0.3*cw; };
+    var broad = paint.strokes.filter(isBroad).length, short = paint.strokes.filter(isShort).length;
+    var match = paint.strokes.filter(function(st){ return isBroad(st) && isShort(st); }).length;
+    if(n >= 3 && match/n >= 0.6) return "Those look a lot like Johns's strokes! Short and broad, one dab next to another.";
+    if(broad/n < 0.5) return "Try the big brush! Johns's strokes are wide and chunky, not thin and careful.";
+    if(short/n < 0.5) return "Try short little dabs instead of long lines. That's how Johns had to paint.";
+    return "Nice painting! Try a few more short, broad dabs and see how close you can get.";
+  }
+  function finishPaint(){
+    var s = STOPS[state.findIndex];
+    state.findPhase = "revealed";
+    $("paintCanvas").classList.add("locked"); $("paintCanvas").classList.remove("peek");
+    $("paintPanel").classList.add("hidden");
+    $("findQ").textContent = "";
+    $("capTitle").textContent = s.title;
+    $("capBody").textContent = paintVerdict() + " " + s.body;
+    $("nextFindBtn").textContent = (state.findIndex===STOPS.length-1) ? "Finish" : "Next";
+    $("findCaption").classList.remove("hidden");
+    $("findProgress").textContent = (state.findIndex+1) + " of " + STOPS.length;
   }
   function setFeedback(txt, cls){
     var f=$("feedback"); f.textContent=txt; f.className="feedback";
@@ -630,7 +826,12 @@
     var s = STOPS[state.findIndex];
     if(currentPainting.freeTap){ revealStop(state.findIndex, true); return; }
     var inside;
-    if(s.box){ inside = px>=s.box.x && px<=s.box.x+s.box.w && py>=s.box.y && py<=s.box.y+s.box.h; }
+    if(s.areas){
+      // Every visible part of the object counts: inside any area, outside anything covering it.
+      var inR = function(r){ return px>=r.x && px<=r.x+r.w && py>=r.y && py<=r.y+r.h; };
+      inside = s.areas.some(inR) && !(s.exclude||[]).some(inR);
+    }
+    else if(s.box){ inside = px>=s.box.x && px<=s.box.x+s.box.w && py>=s.box.y && py<=s.box.y+s.box.h; }
     else { var aspect = sz.y/sz.x, dx = px - s.cx, dy = (py - s.cy)*aspect; inside = Math.sqrt(dx*dx + dy*dy) <= s.hit; }
     if(inside){ revealStop(state.findIndex, true); return; }
     state.misses++;
@@ -763,15 +964,35 @@
   $("startBack").addEventListener("click", showGallery);
   $("quitLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); stopBgAudio(); showGallery(); });
   $("skipLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); $("promptText").classList.remove("show"); enterFind(); });
-  $("muteLook").addEventListener("click", function(){
-    if(!state.bgAudio) return;
-    state.bgMuted = !state.bgMuted;
-    state.bgAudio.muted = state.bgMuted;
-    $("muteLook").textContent = state.bgMuted ? "♪" : "♫";
-  });
+  $("muteLook").addEventListener("click", toggleMute);
+  $("muteFind").addEventListener("click", toggleMute);
   $("startFindBtn").addEventListener("click", function(){ beginSeeking(0); });
   $("showMeBtn").addEventListener("click", function(){ revealStop(state.findIndex, false); });
   $("nextFindBtn").addEventListener("click", nextFind);
+  $("paintCanvas").addEventListener("pointerdown", paintDown);
+  $("paintCanvas").addEventListener("pointermove", paintMove);
+  $("paintCanvas").addEventListener("pointerup", paintUp);
+  $("paintCanvas").addEventListener("pointercancel", paintUp);
+  Array.prototype.forEach.call(document.querySelectorAll(".brush-btn"), function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll(".brush-btn").forEach(function(x){ x.setAttribute("aria-pressed","false"); });
+      b.setAttribute("aria-pressed","true"); paint.size = parseFloat(b.dataset.size);
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".swatch"), function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll(".swatch").forEach(function(x){ x.setAttribute("aria-pressed","false"); });
+      b.setAttribute("aria-pressed","true"); paint.color = b.dataset.color;
+    });
+  });
+  $("paintClear").addEventListener("click", function(){
+    paint.strokes = []; redrawPaint(); $("paintDone").disabled = true;
+  });
+  $("paintPeek").addEventListener("click", function(){
+    var on = $("paintCanvas").classList.toggle("peek");
+    $("paintPeek").textContent = on ? "Show mine" : "Peek under";
+  });
+  $("paintDone").addEventListener("click", finishPaint);
   $("quitFind").addEventListener("click", showGallery);
   $("againBtn").addEventListener("click", startLooking);
   $("doneBtn").addEventListener("click", showGallery);
