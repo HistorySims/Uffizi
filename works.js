@@ -671,7 +671,20 @@ window.WORKS = [
                 notLong:"Try long, slow curves, like a melody that keeps on going.",
                 jaggy:"Try round, smooth curves instead of zigzags. O'Keeffe's shapes swell and flow.",
                 more:"Keep going! Long, smooth curves, like the music." } },
-        title:"Smooth as music", body:"O'Keeffe blended her colors so smoothly that you can hardly see a single brushstroke. Her curves swell and flow like a melody, the opposite of short, bumpy dabs."}
+        title:"Smooth as music", body:"O'Keeffe blended her colors so smoothly that you can hardly see a single brushstroke. Her curves swell and flow like a melody, the opposite of short, bumpy dabs."},
+      {find:"Now play the painting! Touch a color and hold it to hear it hum. Slide across the stripes to strum them like harp strings. Try two fingers!", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        // bands match the colors in the map (red value >> 5); notes are all from one D major pentatonic chord
+        play:{ map:"images/music-pink-blue-bands.png", start:"Touch a color and hold it.",
+          bands:[
+            {name:"Deep blue",   sound:"organ",   freq:146.83, glow:"#1aa7ff", ring:"#0a5f96", say:"Deep blue hums low and calm, like an organ."},
+            {name:"Deep purple", sound:"cello",   freq:110.00, glow:"#c2318f", ring:"#8a1f66", say:"Deep purple sings low, like a cello."},
+            {name:"Violet",      sound:"bassoon", freq:164.81, glow:"#c860d8", ring:"#8e3aa0", say:"Violet hums like a bassoon."},
+            {name:"Pink",        sound:"voice",   freq:369.99, glow:"#ff7fb6", ring:"#c23f7c", say:"Pink sounds like someone humming: oooh."},
+            {name:"Coral",       sound:"bell",    freq:440.00, glow:"#ff5a3c", ring:"#c9302c", say:"The coral line rings like a church bell."},
+            {name:"Mint",        sound:"violin",  freq:493.88, glow:"#4fe0b0", ring:"#1f9a74", say:"Mint green sings like a violin."},
+            {name:"Pale blue",   sound:"flute",   freq:739.99, glow:"#7fa8ff", ring:"#4466c4", say:"Pale blue floats like a flute."},
+            {name:"Cream",       sound:"chime",   freq:880.00, glow:"#ffd27a", ring:"#b8862a", say:"Cream is the quietest: a tiny glass chime."} ] },
+        title:"Colors you can hear", body:"When she was a young artist, O'Keeffe read a book by the painter Wassily Kandinsky. He believed colors have sounds: light blue like a flute, deep blue like a cello or an organ, green like a violin, violet like a bassoon, orange like a church bell. Look how the curves spread out from the blue, ring after ring, like ripples from a sound. You just turned her painting back into music."}
     ],
     done:[
       "This painting doesn't show a person or a place. Georgia O'Keeffe wanted to find out whether colors and shapes alone could make you feel something, the way music does without any words.",

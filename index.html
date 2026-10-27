@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-28d";
+  window.APP_VERSION = "2026-10-28e";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-28d"></script>
+<script src="works.js?v=2026-10-28e"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -338,6 +338,13 @@
           <button class="btn btn-ghost" id="stickerClear">Start over</button>
           <button class="btn btn-ghost" id="stickerCompare" aria-pressed="false">Compare</button>
           <button class="btn btn-primary" id="stickerDone" disabled>I'm done</button>
+        </div>
+      </div>
+      <div class="paint-panel hidden" id="playPanel">
+        <div class="light-status" id="playStatus" aria-live="polite"></div>
+        <div class="paint-row paint-actions">
+          <button class="btn btn-ghost" id="playHush">Shh, quiet</button>
+          <button class="btn btn-primary" id="playDone">I'm done</button>
         </div>
       </div>
       <div class="caption hidden" id="findCaption">
@@ -783,10 +790,11 @@
     $("showMeBtn").classList.add("hidden");
     setFeedback("", "");
     resetReveal();
-    $("findProgress").textContent = (currentPainting.freeTap || s.paint || s.light || s.stickers ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
+    $("findProgress").textContent = (currentPainting.freeTap || s.paint || s.light || s.stickers || s.play ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
     if(s.paint){ enterPaint(s); return; }
     if(s.stickers){ enterStickers(s); return; }
     if(s.light){ enterLight(s); return; }
+    if(s.play){ enterPlay(s); return; }
     $("frameFind").classList.add("seeking");
     $("findQ").textContent = currentPainting.freeTap ? s.find : (s.find + " Tap it!");
     updateGuides();
@@ -812,7 +820,8 @@
   function exitActivity(){
     cancelAnimationFrame(act.raf); act.raf = 0; act.mode = null;
     actCanvas().classList.add("hidden");
-    $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden");
+    $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden"); $("playPanel").classList.add("hidden");
+    hushPlay(1.5); cancelAnimationFrame(play.raf); play.raf = 0; play.ripples = []; duckBg(false);
     $("actAgainBtn").classList.add("hidden");
     paint.strokes = []; paint.cur = null; paint.wobble = false; light.drag = false;
     stk.items = []; stk.press = null; stk.slide = null; stk.compare = false; cancelAnimationFrame(stk.anim); clearTimeout(stk.msgTimer);
@@ -823,7 +832,7 @@
     if(!act.ctx || !osd || !act.mode || actCanvas().classList.contains("hidden")) return;
     sizeActCanvas();
     act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height);
-    if(act.mode === "paint"){ drawPaintLayer(); } else if(act.mode === "light"){ drawLightLayer(); } else { drawStickerLayer(); }
+    if(act.mode === "paint"){ drawPaintLayer(); } else if(act.mode === "light"){ drawLightLayer(); } else if(act.mode === "play"){ drawPlayLayer(); } else { drawStickerLayer(); }
   }
   function canvasPoint(e){
     var r = actCanvas().getBoundingClientRect();
@@ -1308,6 +1317,288 @@
     $("lightPanel").classList.add("hidden");
     showActivityCaption(s, "");
   }
+  /* ----- play the painting: every color band is an instrument -----
+     Touch a color and it hums (swelling while you hold, echoing away after you let go).
+     Slide across the borders and each color you cross plucks like a harp string.
+     Several fingers play together. All the notes come from one pentatonic chord, so
+     anything a child plays sounds good together.
+     map: a small image where each pixel's red value says which band it belongs to (band = red >> 5). */
+  var play = { cfg:null, mapSrc:"", map:null, mapW:0, mapH:0, masks:[], fingers:{}, glow:[], ripples:[], audio:null, raf:0, ducked:false };
+  // Hums, after Kandinsky: deep blue an organ, purple a cello, violet a bassoon, green a violin,
+  // light blue a flute, orange a church bell. waves: [type, frequency ratio, level].
+  var PLAY_SOUNDS = {
+    organ:   { waves:[["sine",1,0.5],["sine",2,0.3],["sine",0.5,0.45],["triangle",4,0.05]], lp:1500, attack:0.9, level:0.34 },
+    cello:   { waves:[["sawtooth",1,0.32],["sawtooth",1.004,0.28]], lp:850, q:1.2, vib:5, depth:0.004, attack:0.5, level:0.3 },
+    bassoon: { waves:[["square",1,0.22],["sine",1,0.35]], lp:650, q:2.5, vib:4.5, depth:0.003, attack:0.35, level:0.3 },
+    voice:   { waves:[["sawtooth",1,0.4]], formants:[[380,6,1],[850,8,0.45]], vib:5.2, depth:0.005, attack:0.6, level:0.5 },
+    bell:    { waves:[["sine",1,0.3],["sine",0.5,0.35],["sine",2.01,0.05]], trem:3.2, attack:0.8, level:0.16 },
+    violin:  { waves:[["sawtooth",1,0.3],["sawtooth",1.005,0.24]], lp:2400, q:1.5, vib:6, depth:0.006, attack:0.45, level:0.13 },
+    flute:   { waves:[["sine",1,0.5],["sine",2,0.07]], breath:0.06, vib:5, depth:0.004, attack:0.35, level:0.2 },
+    chime:   { waves:[["sine",1,0.35],["sine",2.76,0.06]], trem:5.5, attack:0.25, level:0.1 }
+  };
+  function enterPlay(s){
+    var cfg = s.play;
+    act.mode = "play"; play.cfg = cfg; play.fingers = {}; play.ripples = [];
+    play.glow = cfg.bands.map(function(){ return 0; });
+    if(play.mapSrc !== cfg.map){
+      play.mapSrc = cfg.map; play.map = null; play.masks = [];
+      var im = new Image();
+      im.onload = function(){ if(play.mapSrc === cfg.map){ buildPlayMap(im); redrawActivity(); } };
+      im.src = cfg.map;
+    }
+    resumePlay(s);
+  }
+  function resumePlay(s){
+    state.findPhase = "playing";
+    $("findQ").textContent = s.find;
+    $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
+    if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
+    showActCanvas("play"); redrawActivity();
+    $("playStatus").textContent = play.cfg.start || "";
+    $("playPanel").classList.remove("hidden");
+    duckBg(true);
+    playAudio(); // set up sound now, during a tap, so phones allow it
+    updateGuides();
+  }
+  function buildPlayMap(im){
+    var w = im.naturalWidth, h = im.naturalHeight, c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    var g = c.getContext("2d"); g.drawImage(im, 0, 0);
+    var d = g.getImageData(0, 0, w, h).data, lab = new Uint8Array(w * h);
+    for(var i=0; i<w*h; i++){ lab[i] = d[i*4] >> 5; }
+    play.map = lab; play.mapW = w; play.mapH = h;
+    // per band: a fill in its own glow color, and a bright outline that shimmers like a plucked string
+    // (both drawn scaled up, so their edges come out soft)
+    var edge = function(i, k){
+      var x = i % w, y = (i - x) / w;
+      for(var d=1; d<=2; d++){
+        if((x >= d && lab[i-d] !== k) || (x < w-d && lab[i+d] !== k) || (y >= d && lab[i-d*w] !== k) || (y < h-d && lab[i+d*w] !== k)) return true;
+      }
+      return false;
+    };
+    play.masks = play.cfg.bands.map(function(b, k){
+      var m = document.createElement("canvas"), e = document.createElement("canvas"); m.width = e.width = w; m.height = e.height = h;
+      var mg = m.getContext("2d"), md = mg.createImageData(w, h), eg = e.getContext("2d"), ed = eg.createImageData(w, h), n = parseInt(b.glow.slice(1), 16);
+      for(var i=0; i<w*h; i++){
+        if(lab[i] !== k) continue;
+        md.data[i*4] = n>>16 & 255; md.data[i*4+1] = n>>8 & 255; md.data[i*4+2] = n & 255; md.data[i*4+3] = 255;
+        if(edge(i, k)){ ed.data[i*4] = ed.data[i*4+1] = ed.data[i*4+2] = 255; ed.data[i*4+3] = 255; }
+      }
+      mg.putImageData(md, 0, 0); eg.putImageData(ed, 0, 0);
+      return { fill:m, edge:e };
+    });
+  }
+  function bandAt(e){
+    var sz = osdImgSize(); if(!play.map || !sz) return -1;
+    var p = toImage(e), x = Math.floor(p.x / sz.x * play.mapW), y = Math.floor(p.y / sz.y * play.mapH);
+    if(x < 0 || y < 0 || x >= play.mapW || y >= play.mapH) return -1;
+    var k = play.map[y * play.mapW + x];
+    return k < play.cfg.bands.length ? k : -1;
+  }
+  // The background music steps aside while the painting plays.
+  function duckBg(on){
+    if(play.ducked === on) return;
+    play.ducked = on;
+    if(state.bgAudio && !state.bgMuted){ rampBg(state.bgAudio, on ? 0 : BG_VOL, on ? 0.8 : 3); }
+  }
+  function playAudio(){
+    if(play.audio) return play.audio;
+    var ctx = getAudioCtx(); if(!ctx) return null;
+    var a = { ctx:ctx };
+    var comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -18; comp.ratio.value = 4; comp.attack.value = 0.01; comp.release.value = 0.4;
+    comp.connect(ctx.destination);
+    a.out = ctx.createGain(); a.out.gain.value = 0.4; a.out.connect(comp);
+    a.bus = ctx.createGain(); a.bus.connect(a.out);
+    // a little echo...
+    var dl = ctx.createDelay(2), fb = ctx.createGain(), lp = ctx.createBiquadFilter(), send = ctx.createGain();
+    dl.delayTime.value = 0.42; fb.gain.value = 0.38; lp.type = "lowpass"; lp.frequency.value = 2000; send.gain.value = 0.32;
+    a.bus.connect(send); send.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(a.out);
+    // ...in a big soft room
+    var rv = ctx.createConvolver(), rs = ctx.createGain(), n = Math.floor(ctx.sampleRate * 3), buf = ctx.createBuffer(2, n, ctx.sampleRate);
+    for(var ch=0; ch<2; ch++){ var d = buf.getChannelData(ch); for(var i=0; i<n; i++){ d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); } }
+    rv.buffer = buf; rs.gain.value = 0.45;
+    a.bus.connect(rs); rs.connect(rv); rv.connect(a.out);
+    // noise for the flute's breath
+    var nb = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), nd = nb.getChannelData(0);
+    for(var j=0; j<nd.length; j++){ nd[j] = Math.random() * 2 - 1; }
+    a.noise = nb;
+    play.audio = a;
+    return a;
+  }
+  function startHum(k){
+    var a = playAudio(); if(!a) return null;
+    var b = play.cfg.bands[k], snd = PLAY_SOUNDS[b.sound] || PLAY_SOUNDS.flute, ctx = a.ctx, t = ctx.currentTime;
+    var env = ctx.createGain(), into = env, nodes = [];
+    env.gain.value = 0;
+    if(snd.trem){ // a slow shimmer in the volume
+      var tg = ctx.createGain(), lfo = ctx.createOscillator(), ld = ctx.createGain();
+      tg.gain.value = 0.75; lfo.frequency.value = snd.trem; ld.gain.value = 0.25;
+      lfo.connect(ld); ld.connect(tg.gain); tg.connect(env); into = tg; nodes.push(lfo);
+    }
+    if(snd.lp){
+      var f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = snd.lp; f.Q.value = snd.q || 0.7;
+      f.connect(into); into = f;
+    }
+    if(snd.formants){ // an "ooh", like someone humming
+      var mix = ctx.createGain(), dest = into;
+      snd.formants.forEach(function(fm){
+        var bp = ctx.createBiquadFilter(), fg = ctx.createGain();
+        bp.type = "bandpass"; bp.frequency.value = fm[0]; bp.Q.value = fm[1]; fg.gain.value = fm[2] * 3;
+        mix.connect(bp); bp.connect(fg); fg.connect(dest);
+      });
+      into = mix;
+    }
+    var vib = null;
+    if(snd.vib){ vib = ctx.createOscillator(); vib.frequency.value = snd.vib; nodes.push(vib); }
+    snd.waves.forEach(function(wv){
+      var o = ctx.createOscillator(), g = ctx.createGain(), hz = b.freq * wv[1];
+      o.type = wv[0]; o.frequency.value = hz; g.gain.value = wv[2];
+      if(vib){ var vg = ctx.createGain(); vg.gain.value = hz * snd.depth; vib.connect(vg); vg.connect(o.frequency); }
+      o.connect(g); g.connect(into); nodes.push(o);
+    });
+    if(snd.breath){
+      var ns = ctx.createBufferSource(), nbp = ctx.createBiquadFilter(), ng = ctx.createGain();
+      ns.buffer = a.noise; ns.loop = true; nbp.type = "bandpass"; nbp.frequency.value = b.freq * 2; nbp.Q.value = 3; ng.gain.value = snd.breath;
+      ns.connect(nbp); nbp.connect(ng); ng.connect(into); nodes.push(ns);
+    }
+    env.connect(a.bus);
+    env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(snd.level * (b.gain || 1), t + snd.attack);
+    nodes.forEach(function(nd){ nd.start(t); });
+    return { env:env, nodes:nodes };
+  }
+  function releaseHum(v, secs){
+    if(!v || !play.audio) return;
+    var ctx = play.audio.ctx, t = ctx.currentTime, g = v.env.gain, end = t + secs + 0.3;
+    g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.setTargetAtTime(0, t, secs / 4);
+    v.nodes.forEach(function(nd){ try{ nd.stop(end); }catch(_){} });
+    setTimeout(function(){ try{ v.env.disconnect(); }catch(_){} }, (secs + 0.5) * 1000);
+  }
+  function pluck(k){ // a harp string, or for the bell color, a soft church bell
+    var a = playAudio(); if(!a) return;
+    var b = play.cfg.bands[k], ctx = a.ctx, t = ctx.currentTime, f = b.freq, out = ctx.createGain();
+    out.connect(a.bus);
+    if(b.sound === "bell"){
+      var car = ctx.createOscillator(), mod = ctx.createOscillator(), mg = ctx.createGain();
+      car.frequency.value = f; mod.frequency.value = f * 1.4;
+      mg.gain.setValueAtTime(f * 1.6, t); mg.gain.exponentialRampToValueAtTime(f * 0.05, t + 3);
+      mod.connect(mg); mg.connect(car.frequency); car.connect(out);
+      out.gain.setValueAtTime(0, t); out.gain.linearRampToValueAtTime(0.2, t + 0.006); out.gain.exponentialRampToValueAtTime(0.0005, t + 4.5);
+      car.start(t); mod.start(t); car.stop(t + 4.6); mod.stop(t + 4.6);
+    } else {
+      while(f < 220){ f *= 2; } // harp strings, even for the low colors
+      [[1, 0.24, 2.4], [2, 0.1, 1.4], [3, 0.04, 0.8], [4, 0.02, 0.5]].forEach(function(h){
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = f * h[0];
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(h[1], t + 0.004); g.gain.exponentialRampToValueAtTime(0.0003, t + h[2]);
+        o.connect(g); g.connect(out); o.start(t); o.stop(t + h[2] + 0.05);
+      });
+    }
+    setTimeout(function(){ try{ out.disconnect(); }catch(_){} }, 5000);
+  }
+  function humCount(){ return Object.keys(play.fingers).filter(function(id){ return play.fingers[id].hum; }).length; }
+  function touchBand(f, k, c){
+    var now = performance.now();
+    f.k = k;
+    if(now - f.t > 70){ pluck(k); f.t = now; }
+    releaseHum(f.hum, 2.6); f.hum = null;
+    if(humCount() < 6){ f.hum = startHum(k); }
+    play.glow[k] = Math.max(play.glow[k], 0.9);
+    addRipple(c, k, false); f.last = c;
+    $("playStatus").textContent = play.cfg.bands[k].say;
+    animatePlay();
+  }
+  function playDown(e){
+    if(state.findPhase !== "playing" || !osd) return;
+    e.preventDefault();
+    try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
+    var f = play.fingers[e.pointerId] = { k:-1, hum:null, t:0, last:canvasPoint(e), cand:-1 };
+    var k = bandAt(e);
+    if(k >= 0){ touchBand(f, k, canvasPoint(e)); }
+  }
+  function playMove(e){
+    var f = play.fingers[e.pointerId]; if(!f) return;
+    e.preventDefault();
+    var k = bandAt(e), c = canvasPoint(e);
+    if(k < 0) return;
+    if(k !== f.k){
+      // switch only when the new color shows up twice in a row, so a wobbly border doesn't stutter
+      if(f.cand === k){ f.cand = -1; touchBand(f, k, c); } else { f.cand = k; }
+      return;
+    }
+    f.cand = -1;
+    if(Math.hypot(c.x - f.last.x, c.y - f.last.y) > 36 * act.dpr){ addRipple(c, k, true); f.last = c; animatePlay(); }
+  }
+  function playUp(e){
+    var f = play.fingers[e.pointerId]; if(!f) return;
+    delete play.fingers[e.pointerId];
+    releaseHum(f.hum, 3.2);
+  }
+  function hushPlay(secs){
+    Object.keys(play.fingers).forEach(function(id){ releaseHum(play.fingers[id].hum, secs); });
+    play.fingers = {};
+  }
+  function addRipple(c, k, small){
+    play.ripples.push({ x:c.x, y:c.y, k:k, t0:performance.now(), small:small });
+    if(play.ripples.length > 40){ play.ripples.shift(); }
+  }
+  function animatePlay(){
+    if(play.raf) return;
+    var last = performance.now();
+    var step = function(now){
+      play.raf = 0;
+      if(act.mode !== "play") return;
+      var dt = Math.min(0.1, (now - last) / 1000), held = {}, live = false; last = now;
+      Object.keys(play.fingers).forEach(function(id){ if(play.fingers[id].k >= 0){ held[play.fingers[id].k] = 1; } });
+      // a held color keeps glowing; a let-go one fades out with its echo
+      play.glow = play.glow.map(function(g, k){
+        var to = held[k] ? 0.9 : 0, v = g + (to - g) * Math.min(1, dt * (held[k] ? 6 : 1.2));
+        if(v > 0.01){ live = true; } return v > 0.01 ? v : 0;
+      });
+      if(play.ripples.some(function(r){ return now - r.t0 < 2400; })){ live = true; }
+      redrawActivity();
+      if(live || Object.keys(play.fingers).length){ play.raf = requestAnimationFrame(step); }
+    };
+    play.raf = requestAnimationFrame(step);
+  }
+  function drawPlayLayer(){
+    var ctx = act.ctx, sz = osdImgSize(); if(!sz) return;
+    var tl = toScreen({x:0, y:0}), br = toScreen({x:sz.x, y:sz.y}), now = performance.now();
+    ctx.save();
+    ctx.beginPath(); ctx.rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y); ctx.clip();
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    play.glow.forEach(function(g, k){
+      if(g <= 0.01 || !play.masks[k]) return;
+      var shimmer = 0.8 + 0.2 * Math.sin(now / 90 + k); // the band trembles while it sounds
+      ctx.globalCompositeOperation = "screen"; ctx.globalAlpha = g * 0.55 * shimmer;
+      ctx.drawImage(play.masks[k].fill, tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = g * shimmer;
+      ctx.drawImage(play.masks[k].edge, tl.x, tl.y, br.x - tl.x, br.y - tl.y);
+    });
+    ctx.globalCompositeOperation = "source-over";
+    play.ripples = play.ripples.filter(function(r){ return now - r.t0 < 2400; });
+    play.ripples.forEach(function(r){
+      var age = (now - r.t0) / 2400, rings = r.small ? 1 : 3;
+      for(var i=0; i<rings; i++){
+        var a = age - i * 0.14; if(a <= 0) continue;
+        var rad = (6 + a * (r.small ? 50 : 120)) * act.dpr;
+        ctx.globalAlpha = (1 - a) * (r.small ? 0.5 : 0.85);
+        ctx.lineWidth = (r.small ? 2 : 3) * act.dpr;
+        ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.beginPath(); ctx.arc(r.x, r.y, rad + ctx.lineWidth, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = play.cfg.bands[r.k].ring; ctx.beginPath(); ctx.arc(r.x, r.y, rad, 0, Math.PI * 2); ctx.stroke();
+      }
+    });
+    ctx.restore();
+  }
+  function finishPlay(){
+    var s = STOPS[state.findIndex];
+    state.findPhase = "revealed";
+    hushPlay(3);
+    actCanvas().classList.add("locked");
+    $("playPanel").classList.add("hidden");
+    showActivityCaption(s, "");
+    setTimeout(function(){ if(act.mode !== "play" || state.findPhase !== "playing"){ duckBg(false); } }, 2500);
+  }
   /* ----- stickers: pick one from the tray, tap the painting to place it, drag to move it -----
      A tap always places a new sticker; pressing on a placed one and sliding moves it instead.
      Stickers are stored in image pixels (x, y = where its anchor sits) and drawn lowest-last,
@@ -1537,9 +1828,9 @@
     };
     stk.anim = requestAnimationFrame(step);
   }
-  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } }
-  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } }
-  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } else if(act.mode === "stickers"){ stickerUp(e); } }
+  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } else if(act.mode === "play"){ playDown(e); } }
+  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } else if(act.mode === "play"){ playMove(e); } }
+  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } else if(act.mode === "stickers"){ stickerUp(e); } else if(act.mode === "play"){ playUp(e); } }
   function setFeedback(txt, cls){
     var f=$("feedback"); f.textContent=txt; f.className="feedback";
     if(txt){ if(cls) f.classList.add(cls); void f.offsetWidth; f.classList.add("show"); }
@@ -1729,9 +2020,11 @@
   $("stickerDone").addEventListener("click", finishStickers);
   $("lightHopper").addEventListener("click", sunBackToHopper);
   $("lightDone").addEventListener("click", finishLight);
+  $("playHush").addEventListener("click", function(){ hushPlay(0.8); $("playStatus").textContent = "Shh... listen to the echo fade away."; });
+  $("playDone").addEventListener("click", finishPlay);
   $("actAgainBtn").addEventListener("click", function(){
     var s = STOPS[state.findIndex];
-    if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); } else if(s.stickers){ resumeStickers(s); }
+    if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); } else if(s.stickers){ resumeStickers(s); } else if(s.play){ resumePlay(s); }
   });
   $("quitFind").addEventListener("click", showGallery);
   $("againBtn").addEventListener("click", startLooking);
