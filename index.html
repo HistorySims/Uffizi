@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
-<script src="works.js?v=2026-10-27"></script>
+<script src="works.js?v=2026-10-27d"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -173,8 +173,8 @@
   .caption-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
   .paint-panel{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;padding-top:4px;}
   .paint-row{display:flex;gap:8px 14px;justify-content:center;align-items:center;flex-wrap:wrap;}
-  .brush-btn{width:46px;height:44px;border-radius:12px;border:1.5px solid var(--foam-faint);display:inline-flex;align-items:center;justify-content:center;}
-  .brush-btn span{display:block;width:26px;background:var(--foam);border-radius:999px;}
+  .brush-btn{width:52px;height:46px;border-radius:12px;border:1.5px solid var(--foam-faint);display:inline-flex;align-items:center;justify-content:center;}
+  .brush-btn svg{width:40px;height:34px;display:block;}
   .brush-btn[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.15);}
   .swatch{width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.3);}
   .swatch[aria-pressed="true"]{outline:3px solid var(--gold-bright);outline-offset:2px;}
@@ -847,6 +847,7 @@
     oil:      { alpha:0.82, bristles:0.22 },
     frosting: { alpha:0.97, bristles:0.2, ridge:true },
     gold:     { alpha:0.92, core:"rgba(255,244,190,.8)", sparkle:true },
+    hair:     { alpha:0.95, core:"rgba(255,225,160,.18)" },
     wire:     { alpha:1,    core:"rgba(255,255,255,.4)" },
     soft:     { alpha:0.62, blur:0.7, passes:2 },
     glow:     { alpha:0.92, blur:1.1, core:"rgba(255,255,255,.6)" },
@@ -881,21 +882,29 @@
     Array.prototype.forEach.call(group.children, function(x){ x.setAttribute("aria-pressed", String(x === btn)); });
   }
   function buildPaintPanel(cfg){
-    var n = cfg.brushes.length, names = n === 3 ? ["Thin","Medium","Big"] : (n === 2 ? ["Thin","Big"] : ["Paint"]);
+    var n = cfg.brushes.length, names = n === 4 ? ["Thinnest","Thin","Medium","Big"] : n === 3 ? ["Thin","Medium","Big"] : (n === 2 ? ["Thin","Big"] : ["Paint"]);
     var max = Math.max.apply(null, cfg.brushes);
     $("paintBrushes").innerHTML = ""; $("paintColors").innerHTML = "";
     cfg.brushes.forEach(function(size, i){
       var b = document.createElement("button"); b.type = "button"; b.className = "brush-btn";
       b.setAttribute("aria-label", names[i] + " brush"); b.setAttribute("aria-pressed", String(size === paint.size));
-      var sp = document.createElement("span"); sp.style.height = Math.max(3, Math.round(size / max * 20)) + "px";
-      b.appendChild(sp);
+      // a little paintbrush: wooden handle, metal band, and bristles as wide as the stroke it makes
+      var t = size / max, bw = 2.6 + t * 13.4, bl = 7 + t * 6;
+      b.innerHTML = '<svg viewBox="0 0 48 40" aria-hidden="true"><g transform="rotate(-32 24 20)">'
+        + '<rect x="2" y="17.6" width="22" height="4.8" rx="2.4" fill="#b8793e"/>'
+        + '<rect x="3" y="18.4" width="20" height="1.3" rx=".6" fill="#d9a066" opacity=".8"/>'
+        + '<path d="M23 ' + (20 - Math.max(2.8, bw * 0.42)) + ' L30 ' + (20 - bw * 0.5) + ' L30 ' + (20 + bw * 0.5) + ' L23 ' + (20 + Math.max(2.8, bw * 0.42)) + ' Z" fill="#c9ced6"/>'
+        + '<path d="M30 ' + (20 - bw * 0.5) + ' C' + (30 + bl * 0.6) + ' ' + (20 - bw * 0.55) + ' ' + (30 + bl) + ' ' + (20 - bw * 0.15) + ' ' + (30 + bl + 1.5) + ' 20'
+        + ' C' + (30 + bl) + ' ' + (20 + bw * 0.15) + ' ' + (30 + bl * 0.6) + ' ' + (20 + bw * 0.55) + ' 30 ' + (20 + bw * 0.5) + ' Z" fill="currentColor"/>'
+        + '</g></svg>';
       b.addEventListener("click", function(){ pressOnly($("paintBrushes"), b); paint.size = size; });
       $("paintBrushes").appendChild(b);
     });
+    $("paintBrushes").style.color = paint.colors[paint.color].hex; // the bristles carry the chosen paint
     paint.colors.forEach(function(c, i){
       var b = document.createElement("button"); b.type = "button"; b.className = "swatch";
       b.style.background = c.hex; b.setAttribute("aria-label", c.name); b.setAttribute("aria-pressed", String(i === paint.color));
-      b.addEventListener("click", function(){ pressOnly($("paintColors"), b); paint.color = i; });
+      b.addEventListener("click", function(){ pressOnly($("paintColors"), b); paint.color = i; $("paintBrushes").style.color = c.hex; });
       $("paintColors").appendChild(b);
     });
   }
