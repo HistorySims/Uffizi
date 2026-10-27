@@ -556,7 +556,7 @@ window.WORKS = [
       {find:"Can you count the glowing circles along the very bottom?", cx:0.5, cy:0.955, box:{x:0.0, y:0.92, w:1.0, h:0.07}, title:"A row of lights", body:"Did you count ten? They glow like lamps, or jewels, or the lights along the front of a stage. A grand finale for the whole painting."},
       {find:"Paint on one side of the bridge, and watch what happens on the other side!", cx:0.5, cy:0.27, box:{x:0.04, y:0.03, w:0.92, h:0.48},
         paint:{ look:"glow", check:"any", mirror:true, brushes:[0.012, 0.03, 0.06], brush:1,
-          colors:[{name:"Blue", hex:"#3a7be0"}, {name:"Gold", hex:"#f2c230"}, {name:"Red", hex:"#d2402f"}, {name:"Silver", hex:"#dfe6f2"}],
+          colors:[{name:"Blue", hex:"#3983bd"}, {name:"Teal", hex:"#2fa59e"}, {name:"Gold", hex:"#e4c017"}, {name:"Red", hex:"#c15562"}, {name:"Silver", hex:"#c9cdce"}],
           say:{ good:"Look, both sides match! Your painting is balanced, just like Stella's bridge." } },
         title:"Both sides match", body:"Stella built his bridge like a giant church window: the left side and the right side are almost the same, like a reflection in a mirror. That balance makes the bridge feel calm, strong, and grand."}
     ],
