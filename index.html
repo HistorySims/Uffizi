@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
-<script src="works.js?v=2026-10-27"></script>
+<script src="works.js?v=2026-10-27b"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -881,7 +881,7 @@
     Array.prototype.forEach.call(group.children, function(x){ x.setAttribute("aria-pressed", String(x === btn)); });
   }
   function buildPaintPanel(cfg){
-    var n = cfg.brushes.length, names = n === 3 ? ["Thin","Medium","Big"] : (n === 2 ? ["Thin","Big"] : ["Paint"]);
+    var n = cfg.brushes.length, names = n === 4 ? ["Thinnest","Thin","Medium","Big"] : n === 3 ? ["Thin","Medium","Big"] : (n === 2 ? ["Thin","Big"] : ["Paint"]);
     var max = Math.max.apply(null, cfg.brushes);
     $("paintBrushes").innerHTML = ""; $("paintColors").innerHTML = "";
     cfg.brushes.forEach(function(size, i){
