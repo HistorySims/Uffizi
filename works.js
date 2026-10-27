@@ -21,9 +21,11 @@ window.MUSEUMS = [
 //   paint:{look, check, brushes, brush, colors, say, mirror?, wobble?} = paint along. look = how strokes look
 //     (wax, oil, frosting, gold, wire, soft, glow, streak); check = how the painting is judged
 //     (any, shortBroad, broadSwoosh, thinLong, colorUsed, oneLine, sameSlant, smoothLong); say = words for each result.
-//   stickers:{set, ground, area, check, say, peek, word, start, outside} = place stickers. set = the tray (each sticker's size
-//     w,h in painting pixels and its anchor ax,ay, the point that sits where you tap; spin = how much it can tilt);
-//     ground = an image drawn over the painting first; area = where stickers can go; check = how it's judged (any, meadow).
+//   stickers:{set, ground, area, real, done, word, start, outside, depth?, flip?, jitter?} = place stickers, then slide a
+//     divider to compare with the real painting (there's no right way). set = the tray (each sticker's size w,h in painting
+//     pixels, its anchor ax,ay = the point that sits where you tap, spin = how much it can tilt, y = where it was cut from);
+//     ground = an image drawn over the painting first; area = where stickers can go; depth = {y0,s0,y1,s1}, sizes at two
+//     heights for things that shrink with distance.
 //   light:{hopper, horizon, objects, walls, patches, relight} = drag the sun. objects stand on the ground and cast
 //     shadows along it (len = painted shadow length at the artist's sun, hopper in degrees; back = how much a long
 //     shadow drifts up; offscreen = standing outside the painting); walls = flat signs sticking straight out of the
@@ -94,9 +96,8 @@ window.WORKS = [
       {find:"On the right, follow the falling petals to the woman whose dress overflows with flowers.", cx:0.683, cy:0.511, hit:0.16, z:2, r:0.24, title:"Flora — spring made visible", body:"Touched by Zephyr's warm breath, the fleeing nymph is changing — becoming Flora, the goddess of flowers. She steps forward scattering roses from her gown, and wherever she walks the ground blooms. She is spring itself, made into someone you can see."},
       {find:"Oh no, someone picked all the flowers! Choose a flower, then tap the ground to plant it.", cx:0.585, cy:0.88, box:{x:0.505, y:0.785, w:0.16, h:0.19},
         stickers:{ ground:{src:"images/primavera-meadow-cleared.jpg", x:0.40, y:0.74, w:0.40, h:0.2398},
-          area:{x:0.40, y:0.795, w:0.40, h:0.1848}, peek:"Peek at Botticelli's meadow", word:["flower", "flowers"],
+          area:{x:0.40, y:0.795, w:0.40, h:0.1848}, real:"Botticelli's", word:["flower", "flowers"],
           start:"Choose a flower, then tap the ground.", outside:"Flowers grow on the ground. Try lower down!",
-          check:"meadow", min:12, kinds:4, spread:{cols:4, rows:3, need:0.75},
           set:[
             {id:"pink-rose", name:"Pink rose", src:"images/stickers/primavera/pink-rose.png", w:85, h:35, ax:0.51, ay:0.55, spin:25},
             {id:"white-rose", name:"White rose", src:"images/stickers/primavera/white-rose.png", w:70, h:47, ax:0.5, ay:0.55, spin:25},
@@ -109,10 +110,7 @@ window.WORKS = [
             {id:"star-flowers", name:"White star flowers", src:"images/stickers/primavera/star-flowers.png", w:72, h:85, ax:0.5, ay:0.97, spin:6},
             {id:"purple-flowers", name:"Purple flowers", src:"images/stickers/primavera/purple-flowers.png", w:58, h:73, ax:0.48, ay:0.95, spin:6},
             {id:"strawberry", name:"Wild strawberry", src:"images/stickers/primavera/strawberry.png", w:88, h:79, ax:0.49, ay:0.9, spin:6} ],
-          say:{ good:"What a meadow! Lots of flowers, lots of kinds, spread all over, just like Botticelli's.",
-                few:"Keep planting! Botticelli's meadow is packed with flowers. Can you add some more?",
-                kinds:"Try mixing in more kinds of flowers. Botticelli painted almost 200 different kinds!",
-                spread:"Botticelli spread his flowers all over, like a carpet. Can you fill in the empty spots?" } },
+          done:"Slide to compare your meadow with Botticelli's!" },
         title:"A carpet of flowers", body:"Botticelli painted about 500 kinds of plants in this painting, including almost 200 kinds of flowers, and scientists who study plants have been able to name most of them! He scattered his flowers all over the dark ground, like a carpet, or like the flower-covered tapestries people hung on their walls in his time."}
     ],
     done:[
@@ -377,7 +375,19 @@ window.WORKS = [
                 notBroad:"Load up the biggest brush! Thiebaud's paint is thick, like frosting.",
                 notLong:"Try a big swoosh, like spreading frosting with a knife.",
                 more:"Keep frosting! Try a few big, thick swooshes." } },
-        title:"Paint like frosting", body:"Thiebaud loaded his brush with thick, creamy paint and swooped it on, just like a baker spreading frosting. Up close, the paint on his cakes really is thick and swirly, so it looks good enough to eat."}
+        title:"Paint like frosting", body:"Thiebaud loaded his brush with thick, creamy paint and swooped it on, just like a baker spreading frosting. Up close, the paint on his cakes really is thick and swirly, so it looks good enough to eat."},
+      {find:"The counter is empty! Choose a dessert, then tap the counter to set it out. Arrange them any way you like.", cx:0.5, cy:0.6, box:{x:0.0, y:0.18, w:1.0, h:0.82},
+        stickers:{ ground:{src:"images/pie-counter-empty.jpg", x:0, y:0, w:1, h:1},
+          area:{x:0.0, y:0.335, w:1.0, h:0.645}, depth:{y0:0.33, s0:0.64, y1:0.58, s1:1.0}, flip:false, jitter:0.04,
+          real:"Thiebaud's", word:["dessert", "desserts"],
+          start:"Choose a dessert, then tap the counter.", outside:"Desserts go on the counter. Try lower down!",
+          done:"Slide to compare your counter with Thiebaud's!",
+          set:[
+            {id:"chocolate-cake", name:"Chocolate cake", src:"images/stickers/pie-counter/chocolate-cake.webp", w:373, h:227, ax:0.532, ay:0.629, y:0.785, spin:0},
+            {id:"yellow-cake", name:"Yellow layer cake", src:"images/stickers/pie-counter/yellow-cake.webp", w:382, h:225, ax:0.519, ay:0.587, y:0.786, spin:0},
+            {id:"lemon-meringue", name:"Lemon meringue pie", src:"images/stickers/pie-counter/lemon-meringue.webp", w:397, h:230, ax:0.517, ay:0.604, y:0.776, spin:0},
+            {id:"pumpkin-pie", name:"Pumpkin pie", src:"images/stickers/pie-counter/pumpkin-pie.webp", w:368, h:183, ax:0.524, ay:0.5, y:0.638, spin:0} ] },
+        title:"Rows and rows", body:"Thiebaud lined his desserts up in long rows, the way a diner sets them out: triangles of cake and pie on circles of plates, again and again. Up close they look good enough to eat. From farther away they become a pattern of shapes. The rows shrink as they go back, so the counter looks long and deep."}
     ],
     done:[
       "Every slice on this counter is a little bit different, and a little bit the same. Thiebaud said pie felt 'very magical, very special.' You make it out of ordinary things like apples or squash, then wrap it up in a crust like a present.",

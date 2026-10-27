@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
-<script src="works.js?v=2026-10-26d"></script>
+<script src="works.js?v=2026-10-27"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -183,12 +183,16 @@
   .paint-actions .btn-ghost[disabled]:hover{border-color:var(--foam-faint);color:var(--foam);}
   #stickerPanel{gap:8px;}
   #stickerPanel .paint-actions{flex-wrap:nowrap;gap:6px;}
-  #stickerPanel .paint-actions .btn{padding:0 12px;}
+  #stickerPanel .paint-actions .btn{padding:0 12px;white-space:nowrap;}
+  @media (max-width:420px){ #stickerPanel .paint-actions .btn{padding:0 10px;font-size:.8rem;} }
   #stickerPanel .light-status{font-size:1rem;min-height:1.3em;}
   .sticker-tray{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:400px;}
   .sticker-btn{width:44px;height:44px;border-radius:11px;border:1.5px solid var(--foam-faint);background:#0b1210;
     display:inline-flex;align-items:center;justify-content:center;padding:4px;transition:transform .12s ease;}
   .sticker-btn img{max-width:100%;max-height:100%;display:block;pointer-events:none;}
+  .sticker-tray.big .sticker-btn{width:72px;height:52px;}
+  .paint-canvas:focus{outline:none;}
+  .paint-canvas:focus-visible{outline:2px solid var(--gold-bright);outline-offset:-2px;}
   .sticker-btn[aria-pressed="true"]{border-color:var(--gold-bright);background:rgba(201,162,75,.16);box-shadow:0 0 0 2px rgba(224,189,106,.35);transform:scale(1.06);}
 
   /* ---------- DONE ---------- */
@@ -287,7 +291,7 @@
     <div class="stage">
       <div class="frame" id="frameFind">
         <div id="osd"></div>
-        <canvas class="paint-canvas hidden" id="actCanvas" aria-label="Activity on the painting"></canvas>
+        <canvas class="paint-canvas hidden" id="actCanvas" tabindex="0" aria-label="Activity on the painting"></canvas>
       </div>
     </div>
     <div class="find-bottom">
@@ -317,7 +321,7 @@
         <div class="paint-row paint-actions">
           <button class="btn btn-ghost" id="stickerUndo">Undo</button>
           <button class="btn btn-ghost" id="stickerClear">Start over</button>
-          <button class="btn btn-ghost" id="stickerPeek">Peek</button>
+          <button class="btn btn-ghost" id="stickerCompare" aria-pressed="false">Compare</button>
           <button class="btn btn-primary" id="stickerDone" disabled>I'm done</button>
         </div>
       </div>
@@ -794,7 +798,7 @@
     $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden");
     $("actAgainBtn").classList.add("hidden");
     paint.strokes = []; paint.cur = null; paint.wobble = false; light.drag = false;
-    stk.items = []; stk.press = null; clearTimeout(stk.msgTimer);
+    stk.items = []; stk.press = null; stk.slide = null; stk.compare = false; cancelAnimationFrame(stk.anim); clearTimeout(stk.msgTimer);
     if(act.ctx){ act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height); }
     if(osd){ osd.setMouseNavEnabled(true); }
   }
@@ -1283,7 +1287,7 @@
      Stickers are stored in image pixels (x, y = where its anchor sits) and drawn lowest-last,
      so nearer things overlap farther ones. An optional ground image covers part of the painting
      first (e.g. the meadow with Botticelli's own flowers cleared away). */
-  var stk = { cfg:null, imgs:{}, kind:0, items:[], press:null, seq:0, msgTimer:0 };
+  var stk = { cfg:null, imgs:{}, kind:0, items:[], press:null, seq:0, msgTimer:0, compare:false, split:0.5, slide:null, anim:0 };
   function stickerImg(src){
     if(!stk.imgs[src]){
       var im = new Image();
@@ -1308,32 +1312,34 @@
   }
   function resumeStickers(s){
     state.findPhase = "stickers";
-    stk.press = null;
+    stk.press = null; stk.slide = null; setCompare(false);
     $("findQ").textContent = s.find;
     $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
     if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
     showActCanvas("stickers"); redrawActivity();
-    setStickerPeek(false);
     updateStickerButtons(); stickerStatus();
     $("stickerPanel").classList.remove("hidden");
     updateGuides();
   }
   function buildStickerTray(cfg){
     var tray = $("stickerTray"); tray.innerHTML = "";
+    tray.classList.toggle("big", cfg.set.length <= 6);
     cfg.set.forEach(function(k, i){
       var b = document.createElement("button"); b.type = "button"; b.className = "sticker-btn";
       b.setAttribute("aria-label", k.name); b.setAttribute("aria-pressed", String(i === stk.kind));
       var im = document.createElement("img"); im.src = k.src; im.alt = ""; b.appendChild(im);
-      b.addEventListener("click", function(){ pressOnly(tray, b); stk.kind = i; });
+      b.addEventListener("click", function(){ pressOnly(tray, b); stk.kind = i; if(stk.compare){ setCompare(false); } });
       tray.appendChild(b);
     });
   }
   function stickerStatus(msg){
     clearTimeout(stk.msgTimer);
     var n = stk.items.length, word = stk.cfg.word || ["sticker", "stickers"];
-    $("stickerStatus").textContent = msg || (n ? n + " " + word[n === 1 ? 0 : 1] + " so far" : (stk.cfg.start || "Pick one, then tap to place it."));
+    $("stickerStatus").textContent = msg || (stk.compare ? compareHint() :
+      (n ? n + " " + word[n === 1 ? 0 : 1] + " so far" : (stk.cfg.start || "Pick one, then tap to place it.")));
     if(msg){ stk.msgTimer = setTimeout(function(){ stickerStatus(); }, 2200); }
   }
+  function compareHint(){ return "Slide to compare yours with " + (stk.cfg.real || "the real one") + "."; }
   function updateStickerButtons(){
     var n = stk.items.length;
     $("stickerUndo").disabled = !n; $("stickerClear").disabled = !n; $("stickerDone").disabled = !n;
@@ -1342,29 +1348,48 @@
   function inStickerArea(p){ var a = areaPx(); return p.x >= a.x0 && p.x <= a.x1 && p.y >= a.y0 && p.y <= a.y1; }
   function clampToArea(p){ var a = areaPx(); return { x:Math.min(a.x1, Math.max(a.x0, p.x)), y:Math.min(a.y1, Math.max(a.y0, p.y)) }; }
   function stickerOrder(){ return stk.items.slice().sort(function(a, b){ return (a.y - b.y) || (a.n - b.n); }); }
+  // On a counter seen in perspective, things farther back look smaller: depth = {y0, s0, y1, s1}
+  // gives the size at two heights. Each sticker keeps the size it had where it was cut out (kind.y).
+  function depthAt(yFrac){
+    var d = stk.cfg.depth; if(!d) return 1;
+    var t = Math.max(0, Math.min(1, (yFrac - d.y0) / (d.y1 - d.y0)));
+    return d.s0 + (d.s1 - d.s0) * t;
+  }
+  function stickerScale(it){
+    var kd = stk.cfg.set[it.kind], sz = osdImgSize(), k = it.jit * (stk.cfg.scale || 1);
+    return stk.cfg.depth && kd.y != null ? k * depthAt(it.y / sz.y) / depthAt(kd.y) : k;
+  }
   function stickerAt(p){ // the topmost sticker under this point (generous enough for small fingers)
     var order = stickerOrder(), k = imgPxToScreen(), minR = 16 * act.dpr / k;
     for(var i=order.length-1; i>=0; i--){
-      var it = order[i], kd = stk.cfg.set[it.kind];
-      var cx = it.x + (0.5 - kd.ax) * kd.w * it.s, cy = it.y + (0.5 - kd.ay) * kd.h * it.s;
-      var r = Math.max(minR, Math.min(kd.w, kd.h) * it.s * 0.5);
-      if(Math.abs(p.x - cx) <= Math.max(r, kd.w * it.s * 0.45) && Math.abs(p.y - cy) <= Math.max(r, kd.h * it.s * 0.45)) return it;
+      var it = order[i], kd = stk.cfg.set[it.kind], s = stickerScale(it);
+      var cx = it.x + (0.5 - kd.ax) * kd.w * s, cy = it.y + (0.5 - kd.ay) * kd.h * s;
+      var r = Math.max(minR, Math.min(kd.w, kd.h) * s * 0.5);
+      if(Math.abs(p.x - cx) <= Math.max(r, kd.w * s * 0.45) && Math.abs(p.y - cy) <= Math.max(r, kd.h * s * 0.45)) return it;
     }
     return null;
   }
   function placeSticker(p){
-    var kd = stk.cfg.set[stk.kind], spin = (kd.spin != null ? kd.spin : 8) * Math.PI / 180;
+    var cfg = stk.cfg, kd = cfg.set[stk.kind], spin = (kd.spin != null ? kd.spin : 8) * Math.PI / 180;
+    var jit = cfg.jitter != null ? cfg.jitter : 0.13;
     var it = { kind:stk.kind, x:p.x, y:p.y, n:++stk.seq,
-               s:(stk.cfg.scale || 1) * (0.88 + Math.random() * 0.27), rot:(Math.random() * 2 - 1) * spin, flip:Math.random() < 0.5 };
+               jit:1 + (Math.random() * 2 - 1) * jit, rot:(Math.random() * 2 - 1) * spin,
+               flip:cfg.flip !== false && Math.random() < 0.5 };
     stk.items.push(it);
     updateStickerButtons(); stickerStatus(); redrawActivity();
     return it;
   }
+  function paintingRect(){ // the painting's rectangle on the canvas, clipped to the canvas
+    var sz = osdImgSize(), c = actCanvas(), tl = toScreen({x:0, y:0}), br = toScreen({x:sz.x, y:sz.y});
+    return { x0:Math.max(0, tl.x), y0:Math.max(0, tl.y), x1:Math.min(c.width, br.x), y1:Math.min(c.height, br.y) };
+  }
   function drawStickerLayer(){
     var ctx = act.ctx, cfg = stk.cfg, sz = osdImgSize(); if(!sz) return;
-    var k = imgPxToScreen(), tl = toScreen({x:0, y:0}), br = toScreen({x:sz.x, y:sz.y});
+    var k = imgPxToScreen(), R = paintingRect();
+    // in compare mode yours shows left of the divider and the real painting right of it
+    var cut = stk.compare ? R.x0 + (R.x1 - R.x0) * stk.split : R.x1;
     ctx.save();
-    ctx.beginPath(); ctx.rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y); ctx.clip();
+    ctx.beginPath(); ctx.rect(R.x0, R.y0, Math.max(0, cut - R.x0), R.y1 - R.y0); ctx.clip();
     var g = cfg.ground, gi = g && stk.imgs[g.src];
     if(gi && gi.complete && gi.naturalWidth){
       var a = toScreen({x:g.x*sz.x, y:g.y*sz.y}), b = toScreen({x:(g.x+g.w)*sz.x, y:(g.y+g.h)*sz.y});
@@ -1375,7 +1400,7 @@
     stickerOrder().forEach(function(it){
       var kd = cfg.set[it.kind], im = stk.imgs[kd.src];
       if(!im || !im.complete || !im.naturalWidth) return;
-      var p = toScreen({x:it.x, y:it.y}), sc = k * it.s * (it === moving ? 1.08 : 1);
+      var p = toScreen({x:it.x, y:it.y}), sc = k * stickerScale(it) * (it === moving ? 1.08 : 1);
       ctx.save();
       ctx.translate(p.x, p.y); ctx.rotate(it.rot); ctx.scale(it.flip ? -sc : sc, sc);
       if(it === moving){ ctx.shadowColor = "rgba(0,0,0,.7)"; ctx.shadowBlur = 10 * act.dpr; ctx.shadowOffsetY = 4 * act.dpr; }
@@ -1383,11 +1408,58 @@
       ctx.restore();
     });
     ctx.restore();
+    if(stk.compare){ drawDivider(ctx, R, cut); }
+  }
+  function drawDivider(ctx, R, x){
+    var d = act.dpr, cy = (R.y0 + R.y1) / 2, font = getComputedStyle(document.body).fontFamily;
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = 6 * d;
+    ctx.fillStyle = "#fff"; ctx.fillRect(x - 1.5 * d, R.y0, 3 * d, R.y1 - R.y0);
+    // round handle with arrows
+    ctx.beginPath(); ctx.arc(x, cy, 20 * d, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 2.5 * d; ctx.strokeStyle = "#c9a24b"; ctx.stroke();
+    ctx.fillStyle = "#1a1206";
+    [-1, 1].forEach(function(dir){
+      ctx.beginPath(); ctx.moveTo(x + dir * 13 * d, cy); ctx.lineTo(x + dir * 5 * d, cy - 6 * d); ctx.lineTo(x + dir * 5 * d, cy + 6 * d); ctx.closePath(); ctx.fill();
+    });
+    // labels in the top corners of each side (hidden when that side is too narrow)
+    ctx.font = "600 " + (12 * d) + "px " + font; ctx.textBaseline = "middle";
+    function pill(text, px, alignRight){
+      var w = ctx.measureText(text).width + 16 * d, h = 22 * d, y = R.y0 + 10 * d, x0 = alignRight ? px - w : px;
+      ctx.fillStyle = "rgba(4,8,10,.72)";
+      ctx.beginPath();
+      if(ctx.roundRect){ ctx.roundRect(x0, y, w, h, h / 2); } else { ctx.rect(x0, y, w, h); }
+      ctx.fill();
+      ctx.fillStyle = "#f2ebdd"; ctx.textAlign = "left"; ctx.fillText(text, x0 + 8 * d, y + h / 2 + 0.5 * d);
+    }
+    if(x - R.x0 > 90 * d){ pill("Yours", R.x0 + 8 * d, false); }
+    if(R.x1 - x > 110 * d){ pill(stk.cfg.real || "The real one", R.x1 - 8 * d, true); }
+    ctx.restore();
+  }
+  function setCompare(on){
+    stk.compare = on; cancelAnimationFrame(stk.anim);
+    if(on){ stk.split = 0.5; }
+    $("stickerCompare").textContent = on ? "Keep going" : "Compare";
+    $("stickerCompare").setAttribute("aria-pressed", String(on));
+    actCanvas().classList.toggle("sun", on); // a grab cursor while sliding
+    if(stk.cfg){ stickerStatus(); }
+    redrawActivity();
+  }
+  function slideTo(e){
+    var R = paintingRect(), x = canvasPoint(e).x;
+    stk.split = Math.max(0, Math.min(1, (x - R.x0) / Math.max(1, R.x1 - R.x0)));
+    redrawActivity();
   }
   function stickerDown(e){
-    if(state.findPhase !== "stickers" || !osd) return;
+    if(!osd || act.mode !== "stickers") return;
+    if(stk.compare){ // sliding the divider, while placing or after "I'm done"
+      e.preventDefault(); cancelAnimationFrame(stk.anim);
+      try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
+      stk.slide = true; slideTo(e); return;
+    }
+    if(state.findPhase !== "stickers") return;
     e.preventDefault();
-    if(actCanvas().classList.contains("peek")){ setStickerPeek(false); return; } // a tap while peeking just comes back
     var p = toImage(e);
     try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
     var hit = stickerAt(p);
@@ -1397,6 +1469,7 @@
     stk.press = { start:canvasPoint(e), at:p, item:it, off:{x:0, y:0}, moving:false, fresh:true };
   }
   function stickerMove(e){
+    if(stk.slide){ e.preventDefault(); slideTo(e); return; }
     var pr = stk.press; if(!pr) return;
     e.preventDefault();
     var c = canvasPoint(e);
@@ -1407,6 +1480,7 @@
     redrawActivity();
   }
   function stickerUp(){
+    if(stk.slide){ stk.slide = null; return; }
     var pr = stk.press; if(!pr) return;
     stk.press = null;
     // pressed on a sticker without sliding: that's a tap, so place a new one there
@@ -1415,42 +1489,27 @@
     }
     redrawActivity();
   }
-  function setStickerPeek(on){ // hide your stickers for a moment to see the real painting
-    actCanvas().classList.toggle("peek", on);
-    $("stickerPeek").textContent = on ? "Back" : "Peek";
-    $("stickerPeek").setAttribute("aria-label", on ? "Back to mine" : (stk.cfg.peek || "Peek at the real painting"));
-    $("stickerPeek").setAttribute("aria-pressed", String(on));
+  function stickerKey(e){ // the divider also moves with the arrow keys
+    if(act.mode !== "stickers" || !stk.compare) return;
+    var step = e.key === "ArrowLeft" ? -0.05 : (e.key === "ArrowRight" ? 0.05 : 0);
+    if(!step) return;
+    e.preventDefault(); cancelAnimationFrame(stk.anim);
+    stk.split = Math.max(0, Math.min(1, stk.split + step)); redrawActivity();
   }
-  // Each check returns a key; the painting's own words for that key come from works.js (stickers.say).
-  var STICKER_CHECKS = {
-    any: function(){ return "good"; },
-    meadow: function(items, cfg){ // Botticelli: lots of flowers, many kinds, spread all over like a carpet
-      if(items.length < (cfg.min || 12)) return "few";
-      var kinds = {}; items.forEach(function(it){ kinds[it.kind] = 1; });
-      if(Object.keys(kinds).length < (cfg.kinds || 4)) return "kinds";
-      var sp = cfg.spread;
-      if(sp){
-        // split the part of the meadow you can see into a grid; most squares should have a flower
-        var a = areaPx(), v = osd.viewport.viewportToImageRectangle(osd.viewport.getBounds(true));
-        var gx0 = Math.max(a.x0, v.x), gy0 = Math.max(a.y0, v.y), gx1 = Math.min(a.x1, v.x + v.width), gy1 = Math.min(a.y1, v.y + v.height);
-        var cw = (gx1 - gx0) / sp.cols, ch = (gy1 - gy0) / sp.rows, filled = 0;
-        for(var r=0; r<sp.rows; r++){ for(var c=0; c<sp.cols; c++){
-          var x0 = gx0 + c*cw, y0 = gy0 + r*ch, x1 = x0 + cw, y1 = y0 + ch;
-          if(items.some(function(it){ return it.x >= x0 && it.x < x1 && it.y >= y0 && it.y < y1; })){ filled++; }
-        } }
-        if(filled / (sp.rows * sp.cols) < (sp.need || 0.75)) return "spread";
-      }
-      return "good";
-    }
-  };
   function finishStickers(){
     var s = STOPS[state.findIndex], cfg = s.stickers;
-    var key = (STICKER_CHECKS[cfg.check] || STICKER_CHECKS.any)(stk.items, cfg);
     state.findPhase = "revealed"; stk.press = null;
-    setStickerPeek(false);
-    actCanvas().classList.add("locked");
     $("stickerPanel").classList.add("hidden");
-    showActivityCaption(s, (cfg.say && (cfg.say[key] || cfg.say.good)) || "");
+    showActivityCaption(s, cfg.done || "");
+    // there's no right way: show theirs next to the real one, sweeping the divider in from the right
+    setCompare(true); stk.split = 1;
+    var t0 = performance.now();
+    var step = function(now){
+      var t = Math.min(1, (now - t0) / 900), ease = 1 - Math.pow(1 - t, 3);
+      stk.split = 1 - 0.5 * ease; redrawActivity();
+      if(t < 1){ stk.anim = requestAnimationFrame(step); }
+    };
+    stk.anim = requestAnimationFrame(step);
   }
   function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } }
   function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } }
@@ -1638,7 +1697,8 @@
   $("stickerClear").addEventListener("click", function(){
     stk.items = []; updateStickerButtons(); stickerStatus(); redrawActivity();
   });
-  $("stickerPeek").addEventListener("click", function(){ setStickerPeek(!actCanvas().classList.contains("peek")); });
+  $("stickerCompare").addEventListener("click", function(){ setCompare(!stk.compare); });
+  $("actCanvas").addEventListener("keydown", stickerKey);
   $("stickerDone").addEventListener("click", finishStickers);
   $("lightHopper").addEventListener("click", sunBackToHopper);
   $("lightDone").addEventListener("click", finishLight);
