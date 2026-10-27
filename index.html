@@ -4,7 +4,22 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
-<script src="works.js?v=2026-10-27d"></script>
+<script>
+  // The app's version. When a newer one is published, a phone may still have this page saved;
+  // version.json is always fetched fresh, and if it's newer the page reloads itself once.
+  window.APP_VERSION = "2026-10-27e";
+  (function(){
+    try{
+      fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
+        if(!v || !v.version || v.version === window.APP_VERSION) return;
+        var key = "reloadedFor:" + v.version;
+        try{ if(sessionStorage.getItem(key)) return; sessionStorage.setItem(key, "1"); }catch(_){}
+        location.reload();
+      }).catch(function(){});
+    }catch(_){}
+  })();
+</script>
+<script src="works.js?v=2026-10-27e"></script>
 <title>A Looking Game</title>
 <style>
   :root{
