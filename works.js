@@ -265,7 +265,7 @@ window.WORKS = [
       {find:"Can you find a little dog trotting through the crowd?", cx:0.57, cy:0.95, box:{x:0.51, y:0.9, w:0.12, h:0.1}, title:"The little dog", body:"Down at everyone's feet, a small white dog trots along on a leash. Even the dog came out tonight! Motley packed the street so full that you could look for a long time and still find someone new."},
       {find:"Can you find a child sitting on the porch steps?", cx:0.54, cy:0.46, box:{x:0.51, y:0.41, w:0.06, h:0.1}, title:"Front-row seat", body:"A child sits on the porch steps, watching everything go by. Up on the porch, a woman leans on the railing to watch too. Porches and steps are the best seats in the house when the street turns into a party."},
       {find:"Look up at the tall building. Can you find people watching from the windows?", cx:0.86, cy:0.2, box:{x:0.73, y:0.0, w:0.27, h:0.4}, title:"Faces in the windows", body:"High in the windows, neighbors look down at the parade below. Some people join the crowd, and some watch from upstairs. Motley painted everyone, so the whole neighborhood is part of the picture."},
-      {find:"We took Motley's night away! Drag your finger around the color wheel to find the color that brings the night back.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+      {find:"We took Motley's night away! Drag your finger around the color wheel to find the color that brings the night back. Is it black?", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
         // filter: the painting's overall color (its average, scaled so the brightest channel is 1)
         night:{ filter:[0.406, 0.363, 1.0],
           hues:[ {to:20,  say:"A red filter! Hot, like a fire."},
@@ -277,6 +277,8 @@ window.WORKS = [
                  {to:361, say:"Pink! Like a party."} ],
           say:{ none:"No filter, no night: just a plain street. Drag around the wheel!",
                 close:"Ooh, you're getting close!",
+                black:"Black! So gloomy. Where did all the dancers go?",
+                dark:"Darker... night is dark, but is this the right color?",
                 found:"You found Motley's night!",
                 done:"You found it! To take the night away, we took out blue, not black.",
                 reveal:"Here's Motley's night. It was blue all along!" } },
