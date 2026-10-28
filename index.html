@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-28g";
+  window.APP_VERSION = "2026-10-28h";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-28g"></script>
+<script src="works.js?v=2026-10-28h"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -1649,6 +1649,11 @@
     var f = function(n){ var k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
     return [f(0), f(8), f(4)];
   }
+  // A filter only goes partway: the black rim dims the painting like dark glasses rather than
+  // blacking it out. filter = FLOOR + (1 - FLOOR) * the wheel's color.
+  var NIGHT_FLOOR = 0.33;
+  function wheelFilter(rgb){ return rgb.map(function(v){ return NIGHT_FLOOR + (1 - NIGHT_FLOOR) * v; }); }
+  function filterSpot(F){ return wheelSpot(F.map(function(v){ return Math.max(0, (v - NIGHT_FLOOR) / (1 - NIGHT_FLOOR)); })); }
   function wheelSpot(rgb){ // where a color sits on the wheel (x, y from -1 to 1)
     var mx = Math.max.apply(null, rgb), mn = Math.min.apply(null, rgb), d = mx - mn, h = 0;
     if(d){ h = mx === rgb[0] ? ((rgb[1] - rgb[2]) / d + 6) % 6 : mx === rgb[1] ? (rgb[2] - rgb[0]) / d + 2 : (rgb[0] - rgb[1]) / d + 4; }
@@ -1681,10 +1686,10 @@
     var x = (e.clientX - r.left - r.width / 2) / R, y = (e.clientY - r.top - r.height / 2) / R, d = Math.sqrt(x * x + y * y);
     if(d > 1){ x /= d; y /= d; }
     // close enough to the artist's color snaps right onto it
-    var F = night.cfg.filter, t = wheelSpot(F);
+    var F = night.cfg.filter, t = filterSpot(F);
     night.found = Math.hypot(x - t.x, y - t.y) < 0.12;
     if(night.found){ x = t.x; y = t.y; night.color = F.slice(); }
-    else { night.color = wheelRgb((Math.atan2(y, x) * 180 / Math.PI + 360) % 360, Math.sqrt(x * x + y * y)); }
+    else { night.color = wheelFilter(wheelRgb((Math.atan2(y, x) * 180 / Math.PI + 360) % 360, Math.sqrt(x * x + y * y))); }
     night.at = { x:x, y:y };
     drawWheel(); updateNight();
     if(!night.raf){ night.raf = requestAnimationFrame(function(){ night.raf = 0; renderNight(); redrawActivity(); }); }
@@ -1699,7 +1704,7 @@
   }
   function updateNight(){
     var say = night.cfg.say, a = night.at, r = Math.sqrt(a.x * a.x + a.y * a.y), msg;
-    var hue = (Math.atan2(a.y, a.x) * 180 / Math.PI + 360) % 360, t = wheelSpot(night.cfg.filter);
+    var hue = (Math.atan2(a.y, a.x) * 180 / Math.PI + 360) % 360, t = filterSpot(night.cfg.filter);
     if(night.found){ msg = say.found; }
     else if(r < 0.12){ msg = say.none; }
     else if(r > 0.88){ msg = say.black; }
@@ -1726,7 +1731,7 @@
     $("nightPanel").classList.add("hidden");
     showActivityCaption(s, night.found ? night.cfg.say.done : night.cfg.say.reveal);
     if(!night.found){ // show them the answer: slide the filter onto the artist's color
-      var F = night.cfg.filter, t = wheelSpot(F);
+      var F = night.cfg.filter, t = filterSpot(F);
       night.found = true; night.color = F.slice(); night.at = t; redrawActivity();
     }
   }

@@ -277,7 +277,7 @@ window.WORKS = [
                  {to:361, say:"Pink! Like a party."} ],
           say:{ none:"No filter, no night: just a plain street. Drag around the wheel!",
                 close:"Ooh, you're getting close!",
-                black:"Black! So gloomy. Where did all the dancers go?",
+                black:"Black makes it darker... but everything looks dull and gloomy. Is that the night Motley painted?",
                 dark:"Darker... night is dark, but is this the right color?",
                 found:"You found Motley's night!",
                 done:"You found it! To take the night away, we took out blue, not black.",
