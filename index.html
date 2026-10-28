@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-28h";
+  window.APP_VERSION = "2026-10-28i";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-28h"></script>
+<script src="works.js?v=2026-10-28i"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -58,7 +58,7 @@
   .hidden{display:none !important;}
 
   /* ---------- HOME (museums) & GALLERY (works) ---------- */
-  #home,#gallery{text-align:center;padding:30px 24px;overflow-y:auto;}
+  #home,#gallery,#demo{text-align:center;padding:30px 24px;overflow-y:auto;}
   /* margin:auto centers vertically but still lets a long list scroll from the top */
   .screen-inner{margin:auto;width:100%;display:flex;flex-direction:column;align-items:center;}
   .home-copy{font-family:var(--serif);font-size:1.12rem;line-height:1.45;color:var(--foam-dim);max-width:560px;margin:0 auto 26px;}
@@ -207,6 +207,10 @@
   .sticker-btn img{max-width:100%;max-height:100%;display:block;pointer-events:none;}
   .sticker-tray.big .sticker-btn{width:72px;height:52px;}
   .night-mode .navigator{visibility:hidden;} /* the minimap would give away the answer */
+  .demo-list{display:flex;flex-direction:column;gap:14px;width:100%;max-width:640px;margin:0 auto;text-align:left;}
+  .demo-work{border-top:1px solid var(--foam-faint);padding-top:10px;}
+  .demo-work h2{font-family:var(--serif);font-size:1.1rem;margin:0 0 6px;}
+  .demo-work .btn{min-height:40px;padding:4px 12px;font-size:.85rem;margin:0 6px 6px 0;text-align:left;}
   .night-wheel{width:min(46vw,190px);height:min(46vw,190px);touch-action:none;cursor:crosshair;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.45);} /* so the black rim shows on the dark page */
   .paint-canvas:focus{outline:none;}
   .paint-canvas:focus-visible{outline:2px solid var(--gold-bright);outline-offset:-2px;}
@@ -257,6 +261,14 @@
     <h1 id="galleryTitle"></h1>
     <p class="home-copy" id="galleryCopy"></p>
     <div class="painting-grid" id="paintingGrid"></div>
+  </div></section>
+
+  <!-- DEMO (testing only, not linked anywhere): index.html#demo jumps straight to any activity -->
+  <section class="screen" id="demo"><div class="screen-inner">
+    <div class="eyebrow">For testing</div>
+    <h1>Activity demo</h1>
+    <p class="home-copy">Jump straight to any activity, skipping the looking and the clues. "Clues" starts a work at its first clue.</p>
+    <div class="demo-list" id="demoList"></div>
   </div></section>
 
   <!-- START -->
@@ -420,7 +432,7 @@
   var STOPS = currentPainting.stops;
 
   var $ = function(id){ return document.getElementById(id); };
-  var screens = { home:$("home"), gallery:$("gallery"), start:$("start"), looking:$("looking"), find:$("find"), done:$("done"), tune:$("tune") };
+  var screens = { home:$("home"), gallery:$("gallery"), start:$("start"), looking:$("looking"), find:$("find"), done:$("done"), tune:$("tune"), demo:$("demo") };
   var prog = $("prog"), R = 27, C = 2*Math.PI*R;
   prog.style.strokeDasharray = C; prog.style.strokeDashoffset = 0;
 
@@ -2169,9 +2181,50 @@
     var s = STOPS[state.findIndex];
     if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); } else if(s.stickers){ resumeStickers(s); } else if(s.play){ resumePlay(s); } else if(s.night){ resumeNight(s); }
   });
-  $("quitFind").addEventListener("click", showGallery);
+  $("quitFind").addEventListener("click", function(){ if(state.demo){ show("demo"); } else { showGallery(); } });
   $("againBtn").addEventListener("click", startLooking);
-  $("doneBtn").addEventListener("click", showGallery);
+  $("doneBtn").addEventListener("click", function(){ if(state.demo){ show("demo"); } else { showGallery(); } });
+
+  /* ---------- hidden demo page for testing: index.html#demo ---------- */
+  var DEMO_KINDS = { paint:"Paint", light:"Move the sun", stickers:"Stickers", play:"Play the painting", night:"Find the night" };
+  function demoJump(painting, i){
+    state.demo = true;
+    currentMuseum = MUSEUMS.filter(function(m){ return m.id === painting.museum; })[0] || currentMuseum;
+    selectPainting(painting);
+    enterFind();
+    // wait for this painting to open in the viewer (not the one before), then go straight to the stop
+    var opened = false, tries = 0;
+    if(osd){ osd.addOnceHandler("open", function(){ opened = true; }); }
+    var go = function(){
+      if(opened && osdImgSize() && osd.world.getItemAt(0).getFullyLoaded()){ beginSeeking(i); return; }
+      if(++tries < 200){ setTimeout(go, 50); } else if(osdImgSize()){ beginSeeking(i); }
+    };
+    go();
+  }
+  function renderDemo(){
+    var list = $("demoList"); list.innerHTML = "";
+    MUSEUMS.forEach(function(m){
+      worksIn(m).forEach(function(painting){
+        var box = document.createElement("div"); box.className = "demo-work";
+        var h = document.createElement("h2"); h.textContent = painting.title + " · " + m.name; box.appendChild(h);
+        var add = function(label, i, primary){
+          var b = document.createElement("button"); b.type = "button"; b.className = "btn " + (primary ? "btn-primary" : "btn-ghost");
+          b.textContent = label; b.addEventListener("click", function(){ demoJump(painting, i); }); box.appendChild(b);
+        };
+        add("Clues", 0, false);
+        painting.stops.forEach(function(s, i){
+          var kind = Object.keys(DEMO_KINDS).filter(function(k){ return s[k]; })[0];
+          if(kind){ add(DEMO_KINDS[kind] + " (stop " + (i + 1) + ")", i, true); }
+        });
+        list.appendChild(box);
+      });
+    });
+  }
+  function checkDemoHash(){
+    if(location.hash === "#demo"){ state.demo = true; renderDemo(); show("demo"); screens.demo.scrollTop = 0; }
+  }
+  window.addEventListener("hashchange", checkDemoHash);
+  checkDemoHash();
   $("tuneLink").addEventListener("click", enterTune);
   $("quitTune").addEventListener("click", function(){ show("start"); });
 
