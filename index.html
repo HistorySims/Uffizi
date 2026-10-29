@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-29a";
+  window.APP_VERSION = "2026-10-29b";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-29a"></script>
+<script src="works.js?v=2026-10-29b"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -214,6 +214,8 @@
   .night-wheel{width:min(46vw,190px);height:min(46vw,190px);touch-action:none;cursor:crosshair;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.45);} /* so the black rim shows on the dark page */
   .paint-canvas:focus{outline:none;}
   .paint-canvas:focus-visible{outline:2px solid var(--gold-bright);outline-offset:-2px;}
+  .sticker-tray.light .sticker-btn{background:#e9e4dc;} /* dark pieces, like wire, show on a wall-colored tile */
+  .sticker-tray.light .sticker-btn[aria-pressed="true"]{background:#f6eedb;}
   .sticker-btn[aria-pressed="true"]{border-color:var(--gold-bright);background:rgba(201,162,75,.16);box-shadow:0 0 0 2px rgba(224,189,106,.35);transform:scale(1.06);}
 
   /* ---------- DONE ---------- */
@@ -348,6 +350,7 @@
         <div class="light-status" id="stickerStatus" aria-live="polite"></div>
         <div class="sticker-tray" id="stickerTray" role="group" aria-label="Choose a sticker"></div>
         <div class="paint-row paint-actions">
+          <button class="btn btn-ghost hidden" id="stickerTurn" aria-label="Turn the last piece">&#8635; Turn</button>
           <button class="btn btn-ghost" id="stickerUndo">Undo</button>
           <button class="btn btn-ghost" id="stickerClear">Start over</button>
           <button class="btn btn-ghost" id="stickerCompare" aria-pressed="false">Compare</button>
@@ -1773,7 +1776,7 @@
      Stickers are stored in image pixels (x, y = where its anchor sits) and drawn lowest-last,
      so nearer things overlap farther ones. An optional ground image covers part of the painting
      first (e.g. the meadow with Botticelli's own flowers cleared away). */
-  var stk = { cfg:null, imgs:{}, kind:0, items:[], press:null, seq:0, msgTimer:0, compare:false, split:0.5, slide:null, anim:0 };
+  var stk = { cfg:null, imgs:{}, kind:0, items:[], press:null, seq:0, msgTimer:0, compare:false, split:0.5, slide:null, anim:0, sel:null };
   function stickerImg(src){
     if(!stk.imgs[src]){
       var im = new Image();
@@ -1791,7 +1794,8 @@
   }
   function enterStickers(s){
     var cfg = s.stickers;
-    act.mode = "stickers"; stk.cfg = cfg; stk.items = []; stk.kind = 0; stk.press = null;
+    act.mode = "stickers"; stk.cfg = cfg; stk.items = []; stk.kind = 0; stk.press = null; stk.sel = null;
+    $("stickerTurn").classList.toggle("hidden", !cfg.turn);
     preloadStickers(currentPainting);
     buildStickerTray(cfg);
     resumeStickers(s);
@@ -1810,6 +1814,7 @@
   function buildStickerTray(cfg){
     var tray = $("stickerTray"); tray.innerHTML = "";
     tray.classList.toggle("big", cfg.set.length <= 6);
+    tray.classList.toggle("light", !!cfg.lightTray);
     cfg.set.forEach(function(k, i){
       var b = document.createElement("button"); b.type = "button"; b.className = "sticker-btn";
       b.setAttribute("aria-label", k.name); b.setAttribute("aria-pressed", String(i === stk.kind));
@@ -1829,6 +1834,7 @@
   function updateStickerButtons(){
     var n = stk.items.length;
     $("stickerUndo").disabled = !n; $("stickerClear").disabled = !n; $("stickerDone").disabled = !n;
+    $("stickerTurn").disabled = !stk.sel;
   }
   function areaPx(){ var a = stk.cfg.area, sz = osdImgSize(); return { x0:a.x*sz.x, y0:a.y*sz.y, x1:(a.x+a.w)*sz.x, y1:(a.y+a.h)*sz.y }; }
   function inStickerArea(p){ var a = areaPx(); return p.x >= a.x0 && p.x <= a.x1 && p.y >= a.y0 && p.y <= a.y1; }
@@ -1861,7 +1867,7 @@
     var it = { kind:stk.kind, x:p.x, y:p.y, n:++stk.seq,
                jit:1 + (Math.random() * 2 - 1) * jit, rot:(Math.random() * 2 - 1) * spin,
                flip:cfg.flip !== false && Math.random() < 0.5 };
-    stk.items.push(it);
+    stk.items.push(it); stk.sel = it;
     updateStickerButtons(); stickerStatus(); redrawActivity();
     return it;
   }
@@ -1894,6 +1900,17 @@
       ctx.restore();
     });
     ctx.restore();
+    var sel = stk.sel;
+    if(cfg.turn && sel && !stk.compare && state.findPhase === "stickers" && stk.items.indexOf(sel) >= 0){
+      var skd = cfg.set[sel.kind], ssc = k * stickerScale(sel), sp = toScreen({x:sel.x, y:sel.y});
+      // the piece's middle: its offset from the anchor, flipped and scaled, then turned
+      var vx = (0.5 - skd.ax) * skd.w * ssc * (sel.flip ? -1 : 1), vy = (0.5 - skd.ay) * skd.h * ssc;
+      var cx = sp.x + vx * Math.cos(sel.rot) - vy * Math.sin(sel.rot), cy = sp.y + vx * Math.sin(sel.rot) + vy * Math.cos(sel.rot);
+      ctx.save();
+      ctx.setLineDash([4 * act.dpr, 4 * act.dpr]); ctx.lineWidth = 1.5 * act.dpr; ctx.strokeStyle = "rgba(201,162,75,.9)";
+      ctx.beginPath(); ctx.arc(cx, cy, Math.max(skd.w, skd.h) * ssc * 0.6 + 4 * act.dpr, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
     if(stk.compare){ drawDivider(ctx, R, cut, stk.cfg.real || "The real one"); }
   }
   function drawDivider(ctx, R, x, realLabel){
@@ -1960,7 +1977,7 @@
     e.preventDefault();
     var c = canvasPoint(e);
     if(!pr.moving && Math.hypot(c.x - pr.start.x, c.y - pr.start.y) < 8 * act.dpr) return;
-    pr.moving = true;
+    pr.moving = true; stk.sel = pr.item; updateStickerButtons();
     var p = toImage(e), q = clampToArea({ x:p.x + pr.off.x, y:p.y + pr.off.y });
     pr.item.x = q.x; pr.item.y = q.y;
     redrawActivity();
@@ -2179,10 +2196,17 @@
     if(!stk.items.length) return;
     var last = stk.items.reduce(function(a, b){ return b.n > a.n ? b : a; });
     stk.items.splice(stk.items.indexOf(last), 1);
+    if(stk.sel === last){ stk.sel = stk.items.length ? stk.items.reduce(function(a, b){ return b.n > a.n ? b : a; }) : null; }
     updateStickerButtons(); stickerStatus(); redrawActivity();
   });
   $("stickerClear").addEventListener("click", function(){
-    stk.items = []; updateStickerButtons(); stickerStatus(); redrawActivity();
+    stk.items = []; stk.sel = null; updateStickerButtons(); stickerStatus(); redrawActivity();
+  });
+  $("stickerTurn").addEventListener("click", function(){
+    if(!stk.sel || stk.items.indexOf(stk.sel) < 0) return;
+    stk.sel.rot += (stk.cfg.turn || 45) * Math.PI / 180;
+    if(stk.compare){ setCompare(false); }
+    redrawActivity();
   });
   $("stickerCompare").addEventListener("click", function(){ setCompare(!stk.compare); });
   $("actCanvas").addEventListener("keydown", stickerKey);

@@ -600,7 +600,22 @@ window.WORKS = [
           say:{ good:"One line, one wire, just like Calder! Now watch it wobble.",
                 tooMany:"Calder used one long wire. Tap Try again, then Start over, and draw your whole figure without lifting your finger!",
                 tooShort:"Make it bigger! Tap Try again and draw one long line that loops around into a shape." } },
-        title:"Drawing in the air", body:"Calder bent and twisted wire into people and animals, like drawing a picture with one long line, right in the air. And he loved things that move: later he invented mobiles, sculptures that sway and turn."}
+        title:"Drawing in the air", body:"Calder bent and twisted wire into people and animals, like drawing a picture with one long line, right in the air. And he loved things that move: later he invented mobiles, sculptures that sway and turn."},
+      {find:"Calder built his acrobats from wire, corks and scraps of cloth. Pick a piece and tap to put it on. Can you build a new trapeze performer? Tap \u21bb Turn to turn the last piece.", cx:0.48, cy:0.34, box:{x:0.365, y:0.24, w:0.23, h:0.2},
+        stickers:{ area:{x:0.3, y:0.15, w:0.4, h:0.4}, jitter:0.05, turn:45, lightTray:true,
+          real:"Calder's", word:["piece", "pieces"],
+          start:"Pick a piece, then tap to place it.", outside:"Build up here, near the trapezes!",
+          done:"Slide to compare your acrobat with Calder's!",
+          set:[
+            {id:"cork", name:"Cork", src:"images/stickers/calder/cork.png", w:16, h:25, ax:0.5, ay:0.5, spin:4},
+            {id:"bead", name:"Wooden bead", src:"images/stickers/calder/bead.png", w:12, h:12, ax:0.5, ay:0.5, spin:0},
+            {id:"arm", name:"Wire arm with a hook", src:"images/stickers/calder/arm.png", w:9, h:30, ax:0.5, ay:0.5, spin:0},
+            {id:"leg", name:"Bent wire leg", src:"images/stickers/calder/leg.png", w:12, h:32, ax:0.5, ay:0.5, spin:0},
+            {id:"spring", name:"Wire spring", src:"images/stickers/calder/spring.png", w:7.5, h:30, ax:0.5, ay:0.5, spin:0},
+            {id:"curl", name:"Wire curl", src:"images/stickers/calder/curl.png", w:14, h:14, ax:0.5, ay:0.5, spin:30},
+            {id:"felt", name:"Red felt", src:"images/stickers/calder/felt.png", w:18, h:15, ax:0.5, ay:0.5, spin:20},
+            {id:"trapeze", name:"Trapeze", src:"images/stickers/calder/trapeze.png", w:30, h:42.5, ax:0.5, ay:0.5, spin:0} ] },
+        title:"A circus from the junk drawer", body:"Calder made his whole circus from things most people throw away: wire, corks, buttons, bottle caps, and scraps of cloth and leather. He bent the wire with pliers, and the performers really worked. He would crouch beside the ring and make the acrobats swing and fly for an audience of friends!"}
     ],
     done:[
       "Here's the secret: Calder's Circus was a real show. In Paris, around 1926, a young American named Alexander Calder started making tiny performers out of wire, cloth, cork, string, buttons, and bottle caps. Then he invited friends over to watch.",
