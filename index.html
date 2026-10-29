@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-29b";
+  window.APP_VERSION = "2026-10-29c";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-29b"></script>
+<script src="works.js?v=2026-10-29c"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -850,7 +850,7 @@
     hushPlay(1.5); cancelAnimationFrame(play.raf); play.raf = 0; play.ripples = []; duckBg(false);
     $("actAgainBtn").classList.add("hidden");
     paint.strokes = []; paint.cur = null; paint.wobble = false; light.drag = false;
-    stk.items = []; stk.press = null; stk.slide = null; stk.compare = false; cancelAnimationFrame(stk.anim); clearTimeout(stk.msgTimer);
+    stk.items = []; stk.press = null; stk.slide = null; stk.drawing = null; stk.compare = false; cancelAnimationFrame(stk.anim); clearTimeout(stk.msgTimer);
     if(act.ctx){ act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height); }
     if(osd){ osd.setMouseNavEnabled(true); }
   }
@@ -1776,7 +1776,7 @@
      Stickers are stored in image pixels (x, y = where its anchor sits) and drawn lowest-last,
      so nearer things overlap farther ones. An optional ground image covers part of the painting
      first (e.g. the meadow with Botticelli's own flowers cleared away). */
-  var stk = { cfg:null, imgs:{}, kind:0, items:[], press:null, seq:0, msgTimer:0, compare:false, split:0.5, slide:null, anim:0, sel:null };
+  var stk = { cfg:null, imgs:{}, kind:0, items:[], press:null, seq:0, msgTimer:0, compare:false, split:0.5, slide:null, anim:0, sel:null, drawing:null };
   function stickerImg(src){
     if(!stk.imgs[src]){
       var im = new Image();
@@ -1855,6 +1855,7 @@
     var order = stickerOrder(), k = imgPxToScreen(), minR = 16 * act.dpr / k;
     for(var i=order.length-1; i>=0; i--){
       var it = order[i], kd = stk.cfg.set[it.kind], s = stickerScale(it);
+      if(kd.draw) continue;
       var cx = it.x + (0.5 - kd.ax) * kd.w * s, cy = it.y + (0.5 - kd.ay) * kd.h * s;
       var r = Math.max(minR, Math.min(kd.w, kd.h) * s * 0.5);
       if(Math.abs(p.x - cx) <= Math.max(r, kd.w * s * 0.45) && Math.abs(p.y - cy) <= Math.max(r, kd.h * s * 0.45)) return it;
@@ -1891,6 +1892,7 @@
     var moving = stk.press && stk.press.moving && stk.press.item;
     stickerOrder().forEach(function(it){
       var kd = cfg.set[it.kind], im = stk.imgs[kd.src];
+      if(kd.draw){ drawWireLine(ctx, it, kd.draw, k); return; }
       if(!im || !im.complete || !im.naturalWidth) return;
       var p = toScreen({x:it.x, y:it.y}), sc = k * stickerScale(it) * (it === moving ? 1.08 : 1);
       ctx.save();
@@ -1912,6 +1914,18 @@
       ctx.restore();
     }
     if(stk.compare){ drawDivider(ctx, R, cut, stk.cfg.real || "The real one"); }
+  }
+  // a set item with draw:{w, color} is a tool, not a sticker: dragging draws a line of wire
+  function drawWireLine(ctx, it, d, k){
+    var pts = it.pts.map(toScreen);
+    if(pts.length === 1){ pts.push({ x:pts[0].x + 0.5, y:pts[0].y + 0.5 }); }
+    ctx.save();
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.strokeStyle = d.color; ctx.lineWidth = Math.max(1.2 * act.dpr, d.w * k); strokePath(ctx, pts);
+    // a glint along the top of the wire
+    ctx.globalAlpha = 0.45; ctx.strokeStyle = "#fff"; ctx.lineWidth = Math.max(0.6 * act.dpr, d.w * k * 0.3);
+    strokePath(ctx, pts, function(p){ return { x:p.x - 0.25 * d.w * k, y:p.y - 0.25 * d.w * k }; });
+    ctx.restore();
   }
   function drawDivider(ctx, R, x, realLabel){
     var d = act.dpr, cy = (R.y0 + R.y1) / 2, font = getComputedStyle(document.body).fontFamily;
@@ -1965,6 +1979,13 @@
     e.preventDefault();
     var p = toImage(e);
     try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
+    if(stk.cfg.set[stk.kind].draw){ // the wire tool: start a new line
+      if(!inStickerArea(p)){ stickerStatus(stk.cfg.outside || "Try a spot lower down!"); return; }
+      stk.drawing = { kind:stk.kind, x:p.x, y:p.y, n:++stk.seq, jit:1, rot:0, flip:false, pts:[p], last:canvasPoint(e) };
+      stk.items.push(stk.drawing);
+      updateStickerButtons(); stickerStatus(); redrawActivity();
+      return;
+    }
     var hit = stickerAt(p);
     if(hit){ stk.press = { start:canvasPoint(e), at:p, item:hit, off:{x:hit.x - p.x, y:hit.y - p.y}, moving:false, fresh:false }; return; }
     if(!inStickerArea(p)){ stickerStatus(stk.cfg.outside || "Try a spot lower down!"); return; }
@@ -1973,6 +1994,13 @@
   }
   function stickerMove(e){
     if(stk.slide){ e.preventDefault(); slideTo(e); return; }
+    if(stk.drawing){
+      e.preventDefault();
+      var c = canvasPoint(e), dw = stk.drawing;
+      if(Math.hypot(c.x - dw.last.x, c.y - dw.last.y) < 2 * act.dpr) return;
+      dw.last = c; dw.pts.push(clampToArea(toImage(e))); redrawActivity();
+      return;
+    }
     var pr = stk.press; if(!pr) return;
     e.preventDefault();
     var c = canvasPoint(e);
@@ -1984,6 +2012,7 @@
   }
   function stickerUp(){
     if(stk.slide){ stk.slide = null; return; }
+    if(stk.drawing){ stk.drawing = null; return; }
     var pr = stk.press; if(!pr) return;
     stk.press = null;
     // pressed on a sticker without sliding: that's a tap, so place a new one there
@@ -2196,7 +2225,10 @@
     if(!stk.items.length) return;
     var last = stk.items.reduce(function(a, b){ return b.n > a.n ? b : a; });
     stk.items.splice(stk.items.indexOf(last), 1);
-    if(stk.sel === last){ stk.sel = stk.items.length ? stk.items.reduce(function(a, b){ return b.n > a.n ? b : a; }) : null; }
+    if(stk.sel === last){ // Turn moves on to the newest piece left (drawn wire can't turn)
+      var pieces = stk.items.filter(function(it){ return !stk.cfg.set[it.kind].draw; });
+      stk.sel = pieces.length ? pieces.reduce(function(a, b){ return b.n > a.n ? b : a; }) : null;
+    }
     updateStickerButtons(); stickerStatus(); redrawActivity();
   });
   $("stickerClear").addEventListener("click", function(){
