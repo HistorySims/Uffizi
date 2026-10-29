@@ -249,29 +249,32 @@ window.WORKS = [
     alt:"Gettin' Religion by Archibald J. Motley Jr.: a crowded street at night in deep blue light, with brass musicians, dancers, and neighbors watching from porches and windows",
     intro:"You've soaked up the whole noisy night. Now let's find the people and the tiny details hiding in the blue.",
     src:"images/gettin-religion.jpg", tiles:"images/gettin-religion.jpg",
-    music:"audio/solace.mp3",
+    music:"audio/canal-street-blues.mp3",
     prompts:[
       "Just look. It's nighttime, and the whole street is full of people. Can you almost hear it?",
       "Everything is blue and purple, like the night is glowing. Where is the brightest light?",
       "Find someone making music. What instrument are they playing?",
-      "Find someone dancing, someone walking, and someone just watching. Who would you be?",
+      "Find someone dancing, someone walking, and someone just watching. Is everyone here for the same reason?",
       "If you could step into this painting, what would you do first?"
     ],
     stops:[
       {find:"Can you find the glowing streetlamp?", cx:0.63, cy:0.06, box:{x:0.58, y:0.0, w:0.1, h:0.13}, title:"The streetlamp", body:"The streetlamp glows like a little moon, and the whole street is bathed in its blue light. Motley was famous for his night scenes, painted in deep blues and purples, so the darkness feels warm and alive instead of scary."},
       {find:"Can you find someone playing a shiny trumpet?", cx:0.37, cy:0.48, box:{x:0.3, y:0.42, w:0.14, h:0.14}, title:"The trumpet", body:"Here's a man blowing hard on his trumpet, cheeks full of air. A brass band is marching right down the middle of the street, and the music pulls everyone along with it."},
-      {find:"Can you find someone with both hands raised high in the air?", cx:0.21, cy:0.4, box:{x:0.14, y:0.31, w:0.15, h:0.2}, title:"Hands up high", body:"This tall man throws his head back and lifts both hands toward the sky. Is he singing? Shouting? Praising? The painting is called Gettin' Religion, and he looks like he's feeling the music all the way down to his shoes."},
       {find:"Can you find a tambourine?", cx:0.59, cy:0.71, box:{x:0.54, y:0.67, w:0.1, h:0.08}, title:"Shake, shake", body:"Someone is holding a tambourine, ready to shake it in time with the band. Look how many ways people make music here: trumpets, a trombone, a tambourine, and voices."},
       {find:"Can you find a little dog trotting through the crowd?", cx:0.57, cy:0.95, box:{x:0.51, y:0.9, w:0.12, h:0.1}, title:"The little dog", body:"Down at everyone's feet, a small white dog trots along on a leash. Even the dog came out tonight! Motley packed the street so full that you could look for a long time and still find someone new."},
       {find:"Can you find a child sitting on the porch steps?", cx:0.54, cy:0.46, box:{x:0.51, y:0.41, w:0.06, h:0.1}, title:"Front-row seat", body:"A child sits on the porch steps, watching everything go by. Up on the porch, a woman leans on the railing to watch too. Porches and steps are the best seats in the house when the street turns into a party."},
       {find:"Look up at the tall building. Can you find people watching from the windows?", cx:0.86, cy:0.2, box:{x:0.73, y:0.0, w:0.27, h:0.4}, title:"Faces in the windows", body:"High in the windows, neighbors look down at the parade below. Some people join the crowd, and some watch from upstairs. Motley painted everyone, so the whole neighborhood is part of the picture."},
+      {find:"If you could step into this street, who would you be? Draw a circle around that person.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        circle:{ want:"any", start:"Draw a circle around the person you'd be.", say:{ small:"Draw a bigger circle, all the way around!" } },
+        title:"That's you!", body:"Look closely at your person. Are they playing, dancing, walking, or just watching? What do you think they can hear right now? Everyone on this street has their own reason for being out tonight."},
+      {find:"Can you find where the artist signed his name?", cx:0.92, cy:0.975, box:{x:0.84, y:0.95, w:0.16, h:0.05}, areas:[{x:0.84, y:0.95, w:0.16, h:0.05}], title:"A. J. Motley Jr., 1948", body:"Motley signed his name in red, right on the street. He painted Bronzeville, the Black neighborhood on Chicago's South Side, where he loved to walk at night and watch the music, the dancing and the neighbors on their porches."},
       {find:"We took Motley's night away! Drag your finger around the color wheel to bring the night back. Is it black? Tap Compare to check it against Motley's.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
         // filter: the painting's overall color (its average, scaled so the brightest channel is 1)
         night:{ filter:[0.406, 0.363, 1.0], real:"Motley's" },
         title:"Night is blue", body:"To take the night away, we took out blue, not black! Motley didn't paint the night black. Black would hide everyone and make the street gloomy. Instead he washed the whole scene in deep blue, so it feels like night but you can still see every dancer. And next to all that cool blue, the red dresses, the yellow windows and the glowing lamp shine even brighter."}
     ],
     done:[
-      "Archibald Motley Jr. painted city life in Chicago, especially the busy streets of Black neighborhoods at night: the music, the dancing, the fancy clothes, and the neighbors talking on their porches.",
+      "Archibald Motley Jr. painted city life in Chicago, especially Bronzeville, the Black neighborhood on the South Side, at night: the music, the dancing, the fancy clothes, and the neighbors talking on their porches.",
       "He loved to fill a painting with people, each one doing something different, and to bathe the whole scene in deep, glowing blue. He painted Gettin' Religion in 1948.",
       "Here's a fun connection: the Whitney got this painting in 2016 by trading in some works left to the museum by Josephine Hopper, Edward Hopper's wife. When you see it, find the streetlamp, the trumpet, the little dog, and the faces in the windows."
     ]

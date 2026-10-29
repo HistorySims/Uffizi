@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-29g";
+  window.APP_VERSION = "2026-10-29h";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-29g"></script>
+<script src="works.js?v=2026-10-29h"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -796,6 +796,7 @@
   function fitToStop(s, now){
     // focus: a clue can accept a tap anywhere on a whole group (areas) but zoom in on just one of them
     if(s.focus && state.findPhase === "revealed"){ s = { box:s.focus }; }
+    if(s.circle && lasso.zoom && state.findPhase === "revealed"){ s = { box:lasso.zoom }; }
     var sz = osdImgSize(); if(!sz) return;
     var rect;
     if(s.box){ rect = new OpenSeadragon.Rect(s.box.x*sz.x, s.box.y*sz.y, s.box.w*sz.x, s.box.h*sz.y); }
@@ -1970,9 +1971,9 @@
   /* ----- circle it: draw a loop around a part of the painting that's busy (or calm).
      How busy a place is = how much the color changes there, measured on a small copy of the
      painting and blurred so it describes areas, not single edges. Generous on purpose. */
-  var lasso = { cfg:null, map:null, mw:0, mh:0, cuts:null, pts:[], drawing:false, misses:0, result:"", hint:null, src:"" };
+  var lasso = { cfg:null, map:null, mw:0, mh:0, cuts:null, pts:[], drawing:false, misses:0, result:"", hint:null, src:"", zoom:null };
   function enterCircle(s){
-    act.mode = "circle"; lasso.cfg = s.circle; lasso.pts = []; lasso.drawing = false; lasso.misses = 0; lasso.result = ""; lasso.hint = null;
+    act.mode = "circle"; lasso.cfg = s.circle; lasso.zoom = null; lasso.pts = []; lasso.drawing = false; lasso.misses = 0; lasso.result = ""; lasso.hint = null;
     if(lasso.src !== currentPainting.src){
       lasso.map = null; lasso.src = currentPainting.src;
       var im = new Image(); im.onload = function(){ buildBusyMap(im); }; im.src = currentPainting.src;
@@ -1981,7 +1982,7 @@
   }
   function resumeCircle(s){
     state.findPhase = "circle";
-    lasso.pts = []; lasso.result = ""; lasso.drawing = false;
+    lasso.pts = []; lasso.result = ""; lasso.drawing = false; lasso.zoom = null;
     $("findQ").textContent = s.find;
     $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
     if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
@@ -2032,6 +2033,7 @@
     if(!lasso.drawing) return;
     lasso.drawing = false;
     var cfg = lasso.cfg, say = cfg.say || {}, sz = osdImgSize();
+    if(cfg.want === "any"){ circleAny(cfg, say, sz); return; }
     if(!lasso.map || !sz){ lasso.pts = []; redrawActivity(); return; }
     var poly = lasso.pts.map(function(p){ return [p.x / sz.x, p.y / sz.y]; });
     // how much of the painting the loop holds, and how busy it is in there on average
@@ -2057,6 +2059,24 @@
     $("simpleStatus").textContent = msg;
     redrawActivity();
     setTimeout(function(){ if(lasso.result === "miss" && !lasso.drawing){ lasso.pts = []; lasso.result = ""; redrawActivity(); } }, 1200);
+  }
+  // want:"any" has no wrong answer: whatever you circle, the painting zooms in on it
+  function circleAny(cfg, say, sz){
+    if(!sz){ lasso.pts = []; redrawActivity(); return; }
+    var xs = lasso.pts.map(function(p){ return p.x / sz.x; }), ys = lasso.pts.map(function(p){ return p.y / sz.y; });
+    var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+    if((x1 - x0) * (y1 - y0) < (cfg.min || 0.002)){
+      lasso.result = "miss"; $("simpleStatus").textContent = say.small || "Draw a bigger circle, all the way around!";
+      redrawActivity();
+      setTimeout(function(){ if(lasso.result === "miss" && !lasso.drawing){ lasso.pts = []; lasso.result = ""; redrawActivity(); } }, 1200);
+      return;
+    }
+    var pad = 0.25, w = x1 - x0, h = y1 - y0;
+    lasso.zoom = { x:x0 - w * pad, y:y0 - h * pad, w:w * (1 + 2 * pad), h:h * (1 + 2 * pad) };
+    lasso.result = "good"; state.findPhase = "revealed";
+    $("simplePanel").classList.add("hidden"); actCanvas().classList.add("locked");
+    showActivityCaption(STOPS[state.findIndex], say.good || "");
+    fitToStop(STOPS[state.findIndex]);
   }
   function circleHint(want){ // the busiest (or calmest) place, as a ring to circle around
     var W = lasso.mw, H = lasso.mh, m = boxBlur(lasso.map, W, H, 10), best = -1, bv = want === "busy" ? -1 : 1e9;

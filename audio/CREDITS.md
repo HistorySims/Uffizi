@@ -12,7 +12,7 @@ of Congress recordings below come from its National Jukebox, via Internet Archiv
 
 | File | Music | Recording | Source | License | Paired with |
 |---|---|---|---|---|---|
-| solace.mp3 | Scott Joplin, *Solace: A Mexican Serenade* (1909) | Played on an old upright piano (uploader) | [Internet Archive](https://archive.org/details/Solace_201812) | Public Domain Mark | Gettin' Religion |
+| canal-street-blues.mp3 | King Oliver & Louis Armstrong, *Canal Street Blues* (1923) | King Oliver's Creole Jazz Band (King Oliver, Louis Armstrong, Honoré Dutrey, Johnny Dodds, Lil Hardin Armstrong, Bud Scott, Baby Dodds), Gennett 5133, recorded April 5, 1923 | [Internet Archive](https://archive.org/details/JV-501-1923-Qmbrw4mggSTB2FH7DEmqn6CecouG2N6eke9raoDoba9AbE.mp3) | CC0 (public domain recording) | Gettin' Religion |
 | wild-rose.mp3 | Edward MacDowell, *To a Wild Rose* (1896) | Zoellner String Quartette, Edison, 1920 | [Internet Archive](https://archive.org/details/edison-80600_01_7493) | Public domain (pre-1926 recording) | Seven A.M. |
 | gymnopedie-1.mp3 | Erik Satie, *Gymnopédie No. 1* (1888) | "Gymnopedie No. 1" by Kevin MacLeod (filmmusic.io) | [Internet Archive](https://archive.org/details/gymnopedie-no-1-by-kevin-macleod) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Early Sunday Morning |
 | waltz-of-the-flowers.mp3 | Tchaikovsky, *Waltz of the Flowers*, from *The Nutcracker* (1892) | Victor Symphony Orchestra, Josef Pasternack, 1922 | [Library of Congress](https://archive.org/details/loc-jukebox-59860-waltz-of-the-flowers) | Public domain | Pie Counter |
