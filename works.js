@@ -672,12 +672,12 @@ window.WORKS = [
     ],
     stops:[
       {find:"Can you find the deep blue shape, like a doorway?", cx:0.66, cy:0.7, box:{x:0.47, y:0.43, w:0.36, h:0.57}, title:"The quiet center", body:"Everything in the painting curves around this deep blue shape. It could be the quiet middle of a song, the inside of a shell, or a window onto the sky. O'Keeffe never said exactly what it was. She wanted you to feel it."},
-      {find:"Follow O'Keeffe's curves! Slide each bead along its wire, all the way to the other end: the blue bead on the blue curve, the pink on the pink, the red on the red.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
-        // three wires, each traced along the middle of one color band (blue: just inside the blue shape's edge)
+      {find:"Follow O'Keeffe's curves! Slide each bead along its wire, all the way to the other end: the blue bead on the blue curve, the orange on the orange, the red on the red.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        // three wires, each traced along the middle of one color band (blue: just inside the blue shape's edge; orange: the sloping orange stroke at the top)
         beads:{ r:0.024,
           wires:[ {color:"#1f7fc4", path:[[0.669,0.966],[0.632,0.899],[0.604,0.829],[0.584,0.757],[0.539,0.689],[0.506,0.622],[0.485,0.551],[0.49,0.479],[0.564,0.453],[0.642,0.488],[0.705,0.539],[0.749,0.604],[0.771,0.676],[0.792,0.748],[0.804,0.82],[0.811,0.897],[0.812,0.974],[0.812,0.99]]},
-                  {color:"#ef7fb0", path:[[0.375,0.238],[0.463,0.265],[0.545,0.293],[0.626,0.278],[0.711,0.278],[0.8,0.295],[0.887,0.296]]},
-                  {color:"#f0553a", path:[[0.231,0.977],[0.213,0.905],[0.196,0.832],[0.183,0.757],[0.179,0.681],[0.193,0.606],[0.219,0.536],[0.263,0.474],[0.346,0.445],[0.417,0.398],[0.498,0.369],[0.585,0.373],[0.671,0.388],[0.758,0.42],[0.835,0.457],[0.899,0.51],[0.948,0.572],[0.959,0.596]]} ],
+                  {color:"#f2853f", path:[[0.231,0.018],[0.271,0.04],[0.305,0.068],[0.336,0.104],[0.362,0.137],[0.398,0.16],[0.43,0.189],[0.467,0.216],[0.508,0.236],[0.555,0.236],[0.604,0.237],[0.653,0.239],[0.7,0.241],[0.75,0.245],[0.793,0.268],[0.828,0.295],[0.869,0.316],[0.906,0.341],[0.94,0.368],[0.95,0.378]]},
+                  {color:"#d6332b", path:[[0.231,0.977],[0.213,0.905],[0.196,0.832],[0.183,0.757],[0.179,0.681],[0.193,0.606],[0.219,0.536],[0.263,0.474],[0.346,0.445],[0.417,0.398],[0.498,0.369],[0.585,0.373],[0.671,0.388],[0.758,0.42],[0.835,0.457],[0.899,0.51],[0.948,0.572],[0.959,0.596]]} ],
           start:"Slide each bead along its curve to the glowing end.", yay:"All the way along!" },
         title:"Follow the curve", body:"O'Keeffe's curves carry your eyes around the painting the way the wire carries the beads: up, over and down, smooth the whole way, without a single sharp corner."},
       {find:"Where is there a lot of action? Draw a circle around a busy part of the painting.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
