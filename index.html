@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-28i";
+  window.APP_VERSION = "2026-10-29a";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-28i"></script>
+<script src="works.js?v=2026-10-29a"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -355,9 +355,9 @@
         </div>
       </div>
       <div class="paint-panel hidden" id="nightPanel">
-        <div class="light-status" id="nightStatus" aria-live="polite"></div>
         <canvas class="night-wheel" id="nightWheel" aria-label="Color wheel: drag to try a color filter"></canvas>
         <div class="paint-row paint-actions">
+          <button class="btn btn-ghost" id="nightCompare" aria-pressed="false">Compare</button>
           <button class="btn btn-primary" id="nightDone">I'm done</button>
         </div>
       </div>
@@ -843,7 +843,7 @@
     cancelAnimationFrame(act.raf); act.raf = 0; act.mode = null;
     actCanvas().classList.add("hidden");
     $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden"); $("playPanel").classList.add("hidden"); $("nightPanel").classList.add("hidden");
-    night.loadId++; cancelAnimationFrame(night.raf); night.raf = 0; $("frameFind").classList.remove("night-mode");
+    night.loadId++; cancelAnimationFrame(night.raf); night.raf = 0; cancelAnimationFrame(night.anim); night.compare = false; night.slide = false; $("frameFind").classList.remove("night-mode");
     hushPlay(1.5); cancelAnimationFrame(play.raf); play.raf = 0; play.ripples = []; duckBg(false);
     $("actAgainBtn").classList.add("hidden");
     paint.strokes = []; paint.cur = null; paint.wobble = false; light.drag = false;
@@ -1626,7 +1626,7 @@
      color wheel to try color filters on it. A filter multiplies every color, so the painting
      shown is the real one times (filter / night color): the artist's own night color
      (cfg.filter) brings back the real painting exactly. The center of the wheel is no filter. */
-  var night = { cfg:null, src:"", w:0, h:0, data:null, out:null, img:null, color:[1,1,1], at:{x:0, y:0}, found:false, raf:0, loadId:0, wheelImg:null };
+  var night = { cfg:null, src:"", w:0, h:0, data:null, out:null, img:null, color:[1,1,1], at:{x:0, y:0}, found:false, raf:0, loadId:0, wheelImg:null, compare:false, split:0.5, slide:false, anim:0 };
   function enterNight(s){
     var cfg = s.night, id = ++night.loadId;
     act.mode = "night"; night.cfg = cfg; night.color = [1, 1, 1]; night.at = {x:0, y:0}; night.found = false;
@@ -1647,13 +1647,14 @@
   }
   function resumeNight(s){
     state.findPhase = "night";
+    setNightCompare(false);
     $("findQ").textContent = s.find;
     $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
     if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
     showActCanvas("night");
     $("frameFind").classList.add("night-mode");
     $("nightPanel").classList.remove("hidden");
-    drawWheel(); updateNight(); redrawActivity();
+    drawWheel(); redrawActivity();
     updateGuides();
   }
   function wheelRgb(h, r){ // the wheel goes white in the middle, bright colors halfway out, black at the rim
@@ -1703,7 +1704,7 @@
     if(night.found){ x = t.x; y = t.y; night.color = F.slice(); }
     else { night.color = wheelFilter(wheelRgb((Math.atan2(y, x) * 180 / Math.PI + 360) % 360, Math.sqrt(x * x + y * y))); }
     night.at = { x:x, y:y };
-    drawWheel(); updateNight();
+    drawWheel();
     if(!night.raf){ night.raf = requestAnimationFrame(function(){ night.raf = 0; renderNight(); redrawActivity(); }); }
   }
   function renderNight(){
@@ -1714,38 +1715,58 @@
     for(var p=0, n=d.length; p<n; p+=4){ o[p] = lr[d[p]]; o[p+1] = lg[d[p+1]]; o[p+2] = lb[d[p+2]]; o[p+3] = 255; }
     night.out.getContext("2d").putImageData(night.img, 0, 0);
   }
-  function updateNight(){
-    var say = night.cfg.say, a = night.at, r = Math.sqrt(a.x * a.x + a.y * a.y), msg;
-    var hue = (Math.atan2(a.y, a.x) * 180 / Math.PI + 360) % 360, t = filterSpot(night.cfg.filter);
-    if(night.found){ msg = say.found; }
-    else if(r < 0.12){ msg = say.none; }
-    else if(r > 0.88){ msg = say.black; }
-    else if(Math.hypot(a.x - t.x, a.y - t.y) < 0.35){ msg = say.close; }
-    else if(r > 0.62){ msg = say.dark; }
-    else { msg = (night.cfg.hues.filter(function(h){ return hue < h.to; })[0] || night.cfg.hues[0]).say; }
-    $("nightStatus").textContent = msg;
-  }
   function drawNightLayer(){
-    // found it: the real painting underneath is exactly the answer, and sharper
-    if(!night.data || night.found) return;
+    if(!night.data) return;
     var ctx = act.ctx, sz = osdImgSize(); if(!sz) return;
-    var tl = toScreen({x:0, y:0}), br = toScreen({x:sz.x, y:sz.y});
-    ctx.save();
-    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
-    var x0 = Math.floor(tl.x) - 1, y0 = Math.floor(tl.y) - 1; // a pixel past the edges, so no sliver of the real painting shows
-    ctx.drawImage(night.out, x0, y0, Math.ceil(br.x) + 1 - x0, Math.ceil(br.y) + 1 - y0);
-    ctx.restore();
+    var R = paintingRect(), cut = night.compare ? R.x0 + (R.x1 - R.x0) * night.split : R.x1;
+    // found it and not comparing: the real painting underneath is exactly the answer, and sharper
+    if(!(night.found && !night.compare)){
+      var tl = toScreen({x:0, y:0}), br = toScreen({x:sz.x, y:sz.y});
+      ctx.save();
+      // theirs left of the divider, the real painting (underneath) right of it
+      ctx.beginPath(); ctx.rect(R.x0 - 2, R.y0 - 2, Math.max(0, cut - R.x0 + 2), R.y1 - R.y0 + 4); ctx.clip();
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+      var x0 = Math.floor(tl.x) - 1, y0 = Math.floor(tl.y) - 1; // a pixel past the edges, so no sliver of the real painting shows
+      ctx.drawImage(night.out, x0, y0, Math.ceil(br.x) + 1 - x0, Math.ceil(br.y) + 1 - y0);
+      ctx.restore();
+    }
+    if(night.compare){ drawDivider(ctx, R, cut, night.cfg.real || "The real one"); }
   }
+  function setNightCompare(on){
+    night.compare = on; cancelAnimationFrame(night.anim);
+    if(on){ night.split = 0.5; }
+    $("nightCompare").textContent = on ? "Stop comparing" : "Compare";
+    $("nightCompare").setAttribute("aria-pressed", String(on));
+    actCanvas().classList.toggle("sun", on); // a grab cursor while sliding
+    redrawActivity();
+  }
+  function nightSlide(e){
+    var R = paintingRect(), x = canvasPoint(e).x;
+    night.split = Math.max(0, Math.min(1, (x - R.x0) / Math.max(1, R.x1 - R.x0)));
+    redrawActivity();
+  }
+  function nightDown(e){
+    if(!night.compare) return;
+    e.preventDefault(); cancelAnimationFrame(night.anim);
+    try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
+    night.slide = true; nightSlide(e);
+  }
+  function nightMove(e){ if(night.slide){ e.preventDefault(); nightSlide(e); } }
+  function nightUp(){ night.slide = false; }
   function finishNight(){
     var s = STOPS[state.findIndex];
     state.findPhase = "revealed";
-    actCanvas().classList.add("locked");
     $("nightPanel").classList.add("hidden");
-    showActivityCaption(s, night.found ? night.cfg.say.done : night.cfg.say.reveal);
-    if(!night.found){ // show them the answer: slide the filter onto the artist's color
-      var F = night.cfg.filter, t = filterSpot(F);
-      night.found = true; night.color = F.slice(); night.at = t; redrawActivity();
-    }
+    showActivityCaption(s, "");
+    // show theirs next to the real one, sweeping the divider in from the right
+    setNightCompare(true); night.split = 1;
+    var t0 = performance.now();
+    var step = function(now){
+      var t = Math.min(1, (now - t0) / 900), ease = 1 - Math.pow(1 - t, 3);
+      night.split = 1 - 0.5 * ease; redrawActivity();
+      if(t < 1){ night.anim = requestAnimationFrame(step); }
+    };
+    night.anim = requestAnimationFrame(step);
   }
   /* ----- stickers: pick one from the tray, tap the painting to place it, drag to move it -----
      A tap always places a new sticker; pressing on a placed one and sliding moves it instead.
@@ -1873,9 +1894,9 @@
       ctx.restore();
     });
     ctx.restore();
-    if(stk.compare){ drawDivider(ctx, R, cut); }
+    if(stk.compare){ drawDivider(ctx, R, cut, stk.cfg.real || "The real one"); }
   }
-  function drawDivider(ctx, R, x){
+  function drawDivider(ctx, R, x, realLabel){
     var d = act.dpr, cy = (R.y0 + R.y1) / 2, font = getComputedStyle(document.body).fontFamily;
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = 6 * d;
@@ -1899,7 +1920,7 @@
       ctx.fillStyle = "#f2ebdd"; ctx.textAlign = "left"; ctx.fillText(text, x0 + 8 * d, y + h / 2 + 0.5 * d);
     }
     if(x - R.x0 > 90 * d){ pill("Yours", R.x0 + 8 * d, false); }
-    if(R.x1 - x > 110 * d){ pill(stk.cfg.real || "The real one", R.x1 - 8 * d, true); }
+    if(R.x1 - x > 110 * d){ pill(realLabel, R.x1 - 8 * d, true); }
     ctx.restore();
   }
   function setCompare(on){
@@ -1976,9 +1997,9 @@
     };
     stk.anim = requestAnimationFrame(step);
   }
-  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } else if(act.mode === "play"){ playDown(e); } }
-  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } else if(act.mode === "play"){ playMove(e); } }
-  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } else if(act.mode === "stickers"){ stickerUp(e); } else if(act.mode === "play"){ playUp(e); } }
+  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } else if(act.mode === "play"){ playDown(e); } else if(act.mode === "night"){ nightDown(e); } }
+  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } else if(act.mode === "play"){ playMove(e); } else if(act.mode === "night"){ nightMove(e); } }
+  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } else if(act.mode === "stickers"){ stickerUp(e); } else if(act.mode === "play"){ playUp(e); } else if(act.mode === "night"){ nightUp(e); } }
   function setFeedback(txt, cls){
     var f=$("feedback"); f.textContent=txt; f.className="feedback";
     if(txt){ if(cls) f.classList.add(cls); void f.offsetWidth; f.classList.add("show"); }
@@ -2175,7 +2196,9 @@
     w.addEventListener("pointerdown", function(e){ if(state.findPhase !== "night") return; e.preventDefault(); down = true; try{ w.setPointerCapture(e.pointerId); }catch(_){} wheelPick(e); });
     w.addEventListener("pointermove", function(e){ if(down){ e.preventDefault(); wheelPick(e); } });
     ["pointerup", "pointercancel"].forEach(function(t){ w.addEventListener(t, function(){ down = false; }); });
+    ["touchstart", "touchmove"].forEach(function(t){ w.addEventListener(t, function(e){ e.preventDefault(); }, { passive:false }); });
   })();
+  $("nightCompare").addEventListener("click", function(){ setNightCompare(!night.compare); });
   $("nightDone").addEventListener("click", finishNight);
   $("actAgainBtn").addEventListener("click", function(){
     var s = STOPS[state.findIndex];
