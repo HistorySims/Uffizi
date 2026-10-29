@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-29d";
+  window.APP_VERSION = "2026-10-29f";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-29d"></script>
+<script src="works.js?v=2026-10-29f"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -206,7 +206,7 @@
     display:inline-flex;align-items:center;justify-content:center;padding:4px;transition:transform .12s ease;}
   .sticker-btn img{max-width:100%;max-height:100%;display:block;pointer-events:none;}
   .sticker-tray.big .sticker-btn{width:72px;height:52px;}
-  .night-mode .navigator{visibility:hidden;} /* the minimap would give away the answer */
+  .night-mode .navigator,.no-map .navigator{visibility:hidden;} /* the minimap would give away the answer, or cover the activity */
   .demo-list{display:flex;flex-direction:column;gap:14px;width:100%;max-width:640px;margin:0 auto;text-align:left;}
   .demo-work{border-top:1px solid var(--foam-faint);padding-top:10px;}
   .demo-work h2{font-family:var(--serif);font-size:1.1rem;margin:0 0 6px;}
@@ -851,8 +851,8 @@
     cancelAnimationFrame(act.raf); act.raf = 0; act.mode = null;
     actCanvas().classList.add("hidden");
     $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden"); $("playPanel").classList.add("hidden"); $("nightPanel").classList.add("hidden"); $("simplePanel").classList.add("hidden");
-    cancelAnimationFrame(beads.raf); beads.drag = -1; lasso.drawing = false;
-    night.loadId++; cancelAnimationFrame(night.raf); night.raf = 0; cancelAnimationFrame(night.anim); night.compare = false; night.slide = false; $("frameFind").classList.remove("night-mode");
+    cancelAnimationFrame(beads.raf); beads.drag = null; lasso.drawing = false;
+    night.loadId++; cancelAnimationFrame(night.raf); night.raf = 0; cancelAnimationFrame(night.anim); night.compare = false; night.slide = false; $("frameFind").classList.remove("night-mode", "no-map");
     hushPlay(1.5); cancelAnimationFrame(play.raf); play.raf = 0; play.ripples = []; duckBg(false);
     $("actAgainBtn").classList.add("hidden");
     paint.strokes = []; paint.cur = null; paint.wobble = false; light.drag = false;
@@ -1826,40 +1826,37 @@
     };
     night.anim = requestAnimationFrame(step);
   }
-  /* ----- bead maze: beads ride on a wire laid along one of the painting's curves; slide
-     them all to the far end, like the bead toy in a waiting room. They can't pass each other.
-     path: points in painting fractions (smoothed into a curve); r: bead radius as a fraction
-     of the painting's width. Bead positions are distances along the wire, in image pixels. */
-  var beads = { cfg:null, pts:[], len:[], total:0, s:[], drag:-1, done:false, t0:0, raf:0 };
+  /* ----- bead maze: wires laid along the painting's curves, each carrying a bead the color
+     of its curve. Slide every bead to the far end of its wire, like the bead toy in a
+     waiting room. wires: [{path:[[x,y],...] in painting fractions, color}]; r: bead radius as
+     a fraction of the painting's width. A bead's place is its distance along its wire (image px). */
+  var beads = { cfg:null, wires:[], drag:null, done:false, raf:0 };
   function enterBeads(s){
-    var cfg = s.beads, sz = osdImgSize();
-    act.mode = "beads"; beads.cfg = cfg; beads.done = false; beads.drag = -1;
-    beads.pts = []; beads.len = []; beads.total = 0; beads.s = [];
-    if(sz){ layBeadWire(sz); }
+    act.mode = "beads"; beads.cfg = s.beads; beads.wires = []; beads.done = false; beads.drag = null;
     resumeBeads(s);
   }
-  function layBeadWire(sz){
-    var P = beads.cfg.path.map(function(p){ return { x:p[0] * sz.x, y:p[1] * sz.y }; });
-    var Q = [P[0]].concat(P, [P[P.length - 1]]), out = [];
-    for(var i=1; i<Q.length-2; i++){ // Catmull-Rom through the points
-      for(var k=0; k<20; k++){
-        var t = k / 20, t2 = t * t, t3 = t2 * t, a = Q[i-1], b = Q[i], c = Q[i+1], d = Q[i+2];
-        out.push({ x:0.5 * (2*b.x + (-a.x + c.x)*t + (2*a.x - 5*b.x + 4*c.x - d.x)*t2 + (-a.x + 3*b.x - 3*c.x + d.x)*t3),
-                   y:0.5 * (2*b.y + (-a.y + c.y)*t + (2*a.y - 5*b.y + 4*c.y - d.y)*t2 + (-a.y + 3*b.y - 3*c.y + d.y)*t3) });
+  function layBeadWires(sz){
+    beads.wires = beads.cfg.wires.map(function(wd){
+      var P = wd.path.map(function(p){ return { x:p[0] * sz.x, y:p[1] * sz.y }; });
+      var Q = [P[0]].concat(P, [P[P.length - 1]]), pts = [];
+      for(var i=1; i<Q.length-2; i++){ // Catmull-Rom through the points
+        for(var k=0; k<16; k++){
+          var t = k / 16, t2 = t * t, t3 = t2 * t, a = Q[i-1], b = Q[i], c = Q[i+1], d = Q[i+2];
+          pts.push({ x:0.5 * (2*b.x + (-a.x + c.x)*t + (2*a.x - 5*b.x + 4*c.x - d.x)*t2 + (-a.x + 3*b.x - 3*c.x + d.x)*t3),
+                     y:0.5 * (2*b.y + (-a.y + c.y)*t + (2*a.y - 5*b.y + 4*c.y - d.y)*t2 + (-a.y + 3*b.y - 3*c.y + d.y)*t3) });
+        }
       }
-    }
-    out.push(P[P.length - 1]);
-    beads.pts = out; beads.len = [0];
-    for(var j=1; j<out.length; j++){ beads.len.push(beads.len[j-1] + Math.hypot(out[j].x - out[j-1].x, out[j].y - out[j-1].y)); }
-    beads.total = beads.len[beads.len.length - 1];
-    var gap = beadGap(); beads.s = beads.cfg.colors.map(function(_, i){ return i * gap; }); // all at the start
+      pts.push(P[P.length - 1]);
+      var len = [0];
+      for(var j=1; j<pts.length; j++){ len.push(len[j-1] + Math.hypot(pts[j].x - pts[j-1].x, pts[j].y - pts[j-1].y)); }
+      return { color:wd.color, pts:pts, len:len, total:len[len.length - 1], s:beadRadius() };
+    });
   }
-  function beadGap(){ return 2.05 * beads.cfg.r * osdImgSize().x; }
-  function beadAt(s){ // the point at a distance along the wire
-    var L = beads.len, i = 1;
+  function beadRadius(){ return beads.cfg.r * osdImgSize().x; }
+  function beadAt(wire, s){ // the point a distance along a wire
+    var L = wire.len, i = 1;
     while(i < L.length - 1 && L[i] < s){ i++; }
-    var a = beads.pts[i-1], b = beads.pts[i], t = (s - L[i-1]) / Math.max(1e-6, L[i] - L[i-1]);
-    t = Math.max(0, Math.min(1, t));
+    var a = wire.pts[i-1], b = wire.pts[i], t = Math.max(0, Math.min(1, (s - L[i-1]) / Math.max(1e-6, L[i] - L[i-1])));
     return { x:a.x + (b.x - a.x) * t, y:a.y + (b.y - a.y) * t };
   }
   function resumeBeads(s){
@@ -1868,78 +1865,75 @@
     $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
     if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
     showActCanvas("beads");
-    if(!beads.pts.length && osdImgSize()){ layBeadWire(osdImgSize()); }
-    else if(beads.pts.length){ var gap = beadGap(); beads.s = beads.s.map(function(_, i){ return i * gap; }); }
-    beads.done = false;
+    $("frameFind").classList.add("no-map"); // a wire ends in the corner where the minimap sits
+    beads.wires = []; beads.done = false; beads.drag = null; // laid fresh (beads back at the start) on the next draw
     $("simpleStatus").textContent = beads.cfg.start || "";
     $("simplePanel").classList.remove("hidden");
     animateBeads(); updateGuides();
   }
-  function animateBeads(){ // keeps the "slide them here" ring pulsing
+  function animateBeads(){ // keeps the "slide it here" rings pulsing
     cancelAnimationFrame(beads.raf);
     var tick = function(){ if(act.mode !== "beads") return; redrawActivity(); beads.raf = requestAnimationFrame(tick); };
     beads.raf = requestAnimationFrame(tick);
   }
   function drawBeadsLayer(){
-    if(!beads.pts.length){ var sz0 = osdImgSize(); if(!sz0) return; layBeadWire(sz0); }
-    var ctx = act.ctx, k = imgPxToScreen(), d = act.dpr, pts = beads.pts.map(toScreen), r = beads.cfg.r * osdImgSize().x * k;
+    var sz = osdImgSize(); if(!sz) return;
+    if(!beads.wires.length){ layBeadWires(sz); }
+    var ctx = act.ctx, k = imgPxToScreen(), d = act.dpr, r = beadRadius() * k, ph = (performance.now() % 1400) / 1400;
     ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
-    // the wire, with a soft shadow and a glint
-    ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 4 * d; ctx.shadowOffsetY = 2 * d;
-    ctx.strokeStyle = "#3b3b40"; ctx.lineWidth = 3.2 * d; strokePath(ctx, pts);
-    ctx.shadowColor = "transparent";
-    ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1.1 * d; strokePath(ctx, pts, function(p){ return { x:p.x - d, y:p.y - d }; });
-    // wooden stops at both ends
-    [pts[0], pts[pts.length - 1]].forEach(function(p){ ctx.fillStyle = "#8a5a2e"; ctx.beginPath(); ctx.arc(p.x, p.y, 5 * d, 0, Math.PI * 2); ctx.fill(); });
-    // where to slide them
-    if(!beads.done){
-      var end = pts[pts.length - 1], ph = (performance.now() % 1400) / 1400;
-      ctx.strokeStyle = "rgba(255,216,107," + (0.9 * (1 - ph)).toFixed(3) + ")"; ctx.lineWidth = 3 * d;
-      ctx.beginPath(); ctx.arc(end.x, end.y, r * (1 + ph * 1.2), 0, Math.PI * 2); ctx.stroke();
-    }
-    // the beads: glossy painted wood
-    beads.s.forEach(function(s, i){
-      var p = toScreen(beadAt(s)), col = beads.cfg.colors[i], g = ctx.createRadialGradient(p.x - r * 0.35, p.y - r * 0.4, r * 0.1, p.x, p.y, r);
+    beads.wires.forEach(function(wire){
+      var pts = wire.pts.map(toScreen), end = pts[pts.length - 1];
+      // the wire, with a soft shadow and a glint
+      ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 4 * d; ctx.shadowOffsetY = 2 * d;
+      ctx.strokeStyle = "#3b3b40"; ctx.lineWidth = 2.6 * d; strokePath(ctx, pts);
+      ctx.shadowColor = "transparent";
+      ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 0.9 * d; strokePath(ctx, pts, function(p){ return { x:p.x - 0.8 * d, y:p.y - 0.8 * d }; });
+      [pts[0], end].forEach(function(p){ ctx.fillStyle = "#8a5a2e"; ctx.beginPath(); ctx.arc(p.x, p.y, 4 * d, 0, Math.PI * 2); ctx.fill(); });
+      // where this bead is going, until it gets there
+      if(wire.s < wire.total - beadRadius() * 1.2){
+        ctx.strokeStyle = wire.color; ctx.globalAlpha = 0.9 * (1 - ph); ctx.lineWidth = 3 * d;
+        ctx.beginPath(); ctx.arc(end.x, end.y, r * (1 + ph * 1.3), 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+      }
+    });
+    // the beads: glossy painted wood, each the color of its curve
+    beads.wires.forEach(function(wire){
+      var p = toScreen(beadAt(wire, wire.s)), col = wire.color, rr = r * (wire === beads.drag ? 1.12 : 1);
+      var g = ctx.createRadialGradient(p.x - rr * 0.35, p.y - rr * 0.4, rr * 0.1, p.x, p.y, rr);
       g.addColorStop(0, mixHex(col, 255, 0.55)); g.addColorStop(0.45, col); g.addColorStop(1, mixHex(col, 0, 0.35));
       ctx.shadowColor = "rgba(0,0,0,.4)"; ctx.shadowBlur = 5 * d; ctx.shadowOffsetY = 2 * d;
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, r * (i === beads.drag ? 1.1 : 1), 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, rr, 0, Math.PI * 2); ctx.fill();
       ctx.shadowColor = "transparent";
-      if(beads.done){ ctx.strokeStyle = "rgba(255,216,107,.9)"; ctx.lineWidth = 2.5 * d; ctx.stroke(); }
+      if(beads.done){ ctx.strokeStyle = "rgba(255,216,107,.95)"; ctx.lineWidth = 2.5 * d; ctx.stroke(); }
     });
     ctx.restore();
   }
   function beadsDown(e){
-    if(state.findPhase !== "beads" || !beads.pts.length) return;
+    if(state.findPhase !== "beads" || !beads.wires.length) return;
     e.preventDefault();
-    var c = canvasPoint(e), r = beads.cfg.r * osdImgSize().x * imgPxToScreen(), best = -1, bd = 1e9;
-    beads.s.forEach(function(s, i){ var p = toScreen(beadAt(s)), dd = Math.hypot(p.x - c.x, p.y - c.y); if(dd < bd){ bd = dd; best = i; } });
+    var c = canvasPoint(e), r = beadRadius() * imgPxToScreen(), best = null, bd = 1e9;
+    beads.wires.forEach(function(wire){ var p = toScreen(beadAt(wire, wire.s)), dd = Math.hypot(p.x - c.x, p.y - c.y); if(dd < bd){ bd = dd; best = wire; } });
     if(bd > Math.max(r * 1.8, 24 * act.dpr)) return;
     try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
     beads.drag = best;
   }
   function beadsMove(e){
-    var i = beads.drag; if(i < 0) return;
+    var wire = beads.drag; if(!wire) return;
     e.preventDefault();
-    // the nearest spot on the wire to the finger, searching near the bead so it can't jump across a loop
-    var c = canvasPoint(e), cur = beads.s[i], win = beads.total * 0.2, best = cur, bd = 1e9;
-    for(var j=0; j<beads.pts.length; j++){
-      if(Math.abs(beads.len[j] - cur) > win) continue;
-      var p = toScreen(beads.pts[j]), dd = Math.hypot(p.x - c.x, p.y - c.y);
-      if(dd < bd){ bd = dd; best = beads.len[j]; }
+    // the nearest spot on the wire to the finger, searching near the bead so it can't jump across a bend
+    var c = canvasPoint(e), win = wire.total * 0.25, best = wire.s, bd = 1e9;
+    for(var j=0; j<wire.pts.length; j++){
+      if(Math.abs(wire.len[j] - wire.s) > win) continue;
+      var p = toScreen(wire.pts[j]), dd = Math.hypot(p.x - c.x, p.y - c.y);
+      if(dd < bd){ bd = dd; best = wire.len[j]; }
     }
-    var gap = beadGap(), n = beads.s.length;
-    // room for the beads in front and behind, then push them along like the real toy
-    best = Math.max(i * gap, Math.min(beads.total - (n - 1 - i) * gap, best));
-    beads.s[i] = best;
-    for(var a=i+1; a<n; a++){ beads.s[a] = Math.max(beads.s[a], beads.s[a-1] + gap); }
-    for(var b=i-1; b>=0; b--){ beads.s[b] = Math.min(beads.s[b], beads.s[b+1] - gap); }
+    var r = beadRadius();
+    wire.s = Math.max(r, Math.min(wire.total - r, best)); // the wooden stops keep it on the wire
   }
   function beadsUp(){
-    if(beads.drag < 0) return;
-    beads.drag = -1;
-    var gap = beadGap(), n = beads.s.length;
-    var home = beads.s.every(function(s, i){ return s >= beads.total - (n - i) * gap - gap * 0.6; });
-    if(home && !beads.done){
+    if(!beads.drag) return;
+    beads.drag = null;
+    var r = beadRadius();
+    if(!beads.done && beads.wires.every(function(w){ return w.s >= w.total - r * 1.6; })){
       beads.done = true; state.findPhase = "revealed";
       $("simpleStatus").textContent = beads.cfg.yay || "";
       setTimeout(function(){
