@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-29f";
+  window.APP_VERSION = "2026-10-29g";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-29f"></script>
+<script src="works.js?v=2026-10-29g"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -1849,7 +1849,7 @@
       pts.push(P[P.length - 1]);
       var len = [0];
       for(var j=1; j<pts.length; j++){ len.push(len[j-1] + Math.hypot(pts[j].x - pts[j-1].x, pts[j].y - pts[j-1].y)); }
-      return { color:wd.color, pts:pts, len:len, total:len[len.length - 1], s:beadRadius() };
+      return { color:wd.color, pts:pts, len:len, total:len[len.length - 1], s:beadRadius(), touched:false };
     });
   }
   function beadRadius(){ return beads.cfg.r * osdImgSize().x; }
@@ -1895,6 +1895,29 @@
         ctx.beginPath(); ctx.arc(end.x, end.y, r * (1 + ph * 1.3), 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
       }
     });
+    // until a bead is picked up, show what to do: untouched beads glow, and the first one
+    // shows a fingertip sliding a ghost of it along its wire toward the end
+    var now = performance.now(), anyTouched = beads.wires.some(function(w){ return w.touched; });
+    beads.wires.forEach(function(wire, i){
+      if(wire.touched || beads.done) return;
+      var p = toScreen(beadAt(wire, wire.s)), glow = 0.5 + 0.5 * Math.sin(now / 260);
+      var hr = r * (1.6 + 0.35 * glow);
+      ctx.fillStyle = wire.color; ctx.globalAlpha = 0.3 + 0.25 * glow;
+      ctx.beginPath(); ctx.arc(p.x, p.y, hr, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.6 + 0.35 * glow; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2 * d; ctx.stroke(); ctx.globalAlpha = 1;
+      if(i !== 0 || anyTouched) return;
+      var t = (now % 2200) / 2200, slide = Math.min(1, t / 0.75), ease = 1 - Math.pow(1 - slide, 3);
+      var reach = Math.min(wire.total * 0.3, 160 * d / k), g = toScreen(beadAt(wire, wire.s + reach * ease));
+      var fade = t < 0.75 ? 1 : 1 - (t - 0.75) / 0.25;
+      ctx.globalAlpha = 0.6 * fade; ctx.fillStyle = wire.color;
+      ctx.beginPath(); ctx.arc(g.x, g.y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 2 * d; ctx.stroke();
+      // a fingertip pressing on the ghost bead
+      ctx.globalAlpha = 0.9 * fade; ctx.fillStyle = "#fff"; ctx.shadowColor = "rgba(0,0,0,.5)"; ctx.shadowBlur = 7 * d;
+      ctx.beginPath(); ctx.arc(g.x + r * 0.6, g.y + r * 0.8, r * 0.95, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowColor = "transparent"; ctx.strokeStyle = "rgba(60,60,70,.55)"; ctx.lineWidth = 1.2 * d; ctx.stroke();
+      ctx.shadowColor = "transparent"; ctx.globalAlpha = 1;
+    });
     // the beads: glossy painted wood, each the color of its curve
     beads.wires.forEach(function(wire){
       var p = toScreen(beadAt(wire, wire.s)), col = wire.color, rr = r * (wire === beads.drag ? 1.12 : 1);
@@ -1914,7 +1937,7 @@
     beads.wires.forEach(function(wire){ var p = toScreen(beadAt(wire, wire.s)), dd = Math.hypot(p.x - c.x, p.y - c.y); if(dd < bd){ bd = dd; best = wire; } });
     if(bd > Math.max(r * 1.8, 24 * act.dpr)) return;
     try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
-    beads.drag = best;
+    beads.drag = best; best.touched = true;
   }
   function beadsMove(e){
     var wire = beads.drag; if(!wire) return;
