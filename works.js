@@ -462,14 +462,16 @@ window.WORKS = [
     stops:[
       {find:"Can you find the glowing white teardrop?", cx:0.25, cy:0.42, box:{x:0.18, y:0.32, w:0.13, h:0.24}, title:"The glow", body:"A soft white teardrop rises up, glowing like a lamp or a bubble or the moon. Pelton loved painting light that seems to shine from inside things, as if the painting were lit from within."},
       {find:"Can you find a warm orange stripe near the bottom?", cx:0.5, cy:0.88, box:{x:0.05, y:0.82, w:0.9, h:0.12}, title:"A warm stripe", body:"Down at the bottom, layers of dark blue and green are crossed by a stripe of warm orange, like sunset glowing deep under the water. One warm color makes all the cool colors around it look even cooler."},
-      {find:"Follow the changes! Slide each bead along its curve: the pearl on the pale thread, the coral on the orange stripe, and the green bead on the green wave.", cx:0.37, cy:0.72, box:{x:0, y:0.5, w:0.75, h:0.45},
-        // pearl and coral, from Ariel's song
+      {find:"Follow the changes! Slide each bead along the curve it sits on, all the way to the other end.", cx:0.53, cy:0.7, box:{x:0.12, y:0.45, w:0.82, h:0.5},
+        // four curves traced over the painting: the pale curl by the teardrop, the big curve over the green form,
+        // the little hook below it, and the long edge of the dark green form
         beads:{ r:0.017,
-          wires:[ {color:"#f4efe2", path:[[0.51,0.68],[0.555,0.645],[0.6,0.627],[0.646,0.636],[0.672,0.675],[0.668,0.72],[0.64,0.75],[0.61,0.765]]},
-                  {color:"#e8743a", path:[[0.024,0.846],[0.08,0.851],[0.13,0.855],[0.178,0.868],[0.26,0.871],[0.35,0.885],[0.45,0.9],[0.55,0.912],[0.64,0.916],[0.71,0.915]]},
-                  {color:"#5fd3a6", path:[[0.125,0.72],[0.15,0.62],[0.18,0.565],[0.215,0.545],[0.3,0.55],[0.36,0.575],[0.41,0.615],[0.46,0.665],[0.51,0.695],[0.56,0.715],[0.585,0.74]]} ],
+          wires:[ {color:"#eef6ee", path:[[0.2069,0.7299],[0.1909,0.7393],[0.1744,0.7372],[0.1602,0.7281],[0.1482,0.7154],[0.1396,0.6949],[0.1394,0.6731],[0.1394,0.6482],[0.1406,0.6254],[0.1452,0.6015],[0.1543,0.5808],[0.166,0.5646],[0.1806,0.5526],[0.191,0.5385],[0.1971,0.5183],[0.208,0.5028],[0.2203,0.494]]},
+                  {color:"#7fdcb8", path:[[0.3078,0.643],[0.2945,0.6601],[0.279,0.6642],[0.2644,0.6541],[0.256,0.6363],[0.2506,0.6143],[0.2488,0.591],[0.2522,0.5699],[0.2608,0.5525],[0.2734,0.5363],[0.2896,0.5254],[0.3105,0.5244],[0.3287,0.5294],[0.3459,0.536],[0.3615,0.5437],[0.3761,0.5532],[0.3886,0.5648],[0.4015,0.5778],[0.4149,0.5933],[0.427,0.6112],[0.4395,0.6296],[0.4495,0.6492],[0.4588,0.6684],[0.4691,0.6841],[0.4711,0.6861]]},
+                  {color:"#26a08c", path:[[0.278,0.7736],[0.2644,0.7646],[0.251,0.7541],[0.237,0.7388],[0.2345,0.7157],[0.2496,0.7072],[0.2651,0.7169],[0.2762,0.731],[0.29,0.7395],[0.3054,0.7486],[0.3207,0.7586],[0.3354,0.7652],[0.3534,0.7688],[0.3684,0.7724],[0.3869,0.7753],[0.3911,0.7755]]},
+                  {color:"#2f6e58", path:[[0.5123,0.8815],[0.4968,0.8786],[0.4805,0.8728],[0.4673,0.8622],[0.4575,0.8426],[0.459,0.8196],[0.4669,0.8004],[0.4813,0.7875],[0.496,0.7801],[0.5131,0.7777],[0.5302,0.7772],[0.5459,0.7785],[0.5628,0.7799],[0.578,0.7774],[0.5957,0.7781],[0.6135,0.7814],[0.6292,0.7844],[0.6467,0.7886],[0.6641,0.7936],[0.6799,0.7999],[0.6972,0.8061],[0.7143,0.811],[0.7322,0.8157],[0.7502,0.8205],[0.7665,0.8267],[0.7814,0.8352],[0.7963,0.8436],[0.8113,0.8522],[0.8265,0.8605],[0.8404,0.8703],[0.8549,0.879],[0.87,0.8874],[0.8849,0.8961],[0.8994,0.9054],[0.9133,0.9149],[0.9186,0.9287]]} ],
           start:"Slide each bead along its curve to the glowing end.", yay:"All the way along!" },
-        title:"Lines that keep moving", body:"Pelton's lines never sit still. They curl, loop and drift like seaweed swaying or smoke rising, so the whole painting seems to be changing as you look. And did you notice the pearl and the coral? They come from Ariel's song."},
+        title:"Lines that keep moving", body:"Pelton's lines never sit still. They curl, loop and drift like seaweed swaying or smoke rising, so the whole painting seems to be changing as you look."},
       {find:"In a sea change, something old turns into something new. What looks old to you? Draw a circle around it.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
         circle:{ want:"opinion", agree:[{x:0, y:0.76, w:1, h:0.24}, {x:0.42, y:0, w:0.58, h:0.28}],
           start:"Draw a circle around something that looks old.",
