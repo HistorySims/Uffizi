@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-29h";
+  window.APP_VERSION = "2026-10-30a";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-29h"></script>
+<script src="works.js?v=2026-10-30a"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -911,7 +911,8 @@
     soft:     { alpha:0.62, blur:0.7, passes:2 },
     glow:     { alpha:0.92, blur:1.1, core:"rgba(255,255,255,.6)" },
     streak:   { alpha:0.9,  bristles:0.3, taper:true },
-    swoop:    { alpha:0.92, swell:true }
+    swoop:    { alpha:0.92, swell:true },
+    glaze:    { alpha:0.14, blur:0.9 }  // thin see-through layers: color only builds up where you paint again
   };
   var paint = { cfg:null, colors:[], size:0.03, color:0, strokes:[], cur:null, wobble:false, t0:0 };
   function enterPaint(s){
@@ -1160,6 +1161,9 @@
       var c = 0, sn = 0;
       streaks.forEach(function(s){ c += Math.cos(2*s.angle); sn += Math.sin(2*s.angle); });
       return Math.hypot(c, sn) / streaks.length >= 0.85 ? "good" : "mixed";
+    },
+    layers: function(S){ // Pelton: many light layers, built up
+      return S.length >= 6 ? "good" : "more";
     },
     smoothLong: function(S){ // O'Keeffe: long, smooth curves
       if(share(S, function(s){ return s.len >= 0.3 && s.turns <= 1; }) >= 0.6) return "good";
@@ -2033,7 +2037,7 @@
     if(!lasso.drawing) return;
     lasso.drawing = false;
     var cfg = lasso.cfg, say = cfg.say || {}, sz = osdImgSize();
-    if(cfg.want === "any"){ circleAny(cfg, say, sz); return; }
+    if(cfg.want === "any" || cfg.want === "opinion"){ circleAny(cfg, say, sz); return; }
     if(!lasso.map || !sz){ lasso.pts = []; redrawActivity(); return; }
     var poly = lasso.pts.map(function(p){ return [p.x / sz.x, p.y / sz.y]; });
     // how much of the painting the loop holds, and how busy it is in there on average
@@ -2060,7 +2064,8 @@
     redrawActivity();
     setTimeout(function(){ if(lasso.result === "miss" && !lasso.drawing){ lasso.pts = []; lasso.result = ""; redrawActivity(); } }, 1200);
   }
-  // want:"any" has no wrong answer: whatever you circle, the painting zooms in on it
+  // want:"any" and "opinion" have no wrong answer: whatever you circle, the painting zooms in on it.
+  // An opinion also says whether it lines up with the usual reading (cfg.agree: areas).
   function circleAny(cfg, say, sz){
     if(!sz){ lasso.pts = []; redrawActivity(); return; }
     var xs = lasso.pts.map(function(p){ return p.x / sz.x; }), ys = lasso.pts.map(function(p){ return p.y / sz.y; });
@@ -2075,7 +2080,17 @@
     lasso.zoom = { x:x0 - w * pad, y:y0 - h * pad, w:w * (1 + 2 * pad), h:h * (1 + 2 * pad) };
     lasso.result = "good"; state.findPhase = "revealed";
     $("simplePanel").classList.add("hidden"); actCanvas().classList.add("locked");
-    showActivityCaption(STOPS[state.findIndex], say.good || "");
+    var lead = say.good || "";
+    if(cfg.want === "opinion"){
+      var poly = lasso.pts.map(function(p){ return [p.x / sz.x, p.y / sz.y]; }), inside = 0, shared = 0;
+      var inArea = function(x, y){ return cfg.agree.some(function(r){ return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h; }); };
+      for(var gy=0; gy<40; gy++){ for(var gx=0; gx<60; gx++){
+        var px = (gx + 0.5) / 60, py = (gy + 0.5) / 40;
+        if(inPoly(px, py, poly)){ inside++; if(inArea(px, py)){ shared++; } }
+      } }
+      lead = inside && shared / inside >= 0.35 ? say.agree : say.unique;
+    }
+    showActivityCaption(STOPS[state.findIndex], lead);
     fitToStop(STOPS[state.findIndex]);
   }
   function circleHint(want){ // the busiest (or calmest) place, as a ring to circle around

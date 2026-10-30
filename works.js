@@ -447,29 +447,50 @@ window.WORKS = [
     id:"pelton", museum:"whitney", title:"Sea Change", artist:"Agnes Pelton",
     role:"The Color Cloud",
     card:"A glowing teardrop rising out of a soft green sea.",
-    subtitle:"A calm, glowing dream. Breathe slowly and let it float.",
+    subtitle:"A painting of change. What do you see?",
     alt:"Sea Change by Agnes Pelton: a glowing white teardrop rises above soft mint-green waves under a deep blue sky",
-    intro:"You've let the colors float. Now let's find a few of the shapes in this dream.",
+    intro:"Now let's go looking for change.",
     src:"images/sea-change.jpg", tiles:"images/sea-change.jpg",
     music:"audio/arabesque-harp.mp3",
     prompts:[
-      "Just look. Nothing here is a real thing you know. Let it float in front of you.",
-      "Breathe in slowly… and out. Does the glowing shape seem to rise when you breathe in?",
-      "Is it day or night? Under the sea, or up in the sky? You decide.",
-      "Find the softest color, and the brightest. Which one do you like best?",
-      "If this painting made a sound, what would it be?"
+      "Just take it in. Let your eyes wander all over the painting, slowly, without looking for anything.",
+      "Now, does it remind you of something? An ocean? A cloud? A storm? A desert? It could be more than one thing. It could be nothing at all.",
+      "This is a painting of change. It's called Sea Change, after a song in a play by William Shakespeare.",
+      "In the song, a spirit named Ariel sings about a sailor deep under the sea: “Of his bones are coral made; those are pearls that were his eyes. Nothing of him that doth fade, but doth suffer a sea-change into something rich and strange.”",
+      "Where can you see change? Look for something rising, opening, melting, or turning into something new."
     ],
     stops:[
       {find:"Can you find the glowing white teardrop?", cx:0.25, cy:0.42, box:{x:0.18, y:0.32, w:0.13, h:0.24}, title:"The glow", body:"A soft white teardrop rises up, glowing like a lamp or a bubble or the moon. Pelton loved painting light that seems to shine from inside things, as if the painting were lit from within."},
-      {find:"Can you find the soft green shape it's rising out of?", cx:0.35, cy:0.65, box:{x:0.14, y:0.5, w:0.46, h:0.3}, title:"A soft green wave", body:"The teardrop grows out of a cloud of mint green that curls like sea foam, or a flower opening, or a wave. Is it water? A cloud? Pelton let it be a little bit of everything."},
-      {find:"Can you find a thin curving line, like a thread?", cx:0.6, cy:0.68, box:{x:0.5, y:0.6, w:0.18, h:0.16}, title:"A thin thread", body:"A fine pale line loops out from the green shape and curves away. It's easy to miss! It makes the shape look like it's moving, like a ribbon trailing behind something drifting through water."},
-      {find:"Look at the top. Can you find the gray edge curling like a wave?", cx:0.7, cy:0.14, box:{x:0.45, y:0.02, w:0.55, h:0.25}, title:"The edge of the sky", body:"Across the top, a soft gray edge curls and drips like the crest of a wave. It makes the blue look like a window, or the inside of a shell, or the view looking up from under the sea."},
-      {find:"Can you find a warm orange stripe near the bottom?", cx:0.5, cy:0.88, box:{x:0.05, y:0.82, w:0.9, h:0.12}, title:"A warm stripe", body:"Down at the bottom, layers of dark blue and green are crossed by a stripe of warm orange, like sunset glowing deep under the water. One warm color makes all the cool colors around it feel even calmer."}
+      {find:"Can you find a warm orange stripe near the bottom?", cx:0.5, cy:0.88, box:{x:0.05, y:0.82, w:0.9, h:0.12}, title:"A warm stripe", body:"Down at the bottom, layers of dark blue and green are crossed by a stripe of warm orange, like sunset glowing deep under the water. One warm color makes all the cool colors around it look even cooler."},
+      {find:"Follow the changes! Slide each bead along its curve: the pearl on the pale thread, the coral on the orange stripe, and the green bead on the green wave.", cx:0.37, cy:0.72, box:{x:0, y:0.5, w:0.75, h:0.45},
+        // pearl and coral, from Ariel's song
+        beads:{ r:0.017,
+          wires:[ {color:"#f4efe2", path:[[0.51,0.68],[0.555,0.645],[0.6,0.627],[0.646,0.636],[0.672,0.675],[0.668,0.72],[0.64,0.75],[0.61,0.765]]},
+                  {color:"#e8743a", path:[[0.024,0.846],[0.08,0.851],[0.13,0.855],[0.178,0.868],[0.26,0.871],[0.35,0.885],[0.45,0.9],[0.55,0.912],[0.64,0.916],[0.71,0.915]]},
+                  {color:"#5fd3a6", path:[[0.125,0.72],[0.15,0.62],[0.18,0.565],[0.215,0.545],[0.3,0.55],[0.36,0.575],[0.41,0.615],[0.46,0.665],[0.51,0.695],[0.56,0.715],[0.585,0.74]]} ],
+          start:"Slide each bead along its curve to the glowing end.", yay:"All the way along!" },
+        title:"Lines that keep moving", body:"Pelton's lines never sit still. They curl, loop and drift like seaweed swaying or smoke rising, so the whole painting seems to be changing as you look. And did you notice the pearl and the coral? They come from Ariel's song."},
+      {find:"In a sea change, something old turns into something new. What looks old to you? Draw a circle around it.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        circle:{ want:"opinion", agree:[{x:0, y:0.76, w:1, h:0.24}, {x:0.42, y:0, w:0.58, h:0.28}],
+          start:"Draw a circle around something that looks old.",
+          say:{ agree:"Art critics agree!", unique:"That's a unique interpretation!", small:"Draw a bigger circle, all the way around!" } },
+        title:"Something old", body:"Lots of people see the oldest parts in the heavy, dark layers along the bottom, like rock or a sea floor that has been there for ages, and in the gray edge hanging over the top. What made your part feel old?"},
+      {find:"Now, what looks new? Draw a circle around it.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        circle:{ want:"opinion", agree:[{x:0.17, y:0.3, w:0.15, h:0.3}],
+          start:"Draw a circle around something that looks new.",
+          say:{ agree:"Art critics agree!", unique:"That's a unique interpretation!", small:"Draw a bigger circle, all the way around!" } },
+        title:"Something new", body:"Lots of people see the newest thing in the glowing teardrop, rising out of the green like something just being born, rich and strange and still changing. What made your part feel new?"},
+      {find:"Pelton built up her glowing colors in thin, see-through layers, painting softly, “with the moth's wing.” Paint very lightly, over the same place again and again, and watch your color grow.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        paint:{ look:"glaze", blank:"#1f4c93", check:"layers", brushes:[0.05, 0.09, 0.15], brush:1,
+          colors:[{name:"Moonlight", hex:"#fbf6e4"}, {name:"Mint", hex:"#9fe3c4"}, {name:"Sea green", hex:"#3f9e8e"}, {name:"Sky blue", hex:"#6fb4f2"}, {name:"Coral", hex:"#ec8a4c"}, {name:"Shell pink", hex:"#f2b8c6"}],
+          say:{ good:"See how the color glows where the thin layers pile up?",
+                more:"Try painting over the same spot again and again, and watch the color grow brighter!" } },
+        title:"Light, layer by layer", body:"Pelton didn't paint her glow all at once. She laid down many thin, see-through layers, one over another, so the light seems to come from deep inside the paint. Slow and gentle, just like you did."}
     ],
     done:[
       "Agnes Pelton painted Sea Change in 1931, while she was living near the ocean on Long Island, in a house made from an old windmill. The next year, she moved to the California desert.",
       "She didn't paint things she saw with her eyes. She painted feelings and visions that came to her when she sat very still and quiet. She hoped her paintings would make people feel calm and full of light.",
-      "The words 'sea change' come from a play by Shakespeare, about something under the sea changing into something 'rich and strange.' When you see it at the Whitney, stand still, breathe slowly, and watch the glowing teardrop rise."
+      "The words 'sea change' come from a play by Shakespeare, about something under the sea changing into something 'rich and strange.' When you see it at the Whitney, look for the change: what's old, what's new, and what's still on its way."
     ]
   },
   {
