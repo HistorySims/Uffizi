@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-30b";
+  window.APP_VERSION = "2026-10-30c";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-30b"></script>
+<script src="works.js?v=2026-10-30c"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -852,7 +852,7 @@
     cancelAnimationFrame(act.raf); act.raf = 0; act.mode = null;
     actCanvas().classList.add("hidden");
     $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden"); $("playPanel").classList.add("hidden"); $("nightPanel").classList.add("hidden"); $("simplePanel").classList.add("hidden");
-    cancelAnimationFrame(beads.raf); beads.drag = null; lasso.drawing = false;
+    cancelAnimationFrame(beads.raf); beads.drag = null; lasso.drawing = false; cancelAnimationFrame(lasso.raf);
     night.loadId++; cancelAnimationFrame(night.raf); night.raf = 0; cancelAnimationFrame(night.anim); night.compare = false; night.slide = false; $("frameFind").classList.remove("night-mode", "no-map");
     hushPlay(1.5); cancelAnimationFrame(play.raf); play.raf = 0; play.ripples = []; duckBg(false);
     $("actAgainBtn").classList.add("hidden");
@@ -912,7 +912,7 @@
     glow:     { alpha:0.92, blur:1.1, core:"rgba(255,255,255,.6)" },
     streak:   { alpha:0.9,  bristles:0.3, taper:true },
     swoop:    { alpha:0.92, swell:true },
-    glaze:    { alpha:0.14, blur:0.9 }  // thin see-through layers: color only builds up where you paint again
+    glaze:    { alpha:0.07, passes:2 }  // a thin see-through coat, about 13% in the middle with soft edges
   };
   var paint = { cfg:null, colors:[], size:0.03, color:0, strokes:[], cur:null, wobble:false, t0:0 };
   function enterPaint(s){
@@ -1061,6 +1061,12 @@
     if(cfg.blank && sz){ // a fresh sheet over the painting
       var b0 = toScreen({x:0, y:0}), b1 = toScreen({x:sz.x, y:sz.y});
       ctx.fillStyle = cfg.blank; ctx.fillRect(Math.floor(b0.x) - 1, Math.floor(b0.y) - 1, Math.ceil(b1.x - b0.x) + 2, Math.ceil(b1.y - b0.y) + 2);
+      if(cfg.light){ // a bright white ground to glaze over: light goes through the color and bounces back
+        var lc = toScreen({ x:cfg.light.x * sz.x, y:cfg.light.y * sz.y }), lr = cfg.light.r * sz.x * imgPxToScreen();
+        var lg = ctx.createRadialGradient(lc.x, lc.y, lr * 0.9, lc.x, lc.y, lr);
+        lg.addColorStop(0, cfg.light.color || "#fbfaf4"); lg.addColorStop(1, "rgba(251,250,244,0)");
+        ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(lc.x, lc.y, lr, 0, Math.PI * 2); ctx.fill();
+      }
     }
     ctx.save();
     if(paint.wobble && all.length){
@@ -1082,7 +1088,7 @@
     try{ c.setPointerCapture(e.pointerId); }catch(_){}
     // brush width is a fraction of the visible canvas, stored in image pixels
     paint.cur = { w:paint.size * c.width / imgPxToScreen(), col:col, bristles:bristles, sparkles:[],
-                  pts:[toImage(e)], spts:[canvasPoint(e)], screenLen:0, screenW:paint.size * c.width, lazy:canvasPoint(e) };
+                  pts:[toImage(e)], spts:[canvasPoint(e)], screenLen:0, screenW:paint.size * c.width, lazy:canvasPoint(e), anchor:canvasPoint(e), dir:null };
     redrawActivity();
   }
   function paintMove(e){
@@ -1103,6 +1109,20 @@
     }
     st.screenLen += Math.hypot(sp.x - last.x, sp.y - last.y);
     st.spts.push(sp); st.pts.push(toImage(e));
+    if(paint.cfg.coats){
+      // glazing builds on every crossing: when the finger turns back, the rest of the stroke is a new coat
+      var vx = sp.x - st.anchor.x, vy = sp.y - st.anchor.y, vl = Math.hypot(vx, vy);
+      if(vl >= 10 * act.dpr){
+        var nd = { x:vx / vl, y:vy / vl };
+        if(st.dir && nd.x * st.dir.x + nd.y * st.dir.y < -0.3){
+          paint.strokes.push(st);
+          paint.cur = st = { w:st.w, col:st.col, bristles:st.bristles, sparkles:[], pts:[st.pts[st.pts.length - 1]], spts:[sp],
+                             screenLen:0, screenW:st.screenW, lazy:sp, anchor:sp, dir:nd };
+          $("paintDone").disabled = false;
+        }
+        st.dir = nd; st.anchor = sp;
+      }
+    }
     if(Math.random() < 0.18){ st.sparkles.push({ i:st.pts.length-1, off:(Math.random()-0.5)*0.9, r:0.12 + Math.random()*0.18 }); }
     redrawActivity();
   }
@@ -1975,9 +1995,15 @@
   /* ----- circle it: draw a loop around a part of the painting that's busy (or calm).
      How busy a place is = how much the color changes there, measured on a small copy of the
      painting and blurred so it describes areas, not single edges. Generous on purpose. */
-  var lasso = { cfg:null, map:null, mw:0, mh:0, cuts:null, pts:[], drawing:false, misses:0, result:"", hint:null, src:"", zoom:null };
+  var lasso = { cfg:null, map:null, mw:0, mh:0, cuts:null, pts:[], drawing:false, misses:0, result:"", hint:null, src:"", zoom:null,
+                img:null, kept:{ old:null, new:null }, keptFor:"", raf:0 };
   function enterCircle(s){
-    act.mode = "circle"; lasso.cfg = s.circle; lasso.zoom = null; lasso.pts = []; lasso.drawing = false; lasso.misses = 0; lasso.result = ""; lasso.hint = null;
+    act.mode = "circle"; lasso.cfg = s.circle; lasso.zoom = null; lasso.pts = [];
+    if(s.circle.want === "keep"){
+      // the old/new boxes belong to one painting; starting over at "old" empties them
+      if(lasso.keptFor !== currentPainting.id || s.circle.slot === "old"){ lasso.kept = { old:null, new:null }; lasso.keptFor = currentPainting.id; }
+      if(!lasso.img || lasso.img.src.indexOf(currentPainting.src) < 0){ lasso.img = new Image(); lasso.img.src = currentPainting.src; }
+    } lasso.drawing = false; lasso.misses = 0; lasso.result = ""; lasso.hint = null;
     if(lasso.src !== currentPainting.src){
       lasso.map = null; lasso.src = currentPainting.src;
       var im = new Image(); im.onload = function(){ buildBusyMap(im); }; im.src = currentPainting.src;
@@ -1987,6 +2013,7 @@
   function resumeCircle(s){
     state.findPhase = "circle";
     lasso.pts = []; lasso.result = ""; lasso.drawing = false; lasso.zoom = null;
+    if(lasso.cfg.want === "keep"){ lasso.kept[lasso.cfg.slot] = null; } // trying again empties this box
     $("findQ").textContent = s.find;
     $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
     if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
@@ -2037,7 +2064,8 @@
     if(!lasso.drawing) return;
     lasso.drawing = false;
     var cfg = lasso.cfg, say = cfg.say || {}, sz = osdImgSize();
-    if(cfg.want === "any" || cfg.want === "opinion"){ circleAny(cfg, say, sz); return; }
+    if(cfg.want === "any"){ circleAny(cfg, say, sz); return; }
+    if(cfg.want === "keep"){ circleKeep(cfg, say, sz); return; }
     if(!lasso.map || !sz){ lasso.pts = []; redrawActivity(); return; }
     var poly = lasso.pts.map(function(p){ return [p.x / sz.x, p.y / sz.y]; });
     // how much of the painting the loop holds, and how busy it is in there on average
@@ -2064,8 +2092,7 @@
     redrawActivity();
     setTimeout(function(){ if(lasso.result === "miss" && !lasso.drawing){ lasso.pts = []; lasso.result = ""; redrawActivity(); } }, 1200);
   }
-  // want:"any" and "opinion" have no wrong answer: whatever you circle, the painting zooms in on it.
-  // An opinion also says whether it lines up with the usual reading (cfg.agree: areas).
+  // want:"any" has no wrong answer: whatever you circle, the painting zooms in on it
   function circleAny(cfg, say, sz){
     if(!sz){ lasso.pts = []; redrawActivity(); return; }
     var xs = lasso.pts.map(function(p){ return p.x / sz.x; }), ys = lasso.pts.map(function(p){ return p.y / sz.y; });
@@ -2080,18 +2107,73 @@
     lasso.zoom = { x:x0 - w * pad, y:y0 - h * pad, w:w * (1 + 2 * pad), h:h * (1 + 2 * pad) };
     lasso.result = "good"; state.findPhase = "revealed";
     $("simplePanel").classList.add("hidden"); actCanvas().classList.add("locked");
-    var lead = say.good || "";
-    if(cfg.want === "opinion"){
-      var poly = lasso.pts.map(function(p){ return [p.x / sz.x, p.y / sz.y]; }), inside = 0, shared = 0;
-      var inArea = function(x, y){ return cfg.agree.some(function(r){ return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h; }); };
-      for(var gy=0; gy<40; gy++){ for(var gx=0; gx<60; gx++){
-        var px = (gx + 0.5) / 60, py = (gy + 0.5) / 40;
-        if(inPoly(px, py, poly)){ inside++; if(inArea(px, py)){ shared++; } }
-      } }
-      lead = inside && shared / inside >= 0.35 ? say.agree : say.unique;
-    }
-    showActivityCaption(STOPS[state.findIndex], lead);
+    showActivityCaption(STOPS[state.findIndex], say.good || "");
     fitToStop(STOPS[state.findIndex]);
+  }
+  /* want:"keep" (slot "old" or "new"): what you circle is cut out of the painting and flies
+     into a box in a top corner, old on the left, new on the right. The boxes stay for the
+     rest of the pair, so the new step shows the old one too. */
+  function circleKeep(cfg, say, sz){
+    var img = lasso.img;
+    if(!sz || !img || !img.naturalWidth){ lasso.pts = []; redrawActivity(); return; }
+    var xs = lasso.pts.map(function(p){ return p.x; }), ys = lasso.pts.map(function(p){ return p.y; });
+    var x0 = Math.max(0, Math.min.apply(null, xs)), x1 = Math.min(sz.x, Math.max.apply(null, xs));
+    var y0 = Math.max(0, Math.min.apply(null, ys)), y1 = Math.min(sz.y, Math.max.apply(null, ys));
+    if((x1 - x0) * (y1 - y0) < (cfg.min || 0.004) * sz.x * sz.y){
+      lasso.result = "miss"; $("simpleStatus").textContent = say.small || "Draw a bigger circle, all the way around!";
+      redrawActivity();
+      setTimeout(function(){ if(lasso.result === "miss" && !lasso.drawing){ lasso.pts = []; lasso.result = ""; redrawActivity(); } }, 1200);
+      return;
+    }
+    // cut it out along the loop, from the full painting
+    var sx = img.naturalWidth / sz.x, k = Math.min(1, 500 / Math.max((x1 - x0) * sx, (y1 - y0) * sx));
+    var c = document.createElement("canvas"); c.width = Math.max(1, Math.round((x1 - x0) * sx * k)); c.height = Math.max(1, Math.round((y1 - y0) * sx * k));
+    var g = c.getContext("2d"), f = c.width / (x1 - x0);
+    g.beginPath(); lasso.pts.forEach(function(p, i){ var px = (p.x - x0) * f, py = (p.y - y0) * f; if(i){ g.lineTo(px, py); } else { g.moveTo(px, py); } });
+    g.closePath(); g.save(); g.clip();
+    g.drawImage(img, x0 * sx, y0 * sx, (x1 - x0) * sx, (y1 - y0) * sx, 0, 0, c.width, c.height);
+    g.restore(); g.lineWidth = 2; g.strokeStyle = "rgba(255,255,255,.85)"; g.stroke();
+    lasso.kept[cfg.slot] = { canvas:c, from:{ x:x0, y:y0, w:x1 - x0, h:y1 - y0 }, t0:performance.now() };
+    lasso.pts = []; lasso.result = "good"; state.findPhase = "revealed";
+    $("simplePanel").classList.add("hidden"); actCanvas().classList.add("locked");
+    // fly it into its box, then talk about it
+    var tick = function(){
+      redrawActivity();
+      if(act.mode === "circle" && performance.now() - lasso.kept[cfg.slot].t0 < 900){ lasso.raf = requestAnimationFrame(tick); }
+      else { showActivityCaption(STOPS[state.findIndex], say.good || ""); }
+    };
+    lasso.raf = requestAnimationFrame(tick);
+  }
+  function keepBox(slot){ // a box in the top corner of the view, in canvas pixels
+    var c = actCanvas(), d = act.dpr, w = Math.min(c.width * 0.3, 150 * d), h = w * 0.82, m = 8 * d;
+    return { x:slot === "old" ? m : c.width - w - m, y:m, w:w, h:h };
+  }
+  function drawKeepBoxes(){
+    var ctx = act.ctx, d = act.dpr, font = getComputedStyle(document.body).fontFamily, now = performance.now();
+    ["old", "new"].forEach(function(slot){
+      var B = keepBox(slot), item = lasso.kept[slot], label = (lasso.cfg.labels || {})[slot] || slot;
+      ctx.save();
+      ctx.fillStyle = "rgba(4,8,10,.72)"; ctx.beginPath();
+      if(ctx.roundRect){ ctx.roundRect(B.x, B.y, B.w, B.h, 10 * d); } else { ctx.rect(B.x, B.y, B.w, B.h); }
+      ctx.fill();
+      if(!item){ ctx.setLineDash([6 * d, 5 * d]); }
+      ctx.strokeStyle = item ? "#e0bd6a" : "rgba(255,255,255,.55)"; ctx.lineWidth = 2 * d; ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#f2ebdd"; ctx.font = "600 " + (12 * d) + "px " + font; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+      ctx.fillText(label, B.x + B.w / 2, B.y + B.h - 5 * d);
+      if(item){
+        // where it fits in the box (above the label)...
+        var pad = 7 * d, bw = B.w - pad * 2, bh = B.h - pad * 2 - 16 * d, s = Math.min(bw / item.canvas.width, bh / item.canvas.height);
+        var to = { x:B.x + pad + (bw - item.canvas.width * s) / 2, y:B.y + pad + (bh - item.canvas.height * s) / 2, w:item.canvas.width * s, h:item.canvas.height * s };
+        // ...flying in from where it was circled
+        var t = Math.min(1, (now - item.t0) / 900), e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        var a = toScreen({ x:item.from.x, y:item.from.y }), b = toScreen({ x:item.from.x + item.from.w, y:item.from.y + item.from.h });
+        var r = { x:a.x + (to.x - a.x) * e, y:a.y + (to.y - a.y) * e, w:(b.x - a.x) + (to.w - (b.x - a.x)) * e, h:(b.y - a.y) + (to.h - (b.y - a.y)) * e };
+        if(t < 1){ ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 12 * d; }
+        ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(item.canvas, r.x, r.y, r.w, r.h);
+      }
+      ctx.restore();
+    });
   }
   function circleHint(want){ // the busiest (or calmest) place, as a ring to circle around
     var W = lasso.mw, H = lasso.mh, m = boxBlur(lasso.map, W, H, 10), best = -1, bv = want === "busy" ? -1 : 1e9;
@@ -2102,6 +2184,7 @@
   function drawCircleLayer(){
     var ctx = act.ctx, sz = osdImgSize(); if(!sz) return;
     var d = act.dpr;
+    if(lasso.cfg && lasso.cfg.want === "keep"){ drawKeepBoxes(); }
     ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
     if(lasso.hint && lasso.result !== "good"){
       var c = toScreen({ x:lasso.hint.x * sz.x, y:lasso.hint.y * sz.y }), rr = lasso.hint.r * sz.x * imgPxToScreen();
