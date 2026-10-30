@@ -249,29 +249,32 @@ window.WORKS = [
     alt:"Gettin' Religion by Archibald J. Motley Jr.: a crowded street at night in deep blue light, with brass musicians, dancers, and neighbors watching from porches and windows",
     intro:"You've soaked up the whole noisy night. Now let's find the people and the tiny details hiding in the blue.",
     src:"images/gettin-religion.jpg", tiles:"images/gettin-religion.jpg",
-    music:"audio/solace.mp3",
+    music:"audio/canal-street-blues.mp3",
     prompts:[
       "Just look. It's nighttime, and the whole street is full of people. Can you almost hear it?",
       "Everything is blue and purple, like the night is glowing. Where is the brightest light?",
       "Find someone making music. What instrument are they playing?",
-      "Find someone dancing, someone walking, and someone just watching. Who would you be?",
+      "Find someone dancing, someone walking, and someone just watching. Is everyone here for the same reason?",
       "If you could step into this painting, what would you do first?"
     ],
     stops:[
       {find:"Can you find the glowing streetlamp?", cx:0.63, cy:0.06, box:{x:0.58, y:0.0, w:0.1, h:0.13}, title:"The streetlamp", body:"The streetlamp glows like a little moon, and the whole street is bathed in its blue light. Motley was famous for his night scenes, painted in deep blues and purples, so the darkness feels warm and alive instead of scary."},
       {find:"Can you find someone playing a shiny trumpet?", cx:0.37, cy:0.48, box:{x:0.3, y:0.42, w:0.14, h:0.14}, title:"The trumpet", body:"Here's a man blowing hard on his trumpet, cheeks full of air. A brass band is marching right down the middle of the street, and the music pulls everyone along with it."},
-      {find:"Can you find someone with both hands raised high in the air?", cx:0.21, cy:0.4, box:{x:0.14, y:0.31, w:0.15, h:0.2}, title:"Hands up high", body:"This tall man throws his head back and lifts both hands toward the sky. Is he singing? Shouting? Praising? The painting is called Gettin' Religion, and he looks like he's feeling the music all the way down to his shoes."},
       {find:"Can you find a tambourine?", cx:0.59, cy:0.71, box:{x:0.54, y:0.67, w:0.1, h:0.08}, title:"Shake, shake", body:"Someone is holding a tambourine, ready to shake it in time with the band. Look how many ways people make music here: trumpets, a trombone, a tambourine, and voices."},
       {find:"Can you find a little dog trotting through the crowd?", cx:0.57, cy:0.95, box:{x:0.51, y:0.9, w:0.12, h:0.1}, title:"The little dog", body:"Down at everyone's feet, a small white dog trots along on a leash. Even the dog came out tonight! Motley packed the street so full that you could look for a long time and still find someone new."},
       {find:"Can you find a child sitting on the porch steps?", cx:0.54, cy:0.46, box:{x:0.51, y:0.41, w:0.06, h:0.1}, title:"Front-row seat", body:"A child sits on the porch steps, watching everything go by. Up on the porch, a woman leans on the railing to watch too. Porches and steps are the best seats in the house when the street turns into a party."},
       {find:"Look up at the tall building. Can you find people watching from the windows?", cx:0.86, cy:0.2, box:{x:0.73, y:0.0, w:0.27, h:0.4}, title:"Faces in the windows", body:"High in the windows, neighbors look down at the parade below. Some people join the crowd, and some watch from upstairs. Motley painted everyone, so the whole neighborhood is part of the picture."},
+      {find:"If you could step into this street, who would you be? Draw a circle around that person.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        circle:{ want:"any", start:"Draw a circle around the person you'd be.", say:{ small:"Draw a bigger circle, all the way around!" } },
+        title:"That's you!", body:"Look closely at your person. Are they playing, dancing, walking, or just watching? What do you think they can hear right now? Everyone on this street has their own reason for being out tonight."},
+      {find:"Can you find where the artist signed his name?", cx:0.92, cy:0.975, box:{x:0.84, y:0.95, w:0.16, h:0.05}, areas:[{x:0.84, y:0.95, w:0.16, h:0.05}], title:"A. J. Motley Jr., 1948", body:"Motley signed his name in red, right on the street. He painted Bronzeville, the Black neighborhood on Chicago's South Side, where he loved to walk at night and watch the music, the dancing and the neighbors on their porches."},
       {find:"We took Motley's night away! Drag your finger around the color wheel to bring the night back. Is it black? Tap Compare to check it against Motley's.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
         // filter: the painting's overall color (its average, scaled so the brightest channel is 1)
         night:{ filter:[0.406, 0.363, 1.0], real:"Motley's" },
         title:"Night is blue", body:"To take the night away, we took out blue, not black! Motley didn't paint the night black. Black would hide everyone and make the street gloomy. Instead he washed the whole scene in deep blue, so it feels like night but you can still see every dancer. And next to all that cool blue, the red dresses, the yellow windows and the glowing lamp shine even brighter."}
     ],
     done:[
-      "Archibald Motley Jr. painted city life in Chicago, especially the busy streets of Black neighborhoods at night: the music, the dancing, the fancy clothes, and the neighbors talking on their porches.",
+      "Archibald Motley Jr. painted city life in Chicago, especially Bronzeville, the Black neighborhood on the South Side, at night: the music, the dancing, the fancy clothes, and the neighbors talking on their porches.",
       "He loved to fill a painting with people, each one doing something different, and to bathe the whole scene in deep, glowing blue. He painted Gettin' Religion in 1948.",
       "Here's a fun connection: the Whitney got this painting in 2016 by trading in some works left to the museum by Josephine Hopper, Edward Hopper's wife. When you see it, find the streetlamp, the trumpet, the little dog, and the faces in the windows."
     ]
@@ -444,29 +447,51 @@ window.WORKS = [
     id:"pelton", museum:"whitney", title:"Sea Change", artist:"Agnes Pelton",
     role:"The Color Cloud",
     card:"A glowing teardrop rising out of a soft green sea.",
-    subtitle:"A calm, glowing dream. Breathe slowly and let it float.",
+    subtitle:"A painting of change. What do you see?",
     alt:"Sea Change by Agnes Pelton: a glowing white teardrop rises above soft mint-green waves under a deep blue sky",
-    intro:"You've let the colors float. Now let's find a few of the shapes in this dream.",
+    intro:"Now let's go looking for change.",
     src:"images/sea-change.jpg", tiles:"images/sea-change.jpg",
     music:"audio/arabesque-harp.mp3",
     prompts:[
-      "Just look. Nothing here is a real thing you know. Let it float in front of you.",
-      "Breathe in slowly… and out. Does the glowing shape seem to rise when you breathe in?",
-      "Is it day or night? Under the sea, or up in the sky? You decide.",
-      "Find the softest color, and the brightest. Which one do you like best?",
-      "If this painting made a sound, what would it be?"
+      "Just take it in. Let your eyes wander all over the painting, slowly, without looking for anything.",
+      "Now, does it remind you of something? An ocean? A cloud? A storm? A desert? It could be more than one thing. It could be nothing at all.",
+      "This is a painting of change. It's called Sea Change, after a song in a play by William Shakespeare.",
+      "In the song, a spirit named Ariel sings about a sailor deep under the sea: “Of his bones are coral made; those are pearls that were his eyes. Nothing of him that doth fade, but doth suffer a sea-change into something rich and strange.”",
+      "Where can you see change? Look for something rising, opening, melting, or turning into something new."
     ],
     stops:[
       {find:"Can you find the glowing white teardrop?", cx:0.25, cy:0.42, box:{x:0.18, y:0.32, w:0.13, h:0.24}, title:"The glow", body:"A soft white teardrop rises up, glowing like a lamp or a bubble or the moon. Pelton loved painting light that seems to shine from inside things, as if the painting were lit from within."},
-      {find:"Can you find the soft green shape it's rising out of?", cx:0.35, cy:0.65, box:{x:0.14, y:0.5, w:0.46, h:0.3}, title:"A soft green wave", body:"The teardrop grows out of a cloud of mint green that curls like sea foam, or a flower opening, or a wave. Is it water? A cloud? Pelton let it be a little bit of everything."},
-      {find:"Can you find a thin curving line, like a thread?", cx:0.6, cy:0.68, box:{x:0.5, y:0.6, w:0.18, h:0.16}, title:"A thin thread", body:"A fine pale line loops out from the green shape and curves away. It's easy to miss! It makes the shape look like it's moving, like a ribbon trailing behind something drifting through water."},
-      {find:"Look at the top. Can you find the gray edge curling like a wave?", cx:0.7, cy:0.14, box:{x:0.45, y:0.02, w:0.55, h:0.25}, title:"The edge of the sky", body:"Across the top, a soft gray edge curls and drips like the crest of a wave. It makes the blue look like a window, or the inside of a shell, or the view looking up from under the sea."},
-      {find:"Can you find a warm orange stripe near the bottom?", cx:0.5, cy:0.88, box:{x:0.05, y:0.82, w:0.9, h:0.12}, title:"A warm stripe", body:"Down at the bottom, layers of dark blue and green are crossed by a stripe of warm orange, like sunset glowing deep under the water. One warm color makes all the cool colors around it feel even calmer."}
+      {find:"Can you find a warm orange stripe near the bottom?", cx:0.5, cy:0.88, box:{x:0.05, y:0.82, w:0.9, h:0.12}, title:"A warm stripe", body:"Down at the bottom, layers of dark blue and green are crossed by a stripe of warm orange, like sunset glowing deep under the water. One warm color makes all the cool colors around it look even cooler."},
+      {find:"Follow the changes! Slide each bead along the curve it sits on, all the way to the other end.", cx:0.53, cy:0.7, box:{x:0.12, y:0.45, w:0.82, h:0.5},
+        // four curves traced over the painting: the pale curl by the teardrop, the big curve over the green form,
+        // the little hook below it, and the long edge of the dark green form
+        beads:{ r:0.017,
+          wires:[ {color:"#eef6ee", path:[[0.2069,0.7299],[0.1909,0.7393],[0.1744,0.7372],[0.1602,0.7281],[0.1482,0.7154],[0.1396,0.6949],[0.1394,0.6731],[0.1394,0.6482],[0.1406,0.6254],[0.1452,0.6015],[0.1543,0.5808],[0.166,0.5646],[0.1806,0.5526],[0.191,0.5385],[0.1971,0.5183],[0.208,0.5028],[0.2203,0.494]]},
+                  {color:"#7fdcb8", path:[[0.3078,0.643],[0.2945,0.6601],[0.279,0.6642],[0.2644,0.6541],[0.256,0.6363],[0.2506,0.6143],[0.2488,0.591],[0.2522,0.5699],[0.2608,0.5525],[0.2734,0.5363],[0.2896,0.5254],[0.3105,0.5244],[0.3287,0.5294],[0.3459,0.536],[0.3615,0.5437],[0.3761,0.5532],[0.3886,0.5648],[0.4015,0.5778],[0.4149,0.5933],[0.427,0.6112],[0.4395,0.6296],[0.4495,0.6492],[0.4588,0.6684],[0.4691,0.6841],[0.4711,0.6861]]},
+                  {color:"#26a08c", path:[[0.278,0.7736],[0.2644,0.7646],[0.251,0.7541],[0.237,0.7388],[0.2345,0.7157],[0.2496,0.7072],[0.2651,0.7169],[0.2762,0.731],[0.29,0.7395],[0.3054,0.7486],[0.3207,0.7586],[0.3354,0.7652],[0.3534,0.7688],[0.3684,0.7724],[0.3869,0.7753],[0.3911,0.7755]]},
+                  {color:"#2f6e58", path:[[0.5123,0.8815],[0.4968,0.8786],[0.4805,0.8728],[0.4673,0.8622],[0.4575,0.8426],[0.459,0.8196],[0.4669,0.8004],[0.4813,0.7875],[0.496,0.7801],[0.5131,0.7777],[0.5302,0.7772],[0.5459,0.7785],[0.5628,0.7799],[0.578,0.7774],[0.5957,0.7781],[0.6135,0.7814],[0.6292,0.7844],[0.6467,0.7886],[0.6641,0.7936],[0.6799,0.7999],[0.6972,0.8061],[0.7143,0.811],[0.7322,0.8157],[0.7502,0.8205],[0.7665,0.8267],[0.7814,0.8352],[0.7963,0.8436],[0.8113,0.8522],[0.8265,0.8605],[0.8404,0.8703],[0.8549,0.879],[0.87,0.8874],[0.8849,0.8961],[0.8994,0.9054],[0.9133,0.9149],[0.9186,0.9287]]} ],
+          start:"Slide each bead along its curve to the glowing end.", yay:"All the way along!" },
+        title:"Lines that keep moving", body:"Pelton's lines never sit still. They curl, loop and drift like seaweed swaying or smoke rising, so the whole painting seems to be changing as you look."},
+      {find:"A sea change is a total transformation: something old turns into something completely new. What looks old to you? Draw a circle around it.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        circle:{ want:"keep", slot:"old", labels:{ old:"Old", new:"New" },
+          start:"Draw a circle around something that looks old.", say:{ small:"Draw a bigger circle, all the way around!" } },
+        title:"Your old", body:"There it goes, into the Old box. Now let's find the new."},
+      {find:"Now, what looks new? Draw a circle around it.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        circle:{ want:"keep", slot:"new", labels:{ old:"Old", new:"New" },
+          start:"Draw a circle around something that looks new.", say:{ small:"Draw a bigger circle, all the way around!" } },
+        title:"Look at the transformation!", body:"Your old on one side, your new on the other. Everyone who looks at Sea Change finds a different old and a different new. There's no one right answer: each person sees the change in their own way."},
+      {find:"Pelton built up her glow in thin, see-through layers of color over a bright white ground, painting softly, \u201cwith the moth's wing.\u201d Brush very light coats over the white circle, again and again, and watch your color glow.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        // coats: every crossing (even rubbing back and forth) is a new see-through coat that builds on the last
+        paint:{ look:"glaze", coats:true, blank:"#1f4c93", light:{ x:0.5, y:0.5, r:0.24 }, check:"layers", brushes:[0.05, 0.09, 0.15], brush:1,
+          colors:[{name:"Gold", hex:"#e8b83a"}, {name:"Mint", hex:"#5fd3a6"}, {name:"Sea green", hex:"#1f8f7e"}, {name:"Sky blue", hex:"#2f7fd8"}, {name:"Coral", hex:"#e8643a"}, {name:"Rose", hex:"#d8507a"}],
+          say:{ good:"See how it glows? The light goes through your thin layers and bounces off the white underneath.",
+                more:"Try brushing over the same spot again and again, and watch the color grow deeper!" } },
+        title:"Light, layer by layer", body:"Pelton didn't paint her glow all at once. She laid thin, see-through layers of color over a bright white ground. Light passes through the color, bounces off the white underneath and comes back out, so the painting seems lit from inside."}
     ],
     done:[
       "Agnes Pelton painted Sea Change in 1931, while she was living near the ocean on Long Island, in a house made from an old windmill. The next year, she moved to the California desert.",
       "She didn't paint things she saw with her eyes. She painted feelings and visions that came to her when she sat very still and quiet. She hoped her paintings would make people feel calm and full of light.",
-      "The words 'sea change' come from a play by Shakespeare, about something under the sea changing into something 'rich and strange.' When you see it at the Whitney, stand still, breathe slowly, and watch the glowing teardrop rise."
+      "The words 'sea change' come from a play by Shakespeare, about something under the sea changing into something 'rich and strange.' When you see it at the Whitney, look for the change: what's old, what's new, and what's still on its way."
     ]
   },
   {
