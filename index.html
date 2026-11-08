@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-08b";
+  window.APP_VERSION = "2026-11-08c";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-08b"></script>
+<script src="works.js?v=2026-11-08c"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -2905,6 +2905,9 @@
   $("actCanvas").addEventListener("pointermove", activityMove);
   $("actCanvas").addEventListener("pointerup", activityUp);
   $("actCanvas").addEventListener("pointercancel", activityUp);
+  // iPhones ignore touch-action here and drag the whole page along with a finger that draws, so
+  // the painting seems to shake: while an activity is on the painting, its touches stay on it
+  ["touchstart", "touchmove"].forEach(function(t){ $("actCanvas").addEventListener(t, function(e){ if(act.mode){ e.preventDefault(); } }, { passive:false }); });
   (function(){ // the palette: drag to mix, tap to pick; the page must not scroll under the finger
     var c = $("paletteCanvas");
     c.addEventListener("pointerdown", paletteDown); c.addEventListener("pointermove", paletteMove);

@@ -675,13 +675,13 @@ window.WORKS = [
       {find:"Can you find little bushes being blown flat by the wind?", cx:0.66, cy:0.5, box:{x:0.55, y:0.4, w:0.23, h:0.19}, title:"Which way is the wind?", body:"These little bushes are all bent the same way, pushed by the wind. The snow streaks all slant the same way too. Pippin made the whole painting feel windy without ever painting the wind itself."},
       {find:"Can you find a tiny bare bush near the bottom?", cx:0.62, cy:0.9, box:{x:0.57, y:0.85, w:0.1, h:0.11}, title:"Hoofprints in the snow", body:"One little bush hangs on in the snow, right in the buffalo's path. Look at all the gray marks scattered around it. They could be hoofprints, left behind by the herd as it thundered past."},
       {find:"Can you find the painter's name, written in yellow?", cx:0.945, cy:0.975, box:{x:0.89, y:0.94, w:0.11, h:0.06}, title:"H. PIPPIN", body:"The only bright color in the whole painting is the artist's name: H. PIPPIN, in yellow letters down in the corner. It's like he's saying 'I made this' in the warmest color he had."},
-      {find:"Pippin made the wind blow with slanting snow. Paint some snow streaks across the dark rocks!", cx:0.31, cy:0.53, box:{x:0.14, y:0.36, w:0.34, h:0.34},
+      {find:"Pippin painted this whole snowstorm with black, white, and the grays in between. Squirt some black and white, mix a gray you like, tap it, and paint snow streaks across the dark rocks, all slanting the same way, like the wind!", cx:0.31, cy:0.53, box:{x:0.14, y:0.36, w:0.34, h:0.34},
         paint:{ look:"streak", check:"sameSlant", brushes:[0.008, 0.018, 0.035], brush:1,
-          colors:[{name:"White", hex:"#f4f1e8"}, {name:"Pale gray", hex:"#c9c9c4"}],
+          palette:{ tubes:[{name:"White", hex:"#f4f1e8"}, {name:"Black", hex:"#1e1d1c"}] },
           say:{ good:"Whoosh! All your snow is slanting the same way. Now it's windy!",
                 mixed:"Your snow is swirling every which way! Try making every streak slant the same direction, like Pippin's.",
                 more:"Paint a few more snow streaks, all slanting the same way." } },
-        title:"Painting the wind", body:"You can't see wind. So how do you paint it? Pippin slanted every snow streak the same way, so your eyes feel the storm blowing across the whole picture."}
+        title:"Painting the wind", body:"You can't see wind. So how do you paint it? Pippin slanted every snow streak the same way, so your eyes feel the storm blowing across the whole picture. And look at his colors: almost nothing but black, white and gray. He mixed so many different grays that the snow, the sky and the rocks each feel different."}
     ],
     done:[
       "Horace Pippin painted this in 1933. He had never seen buffalo running across the snowy plains. He imagined the whole thing, the storm, the herd, the cold, and painted it so strongly that you can almost feel the wind.",
