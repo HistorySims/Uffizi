@@ -198,7 +198,15 @@ window.WORKS = [
       {find:"Can you find Mary's face?", cx:0.724, cy:0.275, box:{x:0.666, y:0.143, w:0.107, h:0.219}, title:"Ready for whatever comes next", body:"Most people would be very scared if a glowing angel appeared in front of them. But Mary's face is calm. Her eyes are steady. She raises her hand like she is in the middle of a conversation, not running away. She seems ready for whatever is going to come next."},
       {find:"Can you find the white flower the angel is holding?", cx:0.322, cy:0.394, box:{x:0.229, y:0.311, w:0.172, h:0.351}, title:"A flower that carries a message", body:"Gabriel holds a white lily. In paintings made around this time, that one flower always carried the same meaning: a message straight from heaven. So the angel is bringing her the news two ways at once. With his words, and with the flower."},
       {find:"Can you find the meadow of wildflowers in the foreground?", cx:0.432, cy:0.664, box:{x:0.030, y:0.550, w:0.600, h:0.240}, title:"A field guide disguised as a painting", body:"Leonardo was also a scientist. Every flower in this meadow is a real one he would have studied outside: iris, dandelion, daisy, columbine. He painted each one exactly right, like a scientist making drawings in a notebook. Painters from this time cared just as much about getting a daisy right as they cared about getting an angel right."},
-      {find:"Can you find the mountains far away in the distance?", cx:0.489, cy:0.287, box:{x:0.419, y:0.145, w:0.126, h:0.257}, title:"A landscape dissolving into haze", body:"Through the gap in the trees, mountains blur into pale mist and a river bends toward a distant harbor. Leonardo invented a way of painting where things far away fade into air, just the way they look to your real eyes. He called it sfumato. He was about twenty years old when he painted this."}
+      {find:"Can you find the mountains far away in the distance?", cx:0.489, cy:0.287, box:{x:0.419, y:0.145, w:0.126, h:0.257}, title:"A landscape dissolving into haze", body:"Through the gap in the trees, mountains blur into pale mist and a river bends toward a distant harbor. Leonardo painted the faraway world as if it were fading into the air, just the way it looks to your real eyes. He was about twenty years old when he painted this."},
+      {find:"Leonardo noticed something about faraway things. Look at the dark trees up close, then at the mountains far away. Mix a color for a faraway mountain: start with the trees' dark green, then try adding white and blue. Paint a mountain in the distance!", cx:0.49, cy:0.26, box:{x:0.33, y:0.08, w:0.32, h:0.36},
+        paint:{ look:"oil", check:"farAway", brushes:[0.015, 0.035, 0.065], brush:1,
+          palette:{ tubes:[{name:"Tree green", hex:"#2f3f26"}, {name:"White", hex:"#f4f1ea"}, {name:"Sky blue", hex:"#7aa2c8"}, {name:"Earth", hex:"#6b4a2e"}] },
+          say:{ good:"Yes! Pale and blue, just like Leonardo's faraway mountains.",
+                dark:"That color looks close up, like the trees. Faraway things look paler. Try mixing in white.",
+                notBlue:"Pale is right! Now look at Leonardo's mountains: they're a little blue too. Try mixing in some blue.",
+                more:"Mix a color on your palette, then paint a faraway mountain." } },
+        title:"Paler and bluer", body:"The more air there is between you and something, the paler and bluer it looks. Leonardo noticed this, wrote about it in his notebooks, and painted it: dark, sharp trees up close, soft blue mountains far away. Painters call it aerial perspective, and it makes a flat painting feel deep."}
     ],
     done:[
       "Here is the story. An angel named Gabriel has come to tell a young woman named Mary that she will be the mother of Jesus. Painters across the Renaissance painted this moment again and again. This is Leonardo's version, made when he was barely a teenager in Florence.",
@@ -429,13 +437,15 @@ window.WORKS = [
       {find:"Can you find a girl watching from a window?", cx:0.97, cy:0.37, box:{x:0.93, y:0.29, w:0.07, h:0.15}, title:"Watching from inside", body:"At the very edge, a girl with a bow in her hair peeks out of a window, smiling. Maybe she wishes she were outside too. Sloan painted this scene by watching his neighbors from his own window."},
       {find:"Can you find one red shirt hanging on the line?", cx:0.645, cy:0.17, box:{x:0.62, y:0.12, w:0.05, h:0.1}, title:"Laundry day", body:"Among all the white sheets and shirts, one red one hangs on the line. People in the city hung their washing between the buildings to dry, even in winter. Sloan thought everyday things like laundry were worth painting."},
       {find:"Can you find where the painter signed his name?", cx:0.08, cy:0.95, box:{x:0.02, y:0.92, w:0.12, h:0.07}, title:"John Sloan, '14", body:"Down in the corner it says John Sloan, and under it, 14, for 1914. That's more than a hundred years ago, but kids building snowmen and cats in the snow look almost exactly the same today."},
-      {find:"Snow has shadows too. Pick a color and paint a shadow on the snow. What color should it be?", cx:0.51, cy:0.63, box:{x:0.3, y:0.48, w:0.42, h:0.3},
-        paint:{ look:"oil", check:"colorUsed", want:["Blue", "Purple"], avoid:["Gray"], brushes:[0.015, 0.035, 0.065], brush:1,
-          colors:[{name:"White", hex:"#f7f4ec"}, {name:"Gray", hex:"#8c8c8c"}, {name:"Blue", hex:"#7f97cf"}, {name:"Purple", hex:"#a397cf"}],
-          say:{ good:"Yes! Sloan's snow shadows are blue and purple, just like yours.",
-                avoid:"Look closely at Sloan's snow. His shadows aren't gray. They're blue and purple! Try painting one in blue.",
-                other:"Now try painting a shadow on the snow. What color are Sloan's shadows?" } },
-        title:"Blue snow shadows", body:"Look closely at Sloan's snow: the shadows aren't gray at all. They're blue and purple! On a sunny day, snow reflects the blue sky, so its shadows really do look blue. Sloan noticed, and painted what he saw."}
+      {find:"What color is a shadow on snow? Look closely at Sloan's snow. Then squirt some paints onto your palette, smear them together, tap your mix to pick it, and paint a shadow on the snow.", cx:0.51, cy:0.63, box:{x:0.3, y:0.48, w:0.42, h:0.3},
+        paint:{ look:"oil", check:"snowShadow", brushes:[0.015, 0.035, 0.065], brush:1,
+          palette:{ tubes:[{name:"White", hex:"#f7f4ec"}, {name:"Black", hex:"#22232a"}, {name:"Blue", hex:"#2f4fa8"}, {name:"Red", hex:"#b8343c"}] },
+          say:{ good:"Yes! You mixed a blue-violet shadow, just like Sloan's.",
+                gray:"That's a gray shadow. Look again at Sloan's snow: his shadows aren't gray. Try mixing blue into your white instead of black.",
+                dark:"That shadow is very dark. Sloan's snow shadows are light, because snow bounces light all around. Try mixing in more white.",
+                warm:"Look again at Sloan's snow shadows. Are they warm or cool? Try mixing in some blue.",
+                more:"Mix a color on your palette, then paint a shadow on the snow." } },
+        title:"Blue snow shadows", body:"Look closely at Sloan's snow: the shadows aren't gray at all. They're blue and violet! On a sunny day, a shadow on snow isn't lit by the sun, only by the blue sky, so it really does look blue. Sloan mixed white with blue and a touch of red to paint what he saw."}
     ],
     done:[
       "John Sloan lived in Greenwich Village, a neighborhood in New York. He made sketches from the window of his apartment on West 4th Street, then turned them into this painting in 1914.",
