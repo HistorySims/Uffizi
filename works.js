@@ -613,7 +613,7 @@ window.WORKS = [
     alt:"Calder's Circus by Alexander Calder: tiny wire and cloth performers around a little circus ring",
     intro:"You've looked over the whole circus. Now let's find the performers. Every one of them was made by hand from bits and scraps.",
     src:"images/calder-circus.jpg", tiles:"images/calder-circus.jpg",
-    music:"audio/brahms-lullaby.mp3",
+    music:"audio/over-the-waves.mp3",
     prompts:[
       "Just look. A whole circus is waiting for you: tents, a ring, and a crowd of tiny performers.",
       "Everything here is small enough to hold in your hand. Which one would you pick up first?",
@@ -629,11 +629,21 @@ window.WORKS = [
       {find:"Can you find the musician with a giant horn?", cx:0.845, cy:0.71, box:{x:0.79, y:0.6, w:0.12, h:0.22}, title:"The big horn", body:"A huge horn curls around this musician, and a long hose loops all over the floor. That hose is real rubber tubing. Calder's circus had sound, too: he brought whistles, noisemakers, and records, and the audience got to make noise along with him."},
       {find:"Can you find a tiny street lamp with a sign on it?", cx:0.09, cy:0.7, box:{x:0.05, y:0.6, w:0.09, h:0.23}, title:"ONE WAY", body:"Read the little sign: ONE WAY! Calder made a whole street lamp out of wire and metal, like one you'd pass on a city sidewalk. Even the scenery in this circus is homemade."},
       {find:"Can you find a tiny American flag?", cx:0.385, cy:0.7, box:{x:0.355, y:0.64, w:0.06, h:0.13}, title:"A little piece of home", body:"Calder was an American who moved to Paris in 1926, and that's where he built this circus. Somebody in the show is proudly waving the Stars and Stripes."},
-      {find:"Calder built his acrobats from wire, corks and scraps of cloth. Pick a piece and tap to put it on, or pick the wire and draw with your finger. Can you build a new trapeze performer? Tap \u21bb Turn to turn the last piece.", cx:0.48, cy:0.34, box:{x:0.365, y:0.24, w:0.23, h:0.2},
-        stickers:{ area:{x:0.3, y:0.15, w:0.4, h:0.4}, jitter:0.05, turn:45, lightTray:true,
-          real:"Calder's", word:["piece", "pieces"],
-          start:"Pick a piece, then tap to place it.", outside:"Build up here, near the trapezes!",
-          done:"Slide to compare your acrobat with Calder's!",
+      {find:"These are Calder's trapeze artists. He made them from wire, corks and scraps of cloth, and at his shows they really swung! Let's make a new one.", cx:0.48, cy:0.36, box:{x:0.355, y:0.255, w:0.25, h:0.21},
+        stickers:{ area:{x:0.3945, y:0.325, w:0.075, h:0.14}, jitter:0.05, turn:45, lightTray:true,
+          word:["piece", "pieces"], start:"Pick a piece, then tap to place it.", outside:"Build it on the bar, right here!",
+          done:"Look at them swing!",
+          // the photo with Calder's own (tiny, side-on) trapeze artists painted out; crisp cut-outs of them hang in their place
+          ground:{src:"images/calder-trapeze-cleared.jpg", x:0.36, y:0.2699, w:0.24, h:0.1696},
+          scene:{ buildBox:{x:0.3945, y:0.325, w:0.075, h:0.14}, wash:0.5,
+            showSay:"Look how each one hangs from its bar.",
+            buildFind:"Build a trapeze artist on the bar! Pick a piece and tap to put it on, or pick the wire and draw with your finger. Tap ↻ Turn to turn the last piece.",
+            sprites:[
+              {src:"images/calder-trapeze/left.webp", pivot:[0.386,0.299], x:0.3736, y:0.3625, w:0.0244, h:0.0593, wires:[0.0385,0.9756]},
+              {src:"images/calder-trapeze/middle.webp", pivot:[0.478,0.286], x:0.4608, y:0.3261, w:0.0277, h:0.0752, wires:[0.2595,0.983]},
+              {src:"images/calder-trapeze/right.webp", pivot:[0.565,0.276], x:0.5549, y:0.3338, w:0.021, h:0.0685, wires:[0.044,0.9168]} ],
+            bar:{ pivot:[0.432, 0.2925], drop:0.0625, w:0.0225 },
+            swing:{ amp:12, idle:2.5, periods:[2.6, 2.9, 2.4], kid:2.75 } },
           set:[
             {id:"cork", name:"Cork", src:"images/stickers/calder/cork.png", w:16, h:25, ax:0.5, ay:0.5, spin:4},
             {id:"bead", name:"Wooden bead", src:"images/stickers/calder/bead.png", w:12, h:12, ax:0.5, ay:0.5, spin:0},
@@ -642,7 +652,6 @@ window.WORKS = [
             {id:"spring", name:"Wire spring", src:"images/stickers/calder/spring.png", w:7.5, h:30, ax:0.5, ay:0.5, spin:0},
             {id:"curl", name:"Wire curl", src:"images/stickers/calder/curl.png", w:14, h:14, ax:0.5, ay:0.5, spin:30},
             {id:"felt", name:"Red felt", src:"images/stickers/calder/felt.png", w:18, h:15, ax:0.5, ay:0.5, spin:20},
-            {id:"trapeze", name:"Trapeze", src:"images/stickers/calder/trapeze.png", w:30, h:42.5, ax:0.5, ay:0.5, spin:0},
             {id:"draw", name:"Draw with wire", src:"images/stickers/calder/draw-wire.png", draw:{ w:1.5, color:"#2f2f33" } } ] },
         title:"A circus from the junk drawer", body:"Calder made his whole circus from things most people throw away: wire, corks, buttons, bottle caps, and scraps of cloth and leather. He bent the wire with pliers, like drawing a picture with one long line right in the air, and the performers really worked. He would crouch beside the ring and make the acrobats swing and fly for an audience of friends!"}
     ],

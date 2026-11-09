@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-08c";
+  window.APP_VERSION = "2026-11-09a";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-08c"></script>
+<script src="works.js?v=2026-11-09a"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -224,6 +224,9 @@
   .night-wheel{width:min(46vw,190px);height:min(46vw,190px);touch-action:none;cursor:crosshair;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.45);} /* so the black rim shows on the dark page */
   .paint-canvas:focus{outline:none;}
   .paint-canvas:focus-visible{outline:2px solid var(--gold-bright);outline-offset:-2px;}
+  #stickerGo{display:none;}
+  #stickerPanel.intro #stickerGo{display:inline-flex;}
+  #stickerPanel.intro .sticker-tray, #stickerPanel.intro .paint-actions .btn:not(#stickerGo){display:none;}
   .sticker-tray.light .sticker-btn{background:#e9e4dc;} /* dark pieces, like wire, show on a wall-colored tile */
   .sticker-tray.light .sticker-btn[aria-pressed="true"]{background:#f6eedb;}
   .sticker-btn[aria-pressed="true"]{border-color:var(--gold-bright);background:rgba(201,162,75,.16);box-shadow:0 0 0 2px rgba(224,189,106,.35);transform:scale(1.06);}
@@ -370,6 +373,7 @@
           <button class="btn btn-ghost" id="stickerClear">Start over</button>
           <button class="btn btn-ghost" id="stickerCompare" aria-pressed="false">Compare</button>
           <button class="btn btn-primary" id="stickerDone" disabled>I'm done</button>
+          <button class="btn btn-primary" id="stickerGo">Let's build one!</button>
         </div>
       </div>
       <div class="paint-panel hidden" id="simplePanel">
@@ -812,6 +816,7 @@
     // focus: a clue can accept a tap anywhere on a whole group (areas) but zoom in on just one of them
     if(s.focus && state.findPhase === "revealed"){ s = { box:s.focus }; }
     if(s.circle && lasso.zoom && state.findPhase === "revealed"){ s = { box:lasso.zoom }; }
+    if(s.stickers && s.stickers.scene && stk.phase === "build"){ s = { box:s.stickers.scene.buildBox }; }
     var sz = osdImgSize(); if(!sz) return;
     var rect;
     if(s.box){ rect = new OpenSeadragon.Rect(s.box.x*sz.x, s.box.y*sz.y, s.box.w*sz.x, s.box.h*sz.y); }
@@ -872,7 +877,7 @@
     hushPlay(1.5); cancelAnimationFrame(play.raf); play.raf = 0; play.ripples = []; duckBg(false);
     $("actAgainBtn").classList.add("hidden");
     paint.strokes = []; paint.cur = null; paint.wobble = false; light.drag = false;
-    stk.items = []; stk.press = null; stk.slide = null; stk.drawing = null; stk.compare = false; cancelAnimationFrame(stk.anim); clearTimeout(stk.msgTimer);
+    stk.items = []; stk.press = null; stk.slide = null; stk.drawing = null; stk.compare = false; cancelAnimationFrame(stk.raf); stk.raf = 0; stk.phase = null; cancelAnimationFrame(stk.anim); clearTimeout(stk.msgTimer);
     if(act.ctx){ act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height); }
     if(osd){ osd.setMouseNavEnabled(true); }
   }
@@ -2468,7 +2473,8 @@
      Stickers are stored in image pixels (x, y = where its anchor sits) and drawn lowest-last,
      so nearer things overlap farther ones. An optional ground image covers part of the painting
      first (e.g. the meadow with Botticelli's own flowers cleared away). */
-  var stk = { cfg:null, imgs:{}, kind:0, items:[], press:null, seq:0, msgTimer:0, compare:false, split:0.5, slide:null, anim:0, sel:null, drawing:null };
+  var stk = { cfg:null, imgs:{}, kind:0, items:[], press:null, seq:0, msgTimer:0, compare:false, split:0.5, slide:null, anim:0, sel:null, drawing:null,
+              phase:null, t0:0, raf:0 };
   function stickerImg(src){
     if(!stk.imgs[src]){
       var im = new Image();
@@ -2481,13 +2487,16 @@
     painting.stops.forEach(function(s){
       if(!s.stickers) return;
       if(s.stickers.ground){ stickerImg(s.stickers.ground.src); }
+      if(s.stickers.scene){ s.stickers.scene.sprites.forEach(function(sp){ stickerImg(sp.src); }); }
       s.stickers.set.forEach(function(k){ stickerImg(k.src); });
     });
   }
   function enterStickers(s){
     var cfg = s.stickers;
     act.mode = "stickers"; stk.cfg = cfg; stk.items = []; stk.kind = 0; stk.press = null; stk.sel = null;
+    stk.phase = cfg.scene ? "show" : null; // a scene starts by looking at it, then zooms in to build
     $("stickerTurn").classList.toggle("hidden", !cfg.turn);
+    $("stickerCompare").classList.toggle("hidden", !!cfg.scene);
     preloadStickers(currentPainting);
     buildStickerTray(cfg);
     resumeStickers(s);
@@ -2495,7 +2504,11 @@
   function resumeStickers(s){
     state.findPhase = "stickers";
     stk.press = null; stk.slide = null; setCompare(false);
-    $("findQ").textContent = s.find;
+    if(stk.phase === "swing"){ stk.phase = "build"; } // trying again goes back to building
+    $("findQ").textContent = stk.phase === "build" ? stk.cfg.scene.buildFind : s.find;
+    $("stickerPanel").classList.toggle("intro", stk.phase === "show");
+    cancelAnimationFrame(stk.raf); stk.raf = 0;
+    if(stk.phase === "show"){ sceneAnimate(); }
     $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
     if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
     showActCanvas("stickers"); redrawActivity();
@@ -2518,6 +2531,7 @@
   function stickerStatus(msg){
     clearTimeout(stk.msgTimer);
     var n = stk.items.length, word = stk.cfg.word || ["sticker", "stickers"];
+    if(!msg && stk.phase === "show"){ $("stickerStatus").textContent = stk.cfg.scene.showSay || ""; return; }
     $("stickerStatus").textContent = msg || (stk.compare ? compareHint() :
       (n ? n + " " + word[n === 1 ? 0 : 1] + " so far" : (stk.cfg.start || "Pick one, then tap to place it.")));
     if(msg){ stk.msgTimer = setTimeout(function(){ stickerStatus(); }, 2200); }
@@ -2581,6 +2595,18 @@
       ctx.drawImage(gi, a.x, a.y, b.x - a.x, b.y - a.y);
     }
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    var scene = cfg.scene, now = performance.now();
+    if(scene){
+      scene.sprites.forEach(function(sp, i){ drawSceneSprite(ctx, sp, sceneAngle(i, now), sz, k); });
+      if(stk.phase === "build"){ // a soft wash, so the parts stand out from the photo while building
+        ctx.fillStyle = "rgba(255,255,255," + (scene.wash || 0.5) + ")"; ctx.fillRect(R.x0, R.y0, R.x1 - R.x0, R.y1 - R.y0);
+      }
+      // your trapeze, and everything on it, swings as one
+      var P = toScreen({ x:scene.bar.pivot[0] * sz.x, y:scene.bar.pivot[1] * sz.y });
+      ctx.save();
+      ctx.translate(P.x, P.y); ctx.rotate(sceneAngle(-1, now)); ctx.translate(-P.x, -P.y);
+      drawSceneBar(ctx, scene.bar, P, sz, k);
+    }
     var moving = stk.press && stk.press.moving && stk.press.item;
     stickerOrder().forEach(function(it){
       var kd = cfg.set[it.kind], im = stk.imgs[kd.src];
@@ -2593,9 +2619,10 @@
       ctx.drawImage(im, -kd.ax * kd.w, -kd.ay * kd.h, kd.w, kd.h);
       ctx.restore();
     });
+    if(scene){ ctx.restore(); }
     ctx.restore();
     var sel = stk.sel;
-    if(cfg.turn && sel && !stk.compare && state.findPhase === "stickers" && stk.items.indexOf(sel) >= 0){
+    if(cfg.turn && sel && !stk.compare && state.findPhase === "stickers" && stk.phase !== "show" && stk.items.indexOf(sel) >= 0){
       var skd = cfg.set[sel.kind], ssc = k * stickerScale(sel), sp = toScreen({x:sel.x, y:sel.y});
       // the piece's middle: its offset from the anchor, flipped and scaled, then turned
       var vx = (0.5 - skd.ax) * skd.w * ssc * (sel.flip ? -1 : 1), vy = (0.5 - skd.ay) * skd.h * ssc;
@@ -2606,6 +2633,44 @@
       ctx.restore();
     }
     if(stk.compare){ drawDivider(ctx, R, cut, stk.cfg.real || "The real one"); }
+  }
+  /* A scene (Calder's trapezes): the artist's figures hang from points on the rig (sprites, each
+     with the two wires of its trapeze), your own trapeze hangs from bar.pivot, and they all swing. */
+  function sceneAngle(i, now){ // i = -1 is your trapeze
+    var sw = stk.cfg.scene.swing, t = (now - stk.t0) / 1000;
+    if(stk.phase === "swing"){
+      var T = i < 0 ? sw.kid : sw.periods[i], ph = i < 0 ? 0.6 : i * 1.9;
+      return sw.amp * Math.PI / 180 * Math.min(1, t / 1.5) * Math.sin(2 * Math.PI * t / T + ph);
+    }
+    if(stk.phase === "show" && i >= 0){ return sw.idle * Math.PI / 180 * Math.sin(2 * Math.PI * t / (sw.periods[i] * 1.6) + i * 1.9); }
+    return 0;
+  }
+  function drawSceneSprite(ctx, sp, ang, sz, k){
+    var im = stk.imgs[sp.src]; if(!im || !im.complete || !im.naturalWidth) return;
+    var P = toScreen({ x:sp.pivot[0] * sz.x, y:sp.pivot[1] * sz.y });
+    var x0 = (sp.x - sp.pivot[0]) * sz.x * k, y0 = (sp.y - sp.pivot[1]) * sz.y * k, w = sp.w * sz.x * k, h = sp.h * sz.y * k;
+    ctx.save();
+    ctx.translate(P.x, P.y); ctx.rotate(ang);
+    ctx.strokeStyle = "rgba(70,66,60,.95)"; ctx.lineWidth = Math.max(1, 0.8 * k); ctx.lineCap = "round"; // the wires up to the rig
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(x0 + sp.wires[0] * w, y0 + 1); ctx.moveTo(0, 0); ctx.lineTo(x0 + sp.wires[1] * w, y0 + 1); ctx.stroke();
+    ctx.drawImage(im, x0, y0, w, h);
+    ctx.restore();
+  }
+  function drawSceneBar(ctx, bar, P, sz, k){ // a wooden bar on two wires, drawn so it stays crisp at any zoom
+    var drop = bar.drop * sz.y * k, half = bar.w * sz.x * k / 2, th = Math.max(2, 3 * k);
+    ctx.save();
+    ctx.strokeStyle = "rgba(70,66,60,.95)"; ctx.lineWidth = Math.max(1, 0.8 * k); ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(P.x - half * 0.92, P.y + drop); ctx.moveTo(P.x, P.y); ctx.lineTo(P.x + half * 0.92, P.y + drop); ctx.stroke();
+    ctx.fillStyle = "#8c5a2e"; ctx.beginPath();
+    if(ctx.roundRect){ ctx.roundRect(P.x - half, P.y + drop - th / 2, half * 2, th, th / 2); } else { ctx.rect(P.x - half, P.y + drop - th / 2, half * 2, th); }
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,225,180,.55)"; ctx.fillRect(P.x - half * 0.94, P.y + drop - th * 0.32, half * 1.88, th * 0.22);
+    ctx.restore();
+  }
+  function sceneAnimate(){ // keeps the trapezes moving while you look, and while they swing
+    stk.t0 = performance.now();
+    var tick = function(){ if(act.mode !== "stickers" || (stk.phase !== "show" && stk.phase !== "swing")) return; redrawActivity(); stk.raf = requestAnimationFrame(tick); };
+    stk.raf = requestAnimationFrame(tick);
   }
   // a set item with draw:{w, color} is a tool, not a sticker: dragging draws a line of wire
   function drawWireLine(ctx, it, d, k){
@@ -2667,7 +2732,7 @@
       try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
       stk.slide = true; slideTo(e); return;
     }
-    if(state.findPhase !== "stickers") return;
+    if(state.findPhase !== "stickers" || stk.phase === "show") return;
     e.preventDefault();
     var p = toImage(e);
     try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
@@ -2724,6 +2789,13 @@
     var s = STOPS[state.findIndex], cfg = s.stickers;
     state.findPhase = "revealed"; stk.press = null;
     $("stickerPanel").classList.add("hidden");
+    if(cfg.scene){
+      stk.phase = "swing"; actCanvas().classList.add("locked");
+      showActivityCaption(s, cfg.done || "");
+      fitToStop(s);
+      cancelAnimationFrame(stk.raf); sceneAnimate();
+      return;
+    }
     showActivityCaption(s, cfg.done || "");
     // there's no right way: show theirs next to the real one, sweeping the divider in from the right
     setCompare(true); stk.split = 1;
@@ -2944,6 +3016,10 @@
   $("stickerCompare").addEventListener("click", function(){ setCompare(!stk.compare); });
   $("actCanvas").addEventListener("keydown", stickerKey);
   $("stickerDone").addEventListener("click", finishStickers);
+  $("stickerGo").addEventListener("click", function(){ // from looking at the artists to building your own
+    if(stk.phase !== "show") return;
+    stk.phase = "build"; resumeStickers(STOPS[state.findIndex]);
+  });
   $("lightHopper").addEventListener("click", sunBackToHopper);
   $("lightDone").addEventListener("click", finishLight);
   $("playHush").addEventListener("click", function(){ hushPlay(0.8); $("playStatus").textContent = "Shh... listen to the echo fade away."; });
