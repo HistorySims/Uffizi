@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-10-30c";
+  window.APP_VERSION = "2026-11-09a";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-10-30c"></script>
+<script src="works.js?v=2026-11-09a"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -184,6 +184,16 @@
   .paint-canvas.peek{opacity:0;}
   .paint-canvas.sun{cursor:grab;}
   .paint-group{display:flex;gap:8px;align-items:center;}
+  .palette-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:420px;}
+  .palette-tubes{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
+  .tube-btn{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 10px 0 6px;border-radius:19px;border:1.5px solid var(--foam-faint);background:#0b1210;color:var(--foam);font-size:.8rem;}
+  .tube-dab{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);box-shadow:inset -3px -3px 5px rgba(0,0,0,.25);
+    background-image:radial-gradient(circle at 33% 28%, rgba(255,255,255,.85) 0, rgba(255,255,255,.3) 16%, rgba(255,255,255,0) 34%);}
+  .palette-canvas{width:100%;height:96px;border-radius:14px;background:#f3efe6;touch-action:none;cursor:crosshair;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08);}
+  .palette-pick{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--gold-bright);font-family:var(--serif);font-style:italic;min-height:30px;}
+  .palette-chosen{width:30px;height:30px;flex:none;box-shadow:inset -4px -5px 7px rgba(0,0,0,.28);
+    background-image:radial-gradient(circle at 33% 28%, rgba(255,255,255,.85) 0, rgba(255,255,255,.3) 16%, rgba(255,255,255,0) 34%);}
+  .palette-chosen.empty{border-style:dashed;background-image:none;box-shadow:none;}
   .light-status{font-family:var(--serif);font-style:italic;font-size:1.12rem;color:var(--gold-bright);min-height:1.5em;text-align:center;}
   .caption-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
   .paint-panel{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;padding-top:4px;}
@@ -214,6 +224,9 @@
   .night-wheel{width:min(46vw,190px);height:min(46vw,190px);touch-action:none;cursor:crosshair;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.45);} /* so the black rim shows on the dark page */
   .paint-canvas:focus{outline:none;}
   .paint-canvas:focus-visible{outline:2px solid var(--gold-bright);outline-offset:-2px;}
+  #stickerGo{display:none;}
+  #stickerPanel.intro #stickerGo{display:inline-flex;}
+  #stickerPanel.intro .sticker-tray, #stickerPanel.intro .paint-actions .btn:not(#stickerGo){display:none;}
   .sticker-tray.light .sticker-btn{background:#e9e4dc;} /* dark pieces, like wire, show on a wall-colored tile */
   .sticker-tray.light .sticker-btn[aria-pressed="true"]{background:#f6eedb;}
   .sticker-btn[aria-pressed="true"]{border-color:var(--gold-bright);background:rgba(201,162,75,.16);box-shadow:0 0 0 2px rgba(224,189,106,.35);transform:scale(1.06);}
@@ -333,6 +346,11 @@
           <div class="paint-group" id="paintBrushes" role="group" aria-label="Choose a brush"></div>
           <div class="paint-group" id="paintColors" role="group" aria-label="Choose a color"></div>
         </div>
+        <div class="palette-wrap hidden" id="paletteWrap">
+          <div class="palette-tubes" id="paletteTubes" role="group" aria-label="Squirt a paint"></div>
+          <canvas class="palette-canvas" id="paletteCanvas" aria-label="Your palette: drag to mix, tap to pick a color"></canvas>
+          <div class="palette-pick"><span class="swatch palette-chosen empty" id="paletteChosen" aria-hidden="true"></span><span id="paletteHint" aria-live="polite"></span></div>
+        </div>
         <div class="paint-row paint-actions">
           <button class="btn btn-ghost" id="paintClear">Start over</button>
           <button class="btn btn-ghost" id="paintPeek">Peek under</button>
@@ -355,6 +373,7 @@
           <button class="btn btn-ghost" id="stickerClear">Start over</button>
           <button class="btn btn-ghost" id="stickerCompare" aria-pressed="false">Compare</button>
           <button class="btn btn-primary" id="stickerDone" disabled>I'm done</button>
+          <button class="btn btn-primary" id="stickerGo">Let's build one!</button>
         </div>
       </div>
       <div class="paint-panel hidden" id="simplePanel">
@@ -797,6 +816,7 @@
     // focus: a clue can accept a tap anywhere on a whole group (areas) but zoom in on just one of them
     if(s.focus && state.findPhase === "revealed"){ s = { box:s.focus }; }
     if(s.circle && lasso.zoom && state.findPhase === "revealed"){ s = { box:lasso.zoom }; }
+    if(s.stickers && s.stickers.scene && stk.phase === "build"){ s = { box:s.stickers.scene.buildBox }; }
     var sz = osdImgSize(); if(!sz) return;
     var rect;
     if(s.box){ rect = new OpenSeadragon.Rect(s.box.x*sz.x, s.box.y*sz.y, s.box.w*sz.x, s.box.h*sz.y); }
@@ -857,7 +877,7 @@
     hushPlay(1.5); cancelAnimationFrame(play.raf); play.raf = 0; play.ripples = []; duckBg(false);
     $("actAgainBtn").classList.add("hidden");
     paint.strokes = []; paint.cur = null; paint.wobble = false; light.drag = false;
-    stk.items = []; stk.press = null; stk.slide = null; stk.drawing = null; stk.compare = false; cancelAnimationFrame(stk.anim); clearTimeout(stk.msgTimer);
+    stk.items = []; stk.press = null; stk.slide = null; stk.drawing = null; stk.compare = false; cancelAnimationFrame(stk.raf); stk.raf = 0; stk.phase = null; cancelAnimationFrame(stk.anim); clearTimeout(stk.msgTimer);
     if(act.ctx){ act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height); }
     if(osd){ osd.setMouseNavEnabled(true); }
   }
@@ -915,17 +935,20 @@
     glaze:    { alpha:0.07, passes:2 }  // a thin see-through coat, about 13% in the middle with soft edges
   };
   var paint = { cfg:null, colors:[], size:0.03, color:0, strokes:[], cur:null, wobble:false, t0:0 };
+  function paintColor(name, hex){
+    return { name:name, hex:hex, light:mixHex(hex,255,0.45), dark:mixHex(hex,0,0.3),
+             shades:[mixHex(hex,255,0.25), mixHex(hex,0,0.2), mixHex(hex,255,0.1)] };
+  }
   function enterPaint(s){
     var cfg = s.paint;
     act.mode = "paint"; paint.cfg = cfg;
-    paint.colors = cfg.colors.map(function(c){
-      return { name:c.name, hex:c.hex, light:mixHex(c.hex,255,0.45), dark:mixHex(c.hex,0,0.3),
-               shades:[mixHex(c.hex,255,0.25), mixHex(c.hex,0,0.2), mixHex(c.hex,255,0.1)] };
-    });
+    paint.colors = cfg.palette ? [paintColor("none", "#9aa3ad")] : cfg.colors.map(function(c){ return paintColor(c.name, c.hex); });
     paint.size = cfg.brushes[cfg.brush || 0]; paint.color = 0;
     paint.strokes = []; paint.cur = null;
     buildPaintPanel(cfg);
+    $("paletteWrap").classList.toggle("hidden", !cfg.palette); $("paintColors").classList.toggle("hidden", !!cfg.palette);
     resumePaint(s);
+    if(cfg.palette){ setupPalette(cfg.palette); }
   }
   function resumePaint(s){
     state.findPhase = "painting";
@@ -1083,6 +1106,7 @@
   function paintDown(e){
     if(state.findPhase !== "painting" || !osd) return;
     e.preventDefault();
+    if(paint.cfg.palette && !pal.picked){ paletteHint("First mix a color on your palette, then tap it to pick it."); return; }
     var c = actCanvas(), col = paint.colors[paint.color], bristles = [];
     for(var i=0;i<7;i++){ bristles.push({ off:(Math.random()-0.5)*0.85, shade:col.shades[i % col.shades.length] }); }
     try{ c.setPointerCapture(e.pointerId); }catch(_){}
@@ -1185,6 +1209,19 @@
     layers: function(S){ // Pelton: many light layers, built up
       return S.length >= 6 ? "good" : "more";
     },
+    snowShadow: function(S){ // Sloan: shadows on snow are blue-violet, not gray
+      var cs = S.map(function(s){ return hexHsl(s.color); }), n = cs.length;
+      if(cs.filter(function(c){ return c.h >= 195 && c.h <= 300 && c.s >= 0.12 && c.l >= 0.35; }).length / n >= 0.5) return "good";
+      if(cs.filter(function(c){ return c.s < 0.12; }).length / n >= 0.5) return "gray";
+      if(cs.filter(function(c){ return c.l < 0.35; }).length / n >= 0.5) return "dark";
+      return "warm";
+    },
+    farAway: function(S){ // Leonardo: faraway things are paler and bluer
+      var cs = S.map(function(s){ return hexHsl(s.color); }), n = cs.length;
+      if(cs.filter(function(c){ return c.l >= 0.55 && c.h >= 165 && c.h <= 255 && c.s >= 0.08; }).length / n >= 0.5) return "good";
+      if(cs.filter(function(c){ return c.l < 0.55; }).length / n >= 0.5) return "dark";
+      return "notBlue";
+    },
     smoothLong: function(S){ // O'Keeffe: long, smooth curves
       if(share(S, function(s){ return s.len >= 0.3 && s.turns <= 1; }) >= 0.6) return "good";
       if(share(S, function(s){ return s.len >= 0.3; }) < 0.5) return "notLong";
@@ -1206,6 +1243,235 @@
     paint.wobble = true; paint.t0 = performance.now();
     var tick = function(){ if(!paint.wobble) return; redrawActivity(); act.raf = requestAnimationFrame(tick); };
     act.raf = requestAnimationFrame(tick);
+  }
+
+  /* ----- palette: squirt paints, smear them together with a finger, tap the mix to pick it,
+     then paint with it (paint.palette:{tubes:[{name, hex}]}). The palette is a small grid of
+     cells, each holding an amount of paint and how much of each tube is in it. Colors mix like
+     pigment, not light: a weighted geometric mean in linear light, so white makes tints, black
+     dulls, and blue with yellow goes green instead of gray. */
+  var pal = { cfg:null, W:216, H:72, h:null, mix:null, lin:[], next:0, knife:null, down:null, picked:null, pickAt:null, out:null, raf:0 };
+  var PAL_SLOTS = [[0.1,0.33],[0.27,0.67],[0.44,0.33],[0.61,0.67],[0.78,0.33],[0.92,0.67],[0.2,0.3],[0.52,0.7]];
+  function setupPalette(cfg){
+    pal.cfg = cfg; pal.next = 0; pal.knife = null; pal.down = null; pal.picked = null; pal.pickAt = null;
+    pal.h = new Float32Array(pal.W * pal.H); pal.mix = new Float32Array(pal.W * pal.H * cfg.tubes.length);
+    pal.lin = cfg.tubes.map(function(t){ var n = parseInt(t.hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255].map(function(v){ return Math.pow(Math.max(v, 3) / 255, 2.2); }); });
+    var row = $("paletteTubes"); row.innerHTML = "";
+    cfg.tubes.forEach(function(t, k){
+      var b = document.createElement("button"); b.type = "button"; b.className = "tube-btn";
+      b.innerHTML = '<span class="tube-dab" style="background-color:' + t.hex + '"></span><span>' + t.name + '</span>';
+      b.setAttribute("aria-label", "Squirt " + t.name);
+      b.addEventListener("click", function(){ squirt(k); });
+      row.appendChild(b);
+    });
+    $("paletteChosen").style.backgroundColor = "transparent"; $("paletteChosen").classList.add("empty");
+    paletteHint(cfg.start || "Squirt some paints onto your palette.");
+    drawPalette();
+  }
+  function paletteHint(t){ $("paletteHint").textContent = t; }
+  function palCellColor(i){ // the mixed color of one cell, as sRGB 0-255
+    var K = pal.lin.length, out = [1, 1, 1];
+    for(var k=0; k<K; k++){ var wk = pal.mix[i * K + k]; if(wk > 0){ for(var c=0; c<3; c++){ out[c] *= Math.pow(pal.lin[k][c], wk); } } }
+    return out.map(function(v){ return Math.round(255 * Math.pow(v, 1 / 2.2)); });
+  }
+  // Each cell holds a height of paint (pal.h) and how much of each tube is in it (pal.mix).
+  function addPaint(i, add, mixOf){ // pile paint onto a cell; its colors mix by how much of each there is
+    var K = pal.lin.length, old = pal.h[i], tot = old + add;
+    if(tot <= 0) return;
+    for(var j=0; j<K; j++){ pal.mix[i * K + j] = (pal.mix[i * K + j] * old + mixOf(j) * add) / tot; }
+    pal.h[i] = Math.min(2.2, tot);
+  }
+  // A squeeze from a tube: a round ribbon of paint that coils in on itself and piles up where it overlaps
+  function squirt(k){
+    var s = PAL_SLOTS[pal.next++ % PAL_SLOTS.length], cx = s[0] * pal.W, cy = s[1] * pal.H, R = 10.5;
+    var th0 = Math.random() * Math.PI * 2, path = [];
+    for(var n=0; n<=40; n++){
+      var t = n / 40, rho = R * (0.6 - 0.48 * t), th = th0 + t * Math.PI * 1.7;
+      path.push({ x:cx + rho * Math.cos(th) * 1.15, y:cy + rho * Math.sin(th), r:R * (0.42 - 0.14 * t), top:1 - 0.15 * t, late:t > 0.55 });
+    }
+    for(var y=Math.floor(cy - R); y<=cy + R; y++){ for(var x=Math.floor(cx - R * 1.3); x<=cx + R * 1.3; x++){
+      if(x < 0 || y < 0 || x >= pal.W || y >= pal.H) continue;
+      var under = 0, over = 0; // the start of the ribbon, and the end that coils over it
+      path.forEach(function(q){
+        var d = Math.hypot(x - q.x, y - q.y) / q.r; if(d >= 1) return;
+        var hh = q.top * Math.sqrt(1 - d * d); // a round tube of paint
+        if(q.late){ over = Math.max(over, hh); } else { under = Math.max(under, hh); }
+      });
+      var add = Math.max(under, over) + 0.55 * Math.min(under, over);
+      if(add > 0.01){ addPaint(y * pal.W + x, add, function(j){ return j === k ? 1 : 0; }); }
+    } }
+    paletteHint(pal.cfg.mixHint || "Now drag your finger through the paint to mix it.");
+    drawPalette();
+  }
+  function palCell(e){
+    var r = $("paletteCanvas").getBoundingClientRect();
+    return { x:(e.clientX - r.left) / r.width * pal.W, y:(e.clientY - r.top) / r.height * pal.H };
+  }
+  // A palette knife. It stirs the paint it passes over, scoops some up (more from under its
+  // middle), and spreads what it carries into a layer, a little thicker toward its edges, so a
+  // smear leaves a shallow trough with ridges along both sides. Colors mix by how much of each.
+  function knifeCells(p, R){
+    var cells = [];
+    for(var y=Math.floor(p.y - R); y<=p.y + R; y++){ for(var x=Math.floor(p.x - R); x<=p.x + R; x++){
+      if(x < 0 || y < 0 || x >= pal.W || y >= pal.H) continue;
+      var d = Math.hypot(x - p.x, y - p.y) / R; if(d <= 1){ cells.push({ i:y * pal.W + x, d:d }); }
+    } }
+    return cells;
+  }
+  function smearAt(p){
+    var K = pal.lin.length, kn = pal.knife, cells = knifeCells(p, 6.3), j;
+    cells.forEach(function(c){
+      var h0 = pal.h[c.i]; if(h0 < 0.01) return;
+      if(kn.mix){ var stir = 0.22 * (1 - c.d); for(j=0; j<K; j++){ pal.mix[c.i * K + j] += (kn.mix[j] - pal.mix[c.i * K + j]) * stir; } }
+      var take = h0 * 0.3 * (1 - 0.7 * c.d);
+      if(!kn.mix){ kn.mix = new Float32Array(K); }
+      var tot = kn.load + take;
+      for(j=0; j<K; j++){ kn.mix[j] = (kn.mix[j] * kn.load + pal.mix[c.i * K + j] * take) / tot; }
+      kn.load = tot; pal.h[c.i] = h0 - take;
+    });
+    if(!kn.mix || kn.load < 0.01) return;
+    var layer = Math.min(0.5, 0.18 + kn.load * 0.03);
+    cells.forEach(function(c){
+      var want = layer * (0.55 + 0.45 * c.d) - pal.h[c.i]; if(want <= 0 || kn.load < 0.01) return;
+      var dep = Math.min(want, kn.load * 0.2);
+      addPaint(c.i, dep, function(j){ return kn.mix[j]; });
+      kn.load -= dep;
+    });
+  }
+  function knifeLift(p){ // what's left on the knife drops off as a little heap where the stroke ends
+    var kn = pal.knife; if(!kn || !kn.mix || kn.load < 0.02) return;
+    var cells = knifeCells(p, 4.8), sum = 0;
+    cells.forEach(function(c){ c.w = Math.pow(1 - c.d, 1.5); sum += c.w; });
+    if(!sum) return;
+    var mix = kn.mix;
+    cells.forEach(function(c){ addPaint(c.i, kn.load * c.w / sum, function(j){ return mix[j]; }); });
+    kn.load = 0;
+  }
+  // Lit paint: shading and a glossy highlight from a light up and to the left, worked out from how
+  // the paint's surface tilts. Done at about screen resolution, then drawn onto the palette.
+  var PAL_LIGHT = (function(){ var l = [-0.45, -0.6, 0.66], n = Math.hypot(l[0], l[1], l[2]); return l.map(function(v){ return v / n; }); })();
+  var PAL_HALF = (function(){ var h = [PAL_LIGHT[0], PAL_LIGHT[1], PAL_LIGHT[2] + 1], n = Math.hypot(h[0], h[1], h[2]); return h.map(function(v){ return v / n; }); })();
+  function drawPalette(){
+    cancelAnimationFrame(pal.raf); pal.raf = 0;
+    var c = $("paletteCanvas"), d = window.devicePixelRatio || 1, cw = Math.round(c.clientWidth * d), ch = Math.round(c.clientHeight * d);
+    if(!cw || !ch || !pal.h) return;
+    if(c.width !== cw || c.height !== ch){ c.width = cw; c.height = ch; }
+    var W = pal.W, H = pal.H, N = W * H, hs = new Float32Array(N), gx = new Float32Array(N), gy = new Float32Array(N), col = new Float32Array(N * 3), x, y, i;
+    // a smoothed surface, so the light slides over it and the edges come out round, not blocky
+    var src = pal.h, tmp = new Float32Array(N);
+    for(var pass=0; pass<2; pass++){
+      var dst = pass ? hs : tmp;
+      for(y=0; y<H; y++){ for(x=0; x<W; x++){
+        var sum = 0, n = 0;
+        for(var yy=y-1; yy<=y+1; yy++){ for(var xx=x-1; xx<=x+1; xx++){ if(xx >= 0 && yy >= 0 && xx < W && yy < H){ sum += src[yy * W + xx]; n++; } } }
+        dst[y * W + x] = sum / n;
+      } }
+      src = tmp;
+    }
+    var has = new Uint8Array(N); // which cells have a colour: painted ones, then their close neighbours
+    for(y=0; y<H; y++){ for(x=0; x<W; x++){
+      i = y * W + x;
+      gx[i] = (hs[y * W + Math.min(W - 1, x + 1)] - hs[y * W + Math.max(0, x - 1)]) / 2;
+      gy[i] = (hs[Math.min(H - 1, y + 1) * W + x] - hs[Math.max(0, y - 1) * W + x]) / 2;
+      if(pal.h[i] > 0.01){ var rgb = palCellColor(i); col[i*3] = rgb[0]; col[i*3+1] = rgb[1]; col[i*3+2] = rgb[2]; has[i] = 1; }
+    } }
+    for(var grow=0; grow<3; grow++){
+      var add = [];
+      for(i=0; i<N; i++){
+        if(has[i] || hs[i] <= 0.005) continue;
+        var cx = i % W, cy = (i - cx) / W, sr = 0, sg2 = 0, sb = 0, sn = 0;
+        for(var dy=-1; dy<=1; dy++){ for(var dx=-1; dx<=1; dx++){
+          var nx2 = cx + dx, ny2 = cy + dy; if(nx2 < 0 || ny2 < 0 || nx2 >= W || ny2 >= H) continue;
+          var q = ny2 * W + nx2; if(has[q]){ sr += col[q*3]; sg2 += col[q*3+1]; sb += col[q*3+2]; sn++; }
+        } }
+        if(sn){ add.push(i, sr / sn, sg2 / sn, sb / sn); }
+      }
+      for(var t=0; t<add.length; t+=4){ i = add[t]; col[i*3] = add[t+1]; col[i*3+1] = add[t+2]; col[i*3+2] = add[t+3]; has[i] = 1; }
+    }
+    var ow = Math.min(cw, Math.round(cw / d * 1.5)), oh = Math.min(ch, Math.round(ch / d * 1.5));
+    if(!pal.out){ pal.out = document.createElement("canvas"); }
+    var oc = pal.out; if(oc.width !== ow || oc.height !== oh){ oc.width = ow; oc.height = oh; }
+    var og = oc.getContext("2d"), img = og.createImageData(ow, oh), o = img.data, L = PAL_LIGHT, Hv = PAL_HALF, slope = 6; // how steeply the paint's surface tilts, per cell
+    for(var py=0; py<oh; py++){
+      var fy = (py + 0.5) / oh * H - 0.5, y0 = Math.max(0, Math.min(H - 1, Math.floor(fy))), y1 = Math.min(H - 1, y0 + 1), ty = Math.max(0, Math.min(1, fy - y0));
+      for(var px=0; px<ow; px++){
+        var fx = (px + 0.5) / ow * W - 0.5, x0 = Math.max(0, Math.min(W - 1, Math.floor(fx))), x1 = Math.min(W - 1, x0 + 1), tx = Math.max(0, Math.min(1, fx - x0));
+        var a = y0 * W + x0, b = y0 * W + x1, cc = y1 * W + x0, dd = y1 * W + x1;
+        var w0 = (1 - tx) * (1 - ty), w1 = tx * (1 - ty), w2 = (1 - tx) * ty, w3 = tx * ty;
+        var hh = hs[a] * w0 + hs[b] * w1 + hs[cc] * w2 + hs[dd] * w3;
+        if(hh < 0.012) continue;
+        // the colour comes only from cells that hold paint, so edges don't fade toward black
+        var cw0 = has[a] ? w0 : 0, cw1 = has[b] ? w1 : 0, cw2 = has[cc] ? w2 : 0, cw3 = has[dd] ? w3 : 0, cs = cw0 + cw1 + cw2 + cw3;
+        if(!cs) continue;
+        var r = (col[a*3] * cw0 + col[b*3] * cw1 + col[cc*3] * cw2 + col[dd*3] * cw3) / cs;
+        var g = (col[a*3+1] * cw0 + col[b*3+1] * cw1 + col[cc*3+1] * cw2 + col[dd*3+1] * cw3) / cs;
+        var bl = (col[a*3+2] * cw0 + col[b*3+2] * cw1 + col[cc*3+2] * cw2 + col[dd*3+2] * cw3) / cs;
+        var nx = -(gx[a] * w0 + gx[b] * w1 + gx[cc] * w2 + gx[dd] * w3) * slope, ny = -(gy[a] * w0 + gy[b] * w1 + gy[cc] * w2 + gy[dd] * w3) * slope, nl = Math.sqrt(nx * nx + ny * ny + 1);
+        nx /= nl; ny /= nl; var nz = 1 / nl;
+        var ndl = Math.max(0, nx * L[0] + ny * L[1] + nz * L[2]), shade = 0.42 + 0.58 * ndl / L[2];
+        var ndh = Math.max(0, nx * Hv[0] + ny * Hv[1] + nz * Hv[2]);
+        var spec = ndh > 0.75 ? Math.pow(ndh, 70) * 0.9 + Math.pow(ndh, 14) * 0.12 : 0; // a sharp glint and a soft sheen: wet, glossy paint
+        var p4 = (py * ow + px) * 4;
+        o[p4] = r * shade + 255 * spec; o[p4+1] = g * shade + 255 * spec; o[p4+2] = bl * shade + 255 * spec;
+        o[p4+3] = 255 * Math.min(1, (hh - 0.012) / 0.03); // even a thin smear of paint is solid
+      }
+    }
+    og.putImageData(img, 0, 0);
+    var ctx = c.getContext("2d");
+    ctx.clearRect(0, 0, cw, ch);
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.shadowColor = "rgba(60,45,25,.3)"; ctx.shadowBlur = 3 * d; ctx.shadowOffsetX = 1 * d; ctx.shadowOffsetY = 1.6 * d; // it sits up off the palette
+    ctx.drawImage(oc, 0, 0, cw, ch);
+    ctx.shadowColor = "transparent";
+    if(pal.pickAt){
+      var mx = (pal.pickAt.x + 0.5) / W * cw, my = (pal.pickAt.y + 0.5) / H * ch;
+      ctx.lineWidth = 2.5 * d; ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.beginPath(); ctx.arc(mx, my, 9 * d, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5 * d; ctx.beginPath(); ctx.arc(mx, my, 7.5 * d, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+  function schedulePalette(){ if(!pal.raf){ pal.raf = requestAnimationFrame(drawPalette); } }
+  function paletteDown(e){
+    if(state.findPhase !== "painting") return;
+    e.preventDefault();
+    try{ $("paletteCanvas").setPointerCapture(e.pointerId); }catch(_){}
+    var p = palCell(e);
+    pal.down = { x:e.clientX, y:e.clientY, last:p, moved:false };
+    pal.knife = { mix:null, load:0 };
+  }
+  function paletteMove(e){
+    var dn = pal.down; if(!dn) return;
+    e.preventDefault();
+    if(!dn.moved && Math.hypot(e.clientX - dn.x, e.clientY - dn.y) < 6) return;
+    dn.moved = true;
+    var p = palCell(e), a = dn.last, steps = Math.max(1, Math.ceil(Math.hypot(p.x - a.x, p.y - a.y)));
+    for(var s=1; s<=steps; s++){ smearAt({ x:a.x + (p.x - a.x) * s / steps, y:a.y + (p.y - a.y) * s / steps }); }
+    dn.last = p;
+    schedulePalette();
+  }
+  function paletteUp(e){
+    var dn = pal.down; if(!dn) return;
+    pal.down = null;
+    if(dn.moved){ knifeLift(dn.last); schedulePalette(); paletteHint(pal.cfg.pickHint || "Tap your mix to pick that color."); return; }
+    // a tap picks the color under the finger (the most paint within a fingertip of it)
+    var tx = Math.floor(dn.last.x), ty = Math.floor(dn.last.y), i = -1, best = 0.02, x, y;
+    for(var yy=ty-3; yy<=ty+3; yy++){ for(var xx=tx-3; xx<=tx+3; xx++){
+      if(xx < 0 || yy < 0 || xx >= pal.W || yy >= pal.H || Math.hypot(xx - tx, yy - ty) > 3) continue;
+      var v = pal.h[yy * pal.W + xx]; if(v > best){ best = v; i = yy * pal.W + xx; x = xx; y = yy; }
+    } }
+    if(i < 0){ paletteHint("There's no paint there. Tap right on your mix."); return; }
+    var rgb = palCellColor(i), hex = "#" + rgb.map(function(v){ return ("0" + v.toString(16)).slice(-2); }).join("");
+    pal.picked = hex; pal.pickAt = { x:x, y:y };
+    paint.colors = [paintColor(hex, hex)]; paint.color = 0;
+    $("paletteChosen").style.backgroundColor = hex; $("paletteChosen").classList.remove("empty");
+    $("paintBrushes").style.color = hex;
+    paletteHint(pal.cfg.paintHint || "Now paint with it!");
+    drawPalette();
+  }
+  function hexHsl(hex){
+    var n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn, h = 0, s = 0;
+    if(d){ s = d / (1 - Math.abs(2 * l - 1)); h = mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; }
+    return { h:h, s:s, l:l };
   }
 
   /* ----- move the sun: drag it across the sky and watch the shadows swing and stretch ----- */
@@ -2207,7 +2473,8 @@
      Stickers are stored in image pixels (x, y = where its anchor sits) and drawn lowest-last,
      so nearer things overlap farther ones. An optional ground image covers part of the painting
      first (e.g. the meadow with Botticelli's own flowers cleared away). */
-  var stk = { cfg:null, imgs:{}, kind:0, items:[], press:null, seq:0, msgTimer:0, compare:false, split:0.5, slide:null, anim:0, sel:null, drawing:null };
+  var stk = { cfg:null, imgs:{}, kind:0, items:[], press:null, seq:0, msgTimer:0, compare:false, split:0.5, slide:null, anim:0, sel:null, drawing:null,
+              phase:null, t0:0, raf:0 };
   function stickerImg(src){
     if(!stk.imgs[src]){
       var im = new Image();
@@ -2220,13 +2487,16 @@
     painting.stops.forEach(function(s){
       if(!s.stickers) return;
       if(s.stickers.ground){ stickerImg(s.stickers.ground.src); }
+      if(s.stickers.scene){ s.stickers.scene.sprites.forEach(function(sp){ stickerImg(sp.src); }); }
       s.stickers.set.forEach(function(k){ stickerImg(k.src); });
     });
   }
   function enterStickers(s){
     var cfg = s.stickers;
     act.mode = "stickers"; stk.cfg = cfg; stk.items = []; stk.kind = 0; stk.press = null; stk.sel = null;
+    stk.phase = cfg.scene ? "show" : null; // a scene starts by looking at it, then zooms in to build
     $("stickerTurn").classList.toggle("hidden", !cfg.turn);
+    $("stickerCompare").classList.toggle("hidden", !!cfg.scene);
     preloadStickers(currentPainting);
     buildStickerTray(cfg);
     resumeStickers(s);
@@ -2234,7 +2504,11 @@
   function resumeStickers(s){
     state.findPhase = "stickers";
     stk.press = null; stk.slide = null; setCompare(false);
-    $("findQ").textContent = s.find;
+    if(stk.phase === "swing"){ stk.phase = "build"; } // trying again goes back to building
+    $("findQ").textContent = stk.phase === "build" ? stk.cfg.scene.buildFind : s.find;
+    $("stickerPanel").classList.toggle("intro", stk.phase === "show");
+    cancelAnimationFrame(stk.raf); stk.raf = 0;
+    if(stk.phase === "show"){ sceneAnimate(); }
     $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
     if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
     showActCanvas("stickers"); redrawActivity();
@@ -2257,6 +2531,7 @@
   function stickerStatus(msg){
     clearTimeout(stk.msgTimer);
     var n = stk.items.length, word = stk.cfg.word || ["sticker", "stickers"];
+    if(!msg && stk.phase === "show"){ $("stickerStatus").textContent = stk.cfg.scene.showSay || ""; return; }
     $("stickerStatus").textContent = msg || (stk.compare ? compareHint() :
       (n ? n + " " + word[n === 1 ? 0 : 1] + " so far" : (stk.cfg.start || "Pick one, then tap to place it.")));
     if(msg){ stk.msgTimer = setTimeout(function(){ stickerStatus(); }, 2200); }
@@ -2320,6 +2595,18 @@
       ctx.drawImage(gi, a.x, a.y, b.x - a.x, b.y - a.y);
     }
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    var scene = cfg.scene, now = performance.now();
+    if(scene){
+      scene.sprites.forEach(function(sp, i){ drawSceneSprite(ctx, sp, sceneAngle(i, now), sz, k); });
+      if(stk.phase === "build"){ // a soft wash, so the parts stand out from the photo while building
+        ctx.fillStyle = "rgba(255,255,255," + (scene.wash || 0.5) + ")"; ctx.fillRect(R.x0, R.y0, R.x1 - R.x0, R.y1 - R.y0);
+      }
+      // your trapeze, and everything on it, swings as one
+      var P = toScreen({ x:scene.bar.pivot[0] * sz.x, y:scene.bar.pivot[1] * sz.y });
+      ctx.save();
+      ctx.translate(P.x, P.y); ctx.rotate(sceneAngle(-1, now)); ctx.translate(-P.x, -P.y);
+      drawSceneBar(ctx, scene.bar, P, sz, k);
+    }
     var moving = stk.press && stk.press.moving && stk.press.item;
     stickerOrder().forEach(function(it){
       var kd = cfg.set[it.kind], im = stk.imgs[kd.src];
@@ -2332,9 +2619,10 @@
       ctx.drawImage(im, -kd.ax * kd.w, -kd.ay * kd.h, kd.w, kd.h);
       ctx.restore();
     });
+    if(scene){ ctx.restore(); }
     ctx.restore();
     var sel = stk.sel;
-    if(cfg.turn && sel && !stk.compare && state.findPhase === "stickers" && stk.items.indexOf(sel) >= 0){
+    if(cfg.turn && sel && !stk.compare && state.findPhase === "stickers" && stk.phase !== "show" && stk.items.indexOf(sel) >= 0){
       var skd = cfg.set[sel.kind], ssc = k * stickerScale(sel), sp = toScreen({x:sel.x, y:sel.y});
       // the piece's middle: its offset from the anchor, flipped and scaled, then turned
       var vx = (0.5 - skd.ax) * skd.w * ssc * (sel.flip ? -1 : 1), vy = (0.5 - skd.ay) * skd.h * ssc;
@@ -2345,6 +2633,44 @@
       ctx.restore();
     }
     if(stk.compare){ drawDivider(ctx, R, cut, stk.cfg.real || "The real one"); }
+  }
+  /* A scene (Calder's trapezes): the artist's figures hang from points on the rig (sprites, each
+     with the two wires of its trapeze), your own trapeze hangs from bar.pivot, and they all swing. */
+  function sceneAngle(i, now){ // i = -1 is your trapeze
+    var sw = stk.cfg.scene.swing, t = (now - stk.t0) / 1000;
+    if(stk.phase === "swing"){
+      var T = i < 0 ? sw.kid : sw.periods[i], ph = i < 0 ? 0.6 : i * 1.9;
+      return sw.amp * Math.PI / 180 * Math.min(1, t / 1.5) * Math.sin(2 * Math.PI * t / T + ph);
+    }
+    if(stk.phase === "show" && i >= 0){ return sw.idle * Math.PI / 180 * Math.sin(2 * Math.PI * t / (sw.periods[i] * 1.6) + i * 1.9); }
+    return 0;
+  }
+  function drawSceneSprite(ctx, sp, ang, sz, k){
+    var im = stk.imgs[sp.src]; if(!im || !im.complete || !im.naturalWidth) return;
+    var P = toScreen({ x:sp.pivot[0] * sz.x, y:sp.pivot[1] * sz.y });
+    var x0 = (sp.x - sp.pivot[0]) * sz.x * k, y0 = (sp.y - sp.pivot[1]) * sz.y * k, w = sp.w * sz.x * k, h = sp.h * sz.y * k;
+    ctx.save();
+    ctx.translate(P.x, P.y); ctx.rotate(ang);
+    ctx.strokeStyle = "rgba(70,66,60,.95)"; ctx.lineWidth = Math.max(1, 0.8 * k); ctx.lineCap = "round"; // the wires up to the rig
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(x0 + sp.wires[0] * w, y0 + 1); ctx.moveTo(0, 0); ctx.lineTo(x0 + sp.wires[1] * w, y0 + 1); ctx.stroke();
+    ctx.drawImage(im, x0, y0, w, h);
+    ctx.restore();
+  }
+  function drawSceneBar(ctx, bar, P, sz, k){ // a wooden bar on two wires, drawn so it stays crisp at any zoom
+    var drop = bar.drop * sz.y * k, half = bar.w * sz.x * k / 2, th = Math.max(2, 3 * k);
+    ctx.save();
+    ctx.strokeStyle = "rgba(70,66,60,.95)"; ctx.lineWidth = Math.max(1, 0.8 * k); ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(P.x - half * 0.92, P.y + drop); ctx.moveTo(P.x, P.y); ctx.lineTo(P.x + half * 0.92, P.y + drop); ctx.stroke();
+    ctx.fillStyle = "#8c5a2e"; ctx.beginPath();
+    if(ctx.roundRect){ ctx.roundRect(P.x - half, P.y + drop - th / 2, half * 2, th, th / 2); } else { ctx.rect(P.x - half, P.y + drop - th / 2, half * 2, th); }
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,225,180,.55)"; ctx.fillRect(P.x - half * 0.94, P.y + drop - th * 0.32, half * 1.88, th * 0.22);
+    ctx.restore();
+  }
+  function sceneAnimate(){ // keeps the trapezes moving while you look, and while they swing
+    stk.t0 = performance.now();
+    var tick = function(){ if(act.mode !== "stickers" || (stk.phase !== "show" && stk.phase !== "swing")) return; redrawActivity(); stk.raf = requestAnimationFrame(tick); };
+    stk.raf = requestAnimationFrame(tick);
   }
   // a set item with draw:{w, color} is a tool, not a sticker: dragging draws a line of wire
   function drawWireLine(ctx, it, d, k){
@@ -2406,7 +2732,7 @@
       try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
       stk.slide = true; slideTo(e); return;
     }
-    if(state.findPhase !== "stickers") return;
+    if(state.findPhase !== "stickers" || stk.phase === "show") return;
     e.preventDefault();
     var p = toImage(e);
     try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
@@ -2463,6 +2789,13 @@
     var s = STOPS[state.findIndex], cfg = s.stickers;
     state.findPhase = "revealed"; stk.press = null;
     $("stickerPanel").classList.add("hidden");
+    if(cfg.scene){
+      stk.phase = "swing"; actCanvas().classList.add("locked");
+      showActivityCaption(s, cfg.done || "");
+      fitToStop(s);
+      cancelAnimationFrame(stk.raf); sceneAnimate();
+      return;
+    }
     showActivityCaption(s, cfg.done || "");
     // there's no right way: show theirs next to the real one, sweeping the divider in from the right
     setCompare(true); stk.split = 1;
@@ -2644,6 +2977,15 @@
   $("actCanvas").addEventListener("pointermove", activityMove);
   $("actCanvas").addEventListener("pointerup", activityUp);
   $("actCanvas").addEventListener("pointercancel", activityUp);
+  // iPhones ignore touch-action here and drag the whole page along with a finger that draws, so
+  // the painting seems to shake: while an activity is on the painting, its touches stay on it
+  ["touchstart", "touchmove"].forEach(function(t){ $("actCanvas").addEventListener(t, function(e){ if(act.mode){ e.preventDefault(); } }, { passive:false }); });
+  (function(){ // the palette: drag to mix, tap to pick; the page must not scroll under the finger
+    var c = $("paletteCanvas");
+    c.addEventListener("pointerdown", paletteDown); c.addEventListener("pointermove", paletteMove);
+    c.addEventListener("pointerup", paletteUp); c.addEventListener("pointercancel", function(){ pal.down = null; });
+    ["touchstart", "touchmove"].forEach(function(t){ c.addEventListener(t, function(e){ e.preventDefault(); }, { passive:false }); });
+  })();
   $("paintClear").addEventListener("click", function(){
     paint.strokes = []; redrawActivity(); $("paintDone").disabled = true;
   });
@@ -2674,6 +3016,10 @@
   $("stickerCompare").addEventListener("click", function(){ setCompare(!stk.compare); });
   $("actCanvas").addEventListener("keydown", stickerKey);
   $("stickerDone").addEventListener("click", finishStickers);
+  $("stickerGo").addEventListener("click", function(){ // from looking at the artists to building your own
+    if(stk.phase !== "show") return;
+    stk.phase = "build"; resumeStickers(STOPS[state.findIndex]);
+  });
   $("lightHopper").addEventListener("click", sunBackToHopper);
   $("lightDone").addEventListener("click", finishLight);
   $("playHush").addEventListener("click", function(){ hushPlay(0.8); $("playStatus").textContent = "Shh... listen to the echo fade away."; });

@@ -198,7 +198,15 @@ window.WORKS = [
       {find:"Can you find Mary's face?", cx:0.724, cy:0.275, box:{x:0.666, y:0.143, w:0.107, h:0.219}, title:"Ready for whatever comes next", body:"Most people would be very scared if a glowing angel appeared in front of them. But Mary's face is calm. Her eyes are steady. She raises her hand like she is in the middle of a conversation, not running away. She seems ready for whatever is going to come next."},
       {find:"Can you find the white flower the angel is holding?", cx:0.322, cy:0.394, box:{x:0.229, y:0.311, w:0.172, h:0.351}, title:"A flower that carries a message", body:"Gabriel holds a white lily. In paintings made around this time, that one flower always carried the same meaning: a message straight from heaven. So the angel is bringing her the news two ways at once. With his words, and with the flower."},
       {find:"Can you find the meadow of wildflowers in the foreground?", cx:0.432, cy:0.664, box:{x:0.030, y:0.550, w:0.600, h:0.240}, title:"A field guide disguised as a painting", body:"Leonardo was also a scientist. Every flower in this meadow is a real one he would have studied outside: iris, dandelion, daisy, columbine. He painted each one exactly right, like a scientist making drawings in a notebook. Painters from this time cared just as much about getting a daisy right as they cared about getting an angel right."},
-      {find:"Can you find the mountains far away in the distance?", cx:0.489, cy:0.287, box:{x:0.419, y:0.145, w:0.126, h:0.257}, title:"A landscape dissolving into haze", body:"Through the gap in the trees, mountains blur into pale mist and a river bends toward a distant harbor. Leonardo invented a way of painting where things far away fade into air, just the way they look to your real eyes. He called it sfumato. He was about twenty years old when he painted this."}
+      {find:"Can you find the mountains far away in the distance?", cx:0.489, cy:0.287, box:{x:0.419, y:0.145, w:0.126, h:0.257}, title:"A landscape dissolving into haze", body:"Through the gap in the trees, mountains blur into pale mist and a river bends toward a distant harbor. Leonardo painted the faraway world as if it were fading into the air, just the way it looks to your real eyes. He was about twenty years old when he painted this."},
+      {find:"Leonardo noticed something about faraway things. Look at the dark trees up close, then at the mountains far away. Mix a color for a faraway mountain: start with the trees' dark green, then try adding white and blue. Paint a mountain in the distance!", cx:0.49, cy:0.26, box:{x:0.33, y:0.08, w:0.32, h:0.36},
+        paint:{ look:"oil", check:"farAway", brushes:[0.015, 0.035, 0.065], brush:1,
+          palette:{ tubes:[{name:"Tree green", hex:"#2f3f26"}, {name:"White", hex:"#f4f1ea"}, {name:"Sky blue", hex:"#7aa2c8"}, {name:"Earth", hex:"#6b4a2e"}] },
+          say:{ good:"Yes! Pale and blue, just like Leonardo's faraway mountains.",
+                dark:"That color looks close up, like the trees. Faraway things look paler. Try mixing in white.",
+                notBlue:"Pale is right! Now look at Leonardo's mountains: they're a little blue too. Try mixing in some blue.",
+                more:"Mix a color on your palette, then paint a faraway mountain." } },
+        title:"Paler and bluer", body:"The more air there is between you and something, the paler and bluer it looks. Leonardo noticed this, wrote about it in his notebooks, and painted it: dark, sharp trees up close, soft blue mountains far away. Painters call it aerial perspective, and it makes a flat painting feel deep."}
     ],
     done:[
       "Here is the story. An angel named Gabriel has come to tell a young woman named Mary that she will be the mother of Jesus. Painters across the Renaissance painted this moment again and again. This is Leonardo's version, made when he was barely a teenager in Florence.",
@@ -429,13 +437,15 @@ window.WORKS = [
       {find:"Can you find a girl watching from a window?", cx:0.97, cy:0.37, box:{x:0.93, y:0.29, w:0.07, h:0.15}, title:"Watching from inside", body:"At the very edge, a girl with a bow in her hair peeks out of a window, smiling. Maybe she wishes she were outside too. Sloan painted this scene by watching his neighbors from his own window."},
       {find:"Can you find one red shirt hanging on the line?", cx:0.645, cy:0.17, box:{x:0.62, y:0.12, w:0.05, h:0.1}, title:"Laundry day", body:"Among all the white sheets and shirts, one red one hangs on the line. People in the city hung their washing between the buildings to dry, even in winter. Sloan thought everyday things like laundry were worth painting."},
       {find:"Can you find where the painter signed his name?", cx:0.08, cy:0.95, box:{x:0.02, y:0.92, w:0.12, h:0.07}, title:"John Sloan, '14", body:"Down in the corner it says John Sloan, and under it, 14, for 1914. That's more than a hundred years ago, but kids building snowmen and cats in the snow look almost exactly the same today."},
-      {find:"Snow has shadows too. Pick a color and paint a shadow on the snow. What color should it be?", cx:0.51, cy:0.63, box:{x:0.3, y:0.48, w:0.42, h:0.3},
-        paint:{ look:"oil", check:"colorUsed", want:["Blue", "Purple"], avoid:["Gray"], brushes:[0.015, 0.035, 0.065], brush:1,
-          colors:[{name:"White", hex:"#f7f4ec"}, {name:"Gray", hex:"#8c8c8c"}, {name:"Blue", hex:"#7f97cf"}, {name:"Purple", hex:"#a397cf"}],
-          say:{ good:"Yes! Sloan's snow shadows are blue and purple, just like yours.",
-                avoid:"Look closely at Sloan's snow. His shadows aren't gray. They're blue and purple! Try painting one in blue.",
-                other:"Now try painting a shadow on the snow. What color are Sloan's shadows?" } },
-        title:"Blue snow shadows", body:"Look closely at Sloan's snow: the shadows aren't gray at all. They're blue and purple! On a sunny day, snow reflects the blue sky, so its shadows really do look blue. Sloan noticed, and painted what he saw."}
+      {find:"What color is a shadow on snow? Look closely at Sloan's snow. Then squirt some paints onto your palette, smear them together, tap your mix to pick it, and paint a shadow on the snow.", cx:0.51, cy:0.63, box:{x:0.3, y:0.48, w:0.42, h:0.3},
+        paint:{ look:"oil", check:"snowShadow", brushes:[0.015, 0.035, 0.065], brush:1,
+          palette:{ tubes:[{name:"White", hex:"#f7f4ec"}, {name:"Black", hex:"#22232a"}, {name:"Blue", hex:"#2f4fa8"}, {name:"Red", hex:"#b8343c"}] },
+          say:{ good:"Yes! You mixed a blue-violet shadow, just like Sloan's.",
+                gray:"That's a gray shadow. Look again at Sloan's snow: his shadows aren't gray. Try mixing blue into your white instead of black.",
+                dark:"That shadow is very dark. Sloan's snow shadows are light, because snow bounces light all around. Try mixing in more white.",
+                warm:"Look again at Sloan's snow shadows. Are they warm or cool? Try mixing in some blue.",
+                more:"Mix a color on your palette, then paint a shadow on the snow." } },
+        title:"Blue snow shadows", body:"Look closely at Sloan's snow: the shadows aren't gray at all. They're blue and violet! On a sunny day, a shadow on snow isn't lit by the sun, only by the blue sky, so it really does look blue. Sloan mixed white with blue and a touch of red to paint what he saw."}
     ],
     done:[
       "John Sloan lived in Greenwich Village, a neighborhood in New York. He made sketches from the window of his apartment on West 4th Street, then turned them into this painting in 1914.",
@@ -603,7 +613,7 @@ window.WORKS = [
     alt:"Calder's Circus by Alexander Calder: tiny wire and cloth performers around a little circus ring",
     intro:"You've looked over the whole circus. Now let's find the performers. Every one of them was made by hand from bits and scraps.",
     src:"images/calder-circus.jpg", tiles:"images/calder-circus.jpg",
-    music:"audio/brahms-lullaby.mp3",
+    music:"audio/over-the-waves.mp3",
     prompts:[
       "Just look. A whole circus is waiting for you: tents, a ring, and a crowd of tiny performers.",
       "Everything here is small enough to hold in your hand. Which one would you pick up first?",
@@ -619,11 +629,21 @@ window.WORKS = [
       {find:"Can you find the musician with a giant horn?", cx:0.845, cy:0.71, box:{x:0.79, y:0.6, w:0.12, h:0.22}, title:"The big horn", body:"A huge horn curls around this musician, and a long hose loops all over the floor. That hose is real rubber tubing. Calder's circus had sound, too: he brought whistles, noisemakers, and records, and the audience got to make noise along with him."},
       {find:"Can you find a tiny street lamp with a sign on it?", cx:0.09, cy:0.7, box:{x:0.05, y:0.6, w:0.09, h:0.23}, title:"ONE WAY", body:"Read the little sign: ONE WAY! Calder made a whole street lamp out of wire and metal, like one you'd pass on a city sidewalk. Even the scenery in this circus is homemade."},
       {find:"Can you find a tiny American flag?", cx:0.385, cy:0.7, box:{x:0.355, y:0.64, w:0.06, h:0.13}, title:"A little piece of home", body:"Calder was an American who moved to Paris in 1926, and that's where he built this circus. Somebody in the show is proudly waving the Stars and Stripes."},
-      {find:"Calder built his acrobats from wire, corks and scraps of cloth. Pick a piece and tap to put it on, or pick the wire and draw with your finger. Can you build a new trapeze performer? Tap \u21bb Turn to turn the last piece.", cx:0.48, cy:0.34, box:{x:0.365, y:0.24, w:0.23, h:0.2},
-        stickers:{ area:{x:0.3, y:0.15, w:0.4, h:0.4}, jitter:0.05, turn:45, lightTray:true,
-          real:"Calder's", word:["piece", "pieces"],
-          start:"Pick a piece, then tap to place it.", outside:"Build up here, near the trapezes!",
-          done:"Slide to compare your acrobat with Calder's!",
+      {find:"These are Calder's trapeze artists. He made them from wire, corks and scraps of cloth, and at his shows they really swung! Let's make a new one.", cx:0.48, cy:0.36, box:{x:0.355, y:0.255, w:0.25, h:0.21},
+        stickers:{ area:{x:0.3945, y:0.325, w:0.075, h:0.14}, jitter:0.05, turn:45, lightTray:true,
+          word:["piece", "pieces"], start:"Pick a piece, then tap to place it.", outside:"Build it on the bar, right here!",
+          done:"Look at them swing!",
+          // the photo with Calder's own (tiny, side-on) trapeze artists painted out; crisp cut-outs of them hang in their place
+          ground:{src:"images/calder-trapeze-cleared.jpg", x:0.36, y:0.2699, w:0.24, h:0.1696},
+          scene:{ buildBox:{x:0.3945, y:0.325, w:0.075, h:0.14}, wash:0.5,
+            showSay:"Look how each one hangs from its bar.",
+            buildFind:"Build a trapeze artist on the bar! Pick a piece and tap to put it on, or pick the wire and draw with your finger. Tap ↻ Turn to turn the last piece.",
+            sprites:[
+              {src:"images/calder-trapeze/left.webp", pivot:[0.386,0.299], x:0.3736, y:0.3625, w:0.0244, h:0.0593, wires:[0.0385,0.9756]},
+              {src:"images/calder-trapeze/middle.webp", pivot:[0.478,0.286], x:0.4608, y:0.3261, w:0.0277, h:0.0752, wires:[0.2595,0.983]},
+              {src:"images/calder-trapeze/right.webp", pivot:[0.565,0.276], x:0.5549, y:0.3338, w:0.021, h:0.0685, wires:[0.044,0.9168]} ],
+            bar:{ pivot:[0.432, 0.2925], drop:0.0625, w:0.0225 },
+            swing:{ amp:12, idle:2.5, periods:[2.6, 2.9, 2.4], kid:2.75 } },
           set:[
             {id:"cork", name:"Cork", src:"images/stickers/calder/cork.png", w:16, h:25, ax:0.5, ay:0.5, spin:4},
             {id:"bead", name:"Wooden bead", src:"images/stickers/calder/bead.png", w:12, h:12, ax:0.5, ay:0.5, spin:0},
@@ -632,7 +652,6 @@ window.WORKS = [
             {id:"spring", name:"Wire spring", src:"images/stickers/calder/spring.png", w:7.5, h:30, ax:0.5, ay:0.5, spin:0},
             {id:"curl", name:"Wire curl", src:"images/stickers/calder/curl.png", w:14, h:14, ax:0.5, ay:0.5, spin:30},
             {id:"felt", name:"Red felt", src:"images/stickers/calder/felt.png", w:18, h:15, ax:0.5, ay:0.5, spin:20},
-            {id:"trapeze", name:"Trapeze", src:"images/stickers/calder/trapeze.png", w:30, h:42.5, ax:0.5, ay:0.5, spin:0},
             {id:"draw", name:"Draw with wire", src:"images/stickers/calder/draw-wire.png", draw:{ w:1.5, color:"#2f2f33" } } ] },
         title:"A circus from the junk drawer", body:"Calder made his whole circus from things most people throw away: wire, corks, buttons, bottle caps, and scraps of cloth and leather. He bent the wire with pliers, like drawing a picture with one long line right in the air, and the performers really worked. He would crouch beside the ring and make the acrobats swing and fly for an audience of friends!"}
     ],
@@ -665,13 +684,13 @@ window.WORKS = [
       {find:"Can you find little bushes being blown flat by the wind?", cx:0.66, cy:0.5, box:{x:0.55, y:0.4, w:0.23, h:0.19}, title:"Which way is the wind?", body:"These little bushes are all bent the same way, pushed by the wind. The snow streaks all slant the same way too. Pippin made the whole painting feel windy without ever painting the wind itself."},
       {find:"Can you find a tiny bare bush near the bottom?", cx:0.62, cy:0.9, box:{x:0.57, y:0.85, w:0.1, h:0.11}, title:"Hoofprints in the snow", body:"One little bush hangs on in the snow, right in the buffalo's path. Look at all the gray marks scattered around it. They could be hoofprints, left behind by the herd as it thundered past."},
       {find:"Can you find the painter's name, written in yellow?", cx:0.945, cy:0.975, box:{x:0.89, y:0.94, w:0.11, h:0.06}, title:"H. PIPPIN", body:"The only bright color in the whole painting is the artist's name: H. PIPPIN, in yellow letters down in the corner. It's like he's saying 'I made this' in the warmest color he had."},
-      {find:"Pippin made the wind blow with slanting snow. Paint some snow streaks across the dark rocks!", cx:0.31, cy:0.53, box:{x:0.14, y:0.36, w:0.34, h:0.34},
+      {find:"Pippin painted this whole snowstorm with black, white, and the grays in between. Squirt some black and white, mix a gray you like, tap it, and paint snow streaks across the dark rocks, all slanting the same way, like the wind!", cx:0.31, cy:0.53, box:{x:0.14, y:0.36, w:0.34, h:0.34},
         paint:{ look:"streak", check:"sameSlant", brushes:[0.008, 0.018, 0.035], brush:1,
-          colors:[{name:"White", hex:"#f4f1e8"}, {name:"Pale gray", hex:"#c9c9c4"}],
+          palette:{ tubes:[{name:"White", hex:"#f4f1e8"}, {name:"Black", hex:"#1e1d1c"}] },
           say:{ good:"Whoosh! All your snow is slanting the same way. Now it's windy!",
                 mixed:"Your snow is swirling every which way! Try making every streak slant the same direction, like Pippin's.",
                 more:"Paint a few more snow streaks, all slanting the same way." } },
-        title:"Painting the wind", body:"You can't see wind. So how do you paint it? Pippin slanted every snow streak the same way, so your eyes feel the storm blowing across the whole picture."}
+        title:"Painting the wind", body:"You can't see wind. So how do you paint it? Pippin slanted every snow streak the same way, so your eyes feel the storm blowing across the whole picture. And look at his colors: almost nothing but black, white and gray. He mixed so many different grays that the snow, the sky and the rocks each feel different."}
     ],
     done:[
       "Horace Pippin painted this in 1933. He had never seen buffalo running across the snowy plains. He imagined the whole thing, the storm, the herd, the cold, and painted it so strongly that you can almost feel the wind.",
