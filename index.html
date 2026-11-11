@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-09a";
+  window.APP_VERSION = "2026-11-11b";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-09a"></script>
+<script src="works.js?v=2026-11-11b"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -222,6 +222,15 @@
   .demo-work h2{font-family:var(--serif);font-size:1.1rem;margin:0 0 6px;}
   .demo-work .btn{min-height:40px;padding:4px 12px;font-size:.85rem;margin:0 6px 6px 0;text-align:left;}
   .night-wheel{width:min(46vw,190px);height:min(46vw,190px);touch-action:none;cursor:crosshair;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,.45);} /* so the black rim shows on the dark page */
+  .night-wheel.small{width:min(34vw,136px);height:min(34vw,136px);}
+  #lightStatus{white-space:nowrap;font-size:min(1.12rem,4.4vw);} /* one line always: a second line would shrink the picture mid-drag */
+  #lightPanel .paint-actions{flex-wrap:nowrap;gap:6px;}
+  #lightPanel .paint-actions .btn{padding:0 12px;white-space:nowrap;}
+  /* with a color wheel: the wheel and a column of buttons side by side, so the picture keeps its room on a phone */
+  #lightPanel.hue{display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;gap:6px 16px;}
+  #lightPanel.hue #lightStatus{grid-column:1 / -1;}
+  #lightPanel.hue .paint-actions{flex-direction:column;align-items:stretch;min-width:142px;} /* wide enough for "Stop comparing", so nothing shifts */
+  #lightPanel.hue .paint-actions .btn{min-height:40px;}
   .paint-canvas:focus{outline:none;}
   .paint-canvas:focus-visible{outline:2px solid var(--gold-bright);outline-offset:-2px;}
   #stickerGo{display:none;}
@@ -359,8 +368,10 @@
       </div>
       <div class="paint-panel hidden" id="lightPanel">
         <div class="light-status" id="lightStatus" aria-live="polite"></div>
+        <canvas class="night-wheel small hidden" id="lightWheel" aria-label="Color wheel: drag to change the color of the light"></canvas>
         <div class="paint-row paint-actions">
           <button class="btn btn-ghost" id="lightHopper">Back to Hopper's sun</button>
+          <button class="btn btn-ghost hidden" id="lightCompare" aria-pressed="false">Compare</button>
           <button class="btn btn-primary" id="lightDone">I'm done</button>
         </div>
       </div>
@@ -876,7 +887,8 @@
     night.loadId++; cancelAnimationFrame(night.raf); night.raf = 0; cancelAnimationFrame(night.anim); night.compare = false; night.slide = false; $("frameFind").classList.remove("night-mode", "no-map");
     hushPlay(1.5); cancelAnimationFrame(play.raf); play.raf = 0; play.ripples = []; duckBg(false);
     $("actAgainBtn").classList.add("hidden");
-    paint.strokes = []; paint.cur = null; paint.wobble = false; light.drag = false;
+    paint.strokes = []; paint.cur = null; paint.wobble = false;
+    light.drag = false; light.slide = false; light.compare = false; cancelAnimationFrame(light.anim); cancelAnimationFrame(light.tween); cancelAnimationFrame(light.raf); light.raf = 0;
     stk.items = []; stk.press = null; stk.slide = null; stk.drawing = null; stk.compare = false; cancelAnimationFrame(stk.raf); stk.raf = 0; stk.phase = null; cancelAnimationFrame(stk.anim); clearTimeout(stk.msgTimer);
     if(act.ctx){ act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height); }
     if(osd){ osd.setMouseNavEnabled(true); }
@@ -1474,24 +1486,48 @@
     return { h:h, s:s, l:l };
   }
 
-  /* ----- move the sun: drag it across the sky and watch the shadows swing and stretch ----- */
-  var light = { cfg:null, theta:18, img:null, patches:[], drag:false, tween:0 };
+  /* ----- move the sun: drag it across the sky and watch the shadows swing and stretch -----
+     Two ways to draw, by what the painting needs:
+     - a street (Early Sunday Morning): shadows lie along the ground and on a wall. They are laid
+       over the painting as see-through shapes, after the painted ones are covered up. (A painted
+       shadow too fine to redraw is kept instead, and covered bit by bit as it shortens: erase.)
+     - under a roof (Seven A.M., light.porch): the whole painting is redrawn here, so shade can be
+       multiplied into it the way real shade darkens paint, and (light.hue) a color wheel can
+       tint the light. A compare slider shows it next to the real painting. */
+  var light = { cfg:null, theta:18, img:null, patches:[], overlays:[], erases:[], mask:null, layer:null, drag:false, tween:0,
+                filter:[1,1,1], at:{x:0, y:0}, plain:true, wheelImg:null, compare:false, split:0.5, slide:false, anim:0, raf:0 };
+  function lightImg(src){
+    var im = new Image();
+    im.onload = function(){ if(act.mode === "light"){ redrawActivity(); } };
+    im.src = src; return im;
+  }
   function enterLight(s){
     var cfg = s.light;
     act.mode = "light"; light.cfg = cfg; light.theta = cfg.hopper; light.patches = [];
+    light.filter = [1, 1, 1]; light.at = {x:0, y:0}; light.plain = true;
     light.img = new Image();
     light.img.onload = function(){ buildLightPatches(); redrawActivity(); };
     light.img.src = currentPainting.src;
+    // overlays: ready-made pieces of the painting with a painted shadow taken out
+    light.overlays = (cfg.overlays || []).map(function(o){ return { img:lightImg(o.src), x:o.x, y:o.y, w:o.w, h:o.h }; });
+    light.erases = (cfg.objects || []).map(function(o){ return o.erase ? lightImg(o.erase.src) : null; });
+    light.mask = cfg.porch ? lightImg(cfg.porch.mask) : null;
+    $("lightHopper").textContent = cfg.back || "Back to Hopper's sun";
+    $("lightWheel").classList.toggle("hidden", !cfg.hue); $("lightCompare").classList.toggle("hidden", !cfg.hue);
+    $("lightPanel").classList.toggle("hue", !!cfg.hue);
     resumeLight(s);
   }
   function resumeLight(s){
     state.findPhase = "lighting";
+    light.drag = false; light.slide = false; setLightCompare(false);
     $("findQ").textContent = s.find;
     $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
     if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
-    showActCanvas("light"); redrawActivity();
-    updateLightStatus();
+    showActCanvas("light");
+    $("frameFind").classList.add("no-map"); // the minimap would show the painting in its old light, and the shadows would draw over it
     $("lightPanel").classList.remove("hidden");
+    if(light.cfg.hue){ paintWheel($("lightWheel"), light, light.plain); }
+    redrawActivity(); updateLightStatus();
     updateGuides();
   }
   // The artist's own painted shadows are hidden so the moving shadows can replace them.
@@ -1561,15 +1597,48 @@
     return { cx:c.width/2, cy:cy, rx:Math.max(40*d, c.width/2 - 30*d), ry:Math.max(40*d, cy - visTop - 34*d) };
   }
   function elevation(theta){ return Math.max(6, theta <= 90 ? theta : 180 - theta); }
+  function sunSide(){ return light.cfg.rise === "left" ? -1 : 1; } // the side of the picture the sun comes up on
   // Something standing on the ground: its shadow lies along the sidewalk, longer when the sun is lower.
-  function drawCastShadow(ctx, o, sz){
+  // With erase (a picture of the ground without the painted shadow), the painter's own shadow is kept
+  // and only the part the shadow has drawn back from is covered: real brushwork, just shorter.
+  function drawCastShadow(ctx, o, sz, n){
     var th = light.theta, e = elevation(th) * Math.PI/180, e0 = elevation(light.cfg.hopper) * Math.PI/180;
     // shadow length scales with 1/tan(height of the sun); matches the painted one at Hopper's sun
     var len = Math.abs(th - 90) < 0.5 ? 0 : o.len * sz.x * Math.tan(e0) / Math.tan(e);
-    var dir = th < 90 ? -1 : 1, bx = o.x * sz.x, cy = o.y * sz.y, t = o.t * sz.y, hw = o.w * sz.x / 2;
+    var dir = (th < 90 ? -1 : 1) * sunSide(), bx = o.x * sz.x, cy = o.y * sz.y, t = o.t * sz.y, hw = (o.w || 0) * sz.x / 2;
     var rise = (o.back || 0) * (len / sz.x) * sz.y; // long shadows drift slightly back toward the buildings
     var b = toScreen({x:bx, y:cy}), tip = toScreen({x:bx + dir*len, y:cy - rise}), k = imgPxToScreen(), T = t * k, HW = hw * k;
     var col = o.color || "14,58,82", a0 = o.alpha || 0.9;
+    if(o.erase){
+      var er = light.erases[n];
+      if(!er || !er.complete || !er.naturalWidth) return; // until it loads, the painted shadow simply stays
+      var ea = toScreen({ x:o.erase.x * sz.x, y:o.erase.y * sz.y }), eb = toScreen({ x:(o.erase.x + o.erase.w) * sz.x, y:(o.erase.y + o.erase.h) * sz.y });
+      // the shadow still lies between its foot and its tip: everything else is covered. The tip keeps a rounded end,
+      // centred on the painted band (mid = the band's centre line, as [x, y] points across the painting)
+      var lo = Math.min(b.x, tip.x), hi = Math.max(b.x, tip.x), m = o.erase.mid, ty = tip.y;
+      if(m){
+        var fx = Math.max(0, Math.min(1, (bx + dir*len) / sz.x)), i = 1;
+        while(i < m.length - 1 && m[i][0] < fx){ i++; }
+        var u = Math.max(0, Math.min(1, (fx - m[i-1][0]) / (m[i][0] - m[i-1][0])));
+        ty = toScreen({ x:0, y:(m[i-1][1] + (m[i][1] - m[i-1][1]) * u) * sz.y }).y;
+      }
+      ctx.save();
+      ctx.beginPath();
+      if(lo > ea.x){ // left of the shadow
+        ctx.moveTo(ea.x - 2, ea.y - 2); ctx.lineTo(lo, ea.y - 2);
+        if(tip.x < b.x){ ctx.lineTo(lo, ty - T * 0.62); ctx.quadraticCurveTo(lo - T * 1.5, ty, lo, ty + T * 0.62); }
+        ctx.lineTo(lo, eb.y + 2); ctx.lineTo(ea.x - 2, eb.y + 2); ctx.closePath();
+      }
+      if(hi < eb.x){ // right of the shadow
+        ctx.moveTo(eb.x + 2, ea.y - 2); ctx.lineTo(hi, ea.y - 2);
+        if(tip.x > b.x){ ctx.lineTo(hi, ty - T * 0.62); ctx.quadraticCurveTo(hi + T * 1.5, ty, hi, ty + T * 0.62); }
+        ctx.lineTo(hi, eb.y + 2); ctx.lineTo(eb.x + 2, eb.y + 2); ctx.closePath();
+      }
+      ctx.clip(); // (nothing to cover = an empty clip = nothing drawn)
+      ctx.drawImage(er, ea.x, ea.y, eb.x - ea.x, eb.y - ea.y);
+      ctx.restore();
+      return;
+    }
     ctx.save();
     ctx.shadowColor = "rgba(" + col + ",.6)"; ctx.shadowBlur = Math.max(2, T * 0.5);
     var grad = ctx.createLinearGradient(b.x, 0, tip.x === b.x ? b.x + 1 : tip.x, 0);
@@ -1601,17 +1670,102 @@
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath(); ctx.fill();
     ctx.restore();
   }
+  function drawOverlays(ctx, sz){
+    light.overlays.forEach(function(o){
+      if(!o.img.complete || !o.img.naturalWidth) return;
+      var a = toScreen({ x:o.x * sz.x, y:o.y * sz.y }), b = toScreen({ x:(o.x + o.w) * sz.x, y:(o.y + o.h) * sz.y });
+      ctx.drawImage(o.img, a.x, a.y, b.x - a.x, b.y - a.y);
+    });
+  }
+  /* An overhanging roof keeps the sun off the walls beneath it. Each surface has a line that the
+     roof's shade reaches down to. The line drops as the sun climbs (how deep it runs goes with
+     the tangent of the sun's height), so at midday everything under the roof is in shade.
+     line rows: [x, where the shade starts, where the painter's shade line is, how deep it runs
+     where it's level]. In the morning light slips in past the end of the roof, which is what
+     slants the line; in the afternoon the sun is on the other side, so the line is level. */
+  function porchLine(t, x, k, pm){
+    var i = 1;
+    while(i < t.length - 1 && t[i][0] < x){ i++; }
+    var a = t[i-1], b = t[i], u = Math.max(0, Math.min(1, (x - a[0]) / (b[0] - a[0])));
+    var top = a[1] + (b[1] - a[1]) * u;
+    return top + k * (pm ? a[3] + (b[3] - a[3]) * u : a[2] + (b[2] - a[2]) * u - top);
+  }
+  function porchShade(P, sz){ // the shade, drawn small so its edges come out soft when it's scaled up
+    if(!light.mask || !light.mask.complete || !light.mask.naturalWidth) return null;
+    var z = P.zone, q = 0.25, w = Math.ceil(z.w * sz.x * q), h = Math.ceil(z.h * sz.y * q);
+    var c = light.layer || (light.layer = document.createElement("canvas"));
+    if(c.width !== w || c.height !== h){ c.width = w; c.height = h; }
+    var g = c.getContext("2d"), th = light.theta, pm = th > 90, low = Math.max(1, Math.min(89, pm ? 180 - th : th));
+    var k = Math.tan(low * Math.PI / 180) / Math.tan(light.cfg.hopper * Math.PI / 180); // how deep the shade runs, against the painter's
+    var path = function(pts){
+      g.beginPath();
+      pts.forEach(function(p, i){ var x = (p[0] - z.x) * sz.x * q, y = (p[1] - z.y) * sz.y * q; if(i){ g.lineTo(x, y); } else { g.moveTo(x, y); } });
+      g.closePath();
+    };
+    g.globalCompositeOperation = "source-over"; g.clearRect(0, 0, w, h);
+    P.surfaces.forEach(function(sf, n){
+      var edge = sf.line.map(function(r){ return [r[0], porchLine(sf.line, r[0], k, pm)]; });
+      edge.unshift([z.x - 0.02, edge[0][1]]); edge.push([z.x + z.w + 0.02, edge[edge.length - 1][1]]);
+      var x0 = edge[0][0], x1 = edge[edge.length - 1][0];
+      g.save(); path(sf.area); g.clip();
+      // the shadow of something hanging on this wall: the painter's own shadow shape, slid further
+      // down as the sun climbs, and only where the sun still reaches (below the line)
+      (P.casts || []).forEach(function(cs){
+        if(cs.on !== n) return;
+        g.save(); path([[x0, 3]].concat(edge, [[x1, 3]])); g.clip();
+        var dy = cs.dy * k - cs.dy;
+        g.fillStyle = cs.color; path(cs.shape.map(function(p){ return [pm ? 2 * cs.cx - p[0] : p[0], p[1] + dy]; })); g.fill();
+        g.restore();
+      });
+      g.fillStyle = P.color; path([[x0, -2]].concat(edge, [[x1, -2]])); g.fill();
+      g.restore();
+    });
+    // only on the surfaces the sun can reach (a mask made from the painting itself)
+    g.globalCompositeOperation = "destination-in"; g.drawImage(light.mask, 0, 0, w, h);
+    g.globalCompositeOperation = "source-over";
+    return c;
+  }
+  function atPaintersLight(){ return light.plain && Math.abs(light.theta - light.cfg.hopper) < 0.01; }
+  function drawPorchScene(ctx, cfg, sz, tl, br){
+    var R = paintingRect(), cut = light.compare ? R.x0 + (R.x1 - R.x0) * light.split : R.x1;
+    // at the painter's own sun and light, the real painting underneath is exactly right
+    if(!atPaintersLight() && light.img && light.img.complete && light.img.naturalWidth){
+      ctx.save();
+      // yours shows left of the divider, the real painting (underneath) right of it
+      ctx.beginPath(); ctx.rect(R.x0 - 2, R.y0 - 2, Math.max(0, cut - R.x0 + 2), R.y1 - R.y0 + 4); ctx.clip();
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+      var x0 = Math.floor(tl.x) - 1, y0 = Math.floor(tl.y) - 1, w = Math.ceil(br.x) + 1 - x0, h = Math.ceil(br.y) + 1 - y0; // a pixel past the edges
+      ctx.drawImage(light.img, x0, y0, w, h);
+      var layer = porchShade(cfg.porch, sz);
+      if(layer){
+        drawOverlays(ctx, sz); // the walls as they would be in full sun...
+        var z = cfg.porch.zone, a = toScreen({ x:z.x * sz.x, y:z.y * sz.y }), b = toScreen({ x:(z.x + z.w) * sz.x, y:(z.y + z.h) * sz.y });
+        ctx.globalCompositeOperation = "multiply"; // ...then the shade for this sun, darkening the paint
+        ctx.drawImage(layer, a.x, a.y, b.x - a.x, b.y - a.y);
+      }
+      if(!light.plain){ // the color of the light, like a filter over everything
+        ctx.globalCompositeOperation = "multiply";
+        ctx.fillStyle = "rgb(" + light.filter.map(function(v){ return Math.round(v * 255); }).join(",") + ")";
+        ctx.fillRect(x0, y0, w, h);
+      }
+      ctx.restore();
+    }
+    if(light.compare){ drawDivider(ctx, R, cut, cfg.real || "The real one"); }
+    else if(state.findPhase === "lighting"){ drawSun(ctx); }
+  }
   function drawLightLayer(){
     var ctx = act.ctx, cfg = light.cfg, sz = osdImgSize(); if(!sz) return;
     var tl = toScreen({x:0, y:0}), br = toScreen({x:sz.x, y:sz.y});
+    if(cfg.porch){ drawPorchScene(ctx, cfg, sz, tl, br); return; }
     ctx.save();
     ctx.beginPath(); ctx.rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y); ctx.clip();
     light.patches.forEach(function(p){
       var a = toScreen({x:p.x, y:p.y}), b = toScreen({x:p.x + p.w, y:p.y + p.h});
       ctx.drawImage(p.canvas, a.x, a.y, b.x - a.x, b.y - a.y);
     });
+    drawOverlays(ctx, sz);
     (cfg.walls || []).forEach(function(wl){ drawWallShadow(ctx, wl, sz); });
-    cfg.objects.forEach(function(o){ drawCastShadow(ctx, o, sz); });
+    cfg.objects.forEach(function(o, n){ drawCastShadow(ctx, o, sz, n); });
     // daylight: brighter when the sun is high, dimmer near the horizon, golden in the evening.
     // (plain translucent layers: this canvas sits on top of the painting, so blend modes can't reach it)
     var s = Math.sin(light.theta * Math.PI/180), s0 = Math.sin(cfg.hopper * Math.PI/180);
@@ -1629,12 +1783,17 @@
     ctx.beginPath(); ctx.ellipse(f.cx, f.cy, f.rx, f.ry, 0, Math.PI, 2*Math.PI); ctx.stroke();
     ctx.setLineDash([]);
     // where Hopper put the sun
-    var hx = f.cx + f.rx*Math.cos(h0), hy = f.cy - f.ry*Math.sin(h0);
+    var side = sunSide(), hx = f.cx + side*f.rx*Math.cos(h0), hy = f.cy - f.ry*Math.sin(h0);
+    var sx = f.cx + side*f.rx*Math.cos(th), sy = f.cy - f.ry*Math.sin(th);
     ctx.fillStyle = "rgba(224,189,106,.95)"; ctx.beginPath(); ctx.arc(hx, hy, 4*d, 0, Math.PI*2); ctx.fill();
-    ctx.font = "600 " + (11*d) + "px " + getComputedStyle(document.body).fontFamily;
-    ctx.textAlign = "right"; ctx.fillText("Hopper's sun", hx - 9*d, hy + 4*d);
+    if(Math.hypot(sx - hx, sy - hy) > 30*d){ // (while the sun sits on the spot, its rays would cover the words)
+      ctx.font = "600 " + (11*d) + "px " + getComputedStyle(document.body).fontFamily;
+      ctx.shadowColor = "rgba(0,0,0,.8)"; ctx.shadowBlur = 3*d; // readable over light walls and dark trees alike
+      if(hx < f.cx){ ctx.textAlign = "left"; ctx.fillText(light.cfg.mark || "Hopper's sun", hx + 9*d, hy + 4*d); }
+      else { ctx.textAlign = "right"; ctx.fillText(light.cfg.mark || "Hopper's sun", hx - 9*d, hy + 4*d); }
+      ctx.shadowColor = "transparent"; ctx.shadowBlur = 0;
+    }
     // the sun
-    var sx = f.cx + f.rx*Math.cos(th), sy = f.cy - f.ry*Math.sin(th);
     var glow = ctx.createRadialGradient(sx, sy, 4*d, sx, sy, 34*d);
     glow.addColorStop(0, "rgba(255,226,120,.85)"); glow.addColorStop(1, "rgba(255,226,120,0)");
     ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(sx, sy, 34*d, 0, Math.PI*2); ctx.fill();
@@ -1647,23 +1806,71 @@
     ctx.restore();
   }
   function setSunFromPointer(e){
-    var f = sunFrame(), p = canvasPoint(e), dx = (p.x - f.cx) / f.rx, dy = (f.cy - p.y) / f.ry;
+    var f = sunFrame(), p = canvasPoint(e), dx = sunSide() * (p.x - f.cx) / f.rx, dy = (f.cy - p.y) / f.ry;
     var th = Math.atan2(dy, dx) * 180/Math.PI;
     if(dy < 0){ th = dx >= 0 ? 0 : 180; } // below the horizon: stick to the nearest end
-    light.theta = Math.min(174, Math.max(6, th));
+    th = Math.min(174, Math.max(6, th));
+    if(light.cfg.snap && Math.abs(th - light.cfg.hopper) < light.cfg.snap){ th = light.cfg.hopper; } // close enough lands on the painter's sun
+    light.theta = th;
     cancelAnimationFrame(light.tween);
     updateLightStatus(); redrawActivity();
   }
   function lightDown(e){
-    if(state.findPhase !== "lighting" || !osd) return;
+    if(!osd) return;
+    if(light.compare){ // sliding the divider, while playing or after "I'm done"
+      e.preventDefault(); cancelAnimationFrame(light.anim);
+      try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
+      light.slide = true; lightSlide(e); return;
+    }
+    if(state.findPhase !== "lighting") return;
     e.preventDefault();
     try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
     light.drag = true; setSunFromPointer(e);
   }
-  function lightMove(e){ if(!light.drag) return; e.preventDefault(); setSunFromPointer(e); }
-  function lightUp(){ light.drag = false; }
+  function lightMove(e){
+    if(light.slide){ e.preventDefault(); lightSlide(e); return; }
+    if(!light.drag) return;
+    e.preventDefault(); setSunFromPointer(e);
+  }
+  function lightUp(){ light.drag = false; light.slide = false; }
+  function lightSlide(e){
+    var R = paintingRect(), x = canvasPoint(e).x;
+    light.split = Math.max(0, Math.min(1, (x - R.x0) / Math.max(1, R.x1 - R.x0)));
+    redrawActivity();
+  }
+  function setLightCompare(on){
+    light.compare = on; cancelAnimationFrame(light.anim);
+    if(on){ light.split = 0.5; }
+    $("lightCompare").textContent = on ? "Stop comparing" : "Compare";
+    $("lightCompare").setAttribute("aria-pressed", String(on));
+    redrawActivity();
+  }
+  function lightWheelPick(e){ // the color of the light: the middle of the wheel is plain daylight, no filter
+    var c = $("lightWheel"), r = c.getBoundingClientRect(), R = r.width / 2 - 3;
+    var x = (e.clientX - r.left - r.width / 2) / R, y = (e.clientY - r.top - r.height / 2) / R, d = Math.sqrt(x * x + y * y);
+    if(d > 1){ x /= d; y /= d; d = 1; }
+    light.plain = d < 0.14;
+    if(light.plain){ x = 0; y = 0; light.filter = [1, 1, 1]; }
+    else { light.filter = wheelFilter(wheelRgb((Math.atan2(y, x) * 180 / Math.PI + 360) % 360, d)); }
+    light.at = { x:x, y:y };
+    paintWheel(c, light, light.plain); updateLightStatus();
+    if(!light.raf){ light.raf = requestAnimationFrame(function(){ light.raf = 0; redrawActivity(); }); }
+  }
+  function sunClock(theta){ // the sun climbs 15 degrees an hour: up at 6:00, at the top at noon
+    var mins = Math.round((360 + theta * 4) / 5) * 5, h = Math.floor(mins / 60), m = mins % 60;
+    return (((h + 11) % 12) + 1) + ":" + (m < 10 ? "0" : "") + m +
+      (h < 12 ? " in the morning" : (h === 12 && !m) ? " noon" : h < 17 ? " in the afternoon" : " in the evening");
+  }
   function updateLightStatus(){
     var th = light.theta, msg;
+    if(light.cfg.clock){ // tell the time by the sun
+      var c = light.cfg.clock;
+      msg = sunClock(th);
+      if(Math.abs(th - light.cfg.hopper) < 0.01){ msg += ". " + c.painter; }
+      else if(c.shade && (th > 90 ? th <= 120 : th >= 72)){ msg += ". " + c.shade; }
+      $("lightStatus").textContent = msg;
+      return;
+    }
     if(Math.abs(th - light.cfg.hopper) < 5){ msg = "This is where Hopper put the sun."; }
     else if(th < 12){ msg = "Sunrise: the longest shadows!"; }
     else if(th < 60){ msg = "Morning: long shadows"; }
@@ -1680,14 +1887,28 @@
       light.theta = from + (to - from) * ease; updateLightStatus(); redrawActivity();
       if(k < 1){ light.tween = requestAnimationFrame(step); }
     };
+    if(light.cfg.hue){ // and the plain light he painted in
+      light.filter = [1, 1, 1]; light.at = {x:0, y:0}; light.plain = true;
+      paintWheel($("lightWheel"), light, true);
+    }
     light.tween = requestAnimationFrame(step);
   }
   function finishLight(){
     var s = STOPS[state.findIndex];
     state.findPhase = "revealed"; light.drag = false;
-    actCanvas().classList.add("locked");
+    cancelAnimationFrame(light.tween);
     $("lightPanel").classList.add("hidden");
     showActivityCaption(s, "");
+    if(!light.cfg.hue){ actCanvas().classList.add("locked"); return; }
+    // show theirs next to the real one, sweeping the divider in from the right
+    setLightCompare(true); light.split = 1;
+    var t0 = performance.now();
+    var step = function(now){
+      var t = Math.min(1, (now - t0) / 900), ease = 1 - Math.pow(1 - t, 3);
+      light.split = 1 - 0.5 * ease; redrawActivity();
+      if(t < 1){ light.anim = requestAnimationFrame(step); }
+    };
+    light.anim = requestAnimationFrame(step);
   }
   /* ----- play the painting: every color band is an instrument -----
      Touch a color and it hums (swelling while you hold, echoing away after you let go).
@@ -2022,11 +2243,12 @@
     var a = h * 60 * Math.PI / 180, r = 1 - (mx + mn) / 2;
     return { x:r * Math.cos(a), y:r * Math.sin(a) };
   }
-  function drawWheel(){
-    var c = $("nightWheel"), dpr = window.devicePixelRatio || 1, size = Math.round(c.clientWidth * dpr) || 200;
-    if(c.width !== size){ c.width = c.height = size; night.wheelImg = null; }
+  function drawWheel(){ paintWheel($("nightWheel"), night, night.found); }
+  function paintWheel(c, st, gold){ // st: whose wheel this is (it keeps the finger's spot and the wheel's picture)
+    var dpr = window.devicePixelRatio || 1, size = Math.round(c.clientWidth * dpr) || 200;
+    if(c.width !== size){ c.width = c.height = size; st.wheelImg = null; }
     var g = c.getContext("2d"), R = size / 2 - 3 * dpr;
-    if(!night.wheelImg){
+    if(!st.wheelImg || st.wheelImg.width !== size){
       var img = g.createImageData(size, size), d = img.data;
       for(var y=0; y<size; y++){ for(var x=0; x<size; x++){
         var dx = (x - size / 2) / R, dy = (y - size / 2) / R, r = Math.sqrt(dx * dx + dy * dy), p = (y * size + x) * 4;
@@ -2034,14 +2256,14 @@
         var rgb = wheelRgb((Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360, r);
         d[p] = rgb[0] * 255; d[p+1] = rgb[1] * 255; d[p+2] = rgb[2] * 255; d[p+3] = r > 1 ? (1.02 - r) / 0.02 * 255 : 255;
       } }
-      night.wheelImg = img;
+      st.wheelImg = img;
     }
-    g.putImageData(night.wheelImg, 0, 0);
+    g.putImageData(st.wheelImg, 0, 0);
     // the finger's spot
-    var mx = size / 2 + night.at.x * R, my = size / 2 + night.at.y * R;
+    var mx = size / 2 + st.at.x * R, my = size / 2 + st.at.y * R;
     g.lineWidth = 3 * dpr;
     g.strokeStyle = "rgba(0,0,0,.6)"; g.beginPath(); g.arc(mx, my, 11 * dpr, 0, Math.PI * 2); g.stroke();
-    g.strokeStyle = night.found ? "#ffd86b" : "#fff"; g.beginPath(); g.arc(mx, my, 9 * dpr, 0, Math.PI * 2); g.stroke();
+    g.strokeStyle = gold ? "#ffd86b" : "#fff"; g.beginPath(); g.arc(mx, my, 9 * dpr, 0, Math.PI * 2); g.stroke();
   }
   function wheelPick(e){
     var c = $("nightWheel"), r = c.getBoundingClientRect(), R = r.width / 2 - 3;
@@ -3022,6 +3244,14 @@
   });
   $("lightHopper").addEventListener("click", sunBackToHopper);
   $("lightDone").addEventListener("click", finishLight);
+  $("lightCompare").addEventListener("click", function(){ setLightCompare(!light.compare); });
+  (function(){ // drag a finger around the sun game's color wheel
+    var w = $("lightWheel"), down = false;
+    w.addEventListener("pointerdown", function(e){ if(state.findPhase !== "lighting") return; e.preventDefault(); down = true; try{ w.setPointerCapture(e.pointerId); }catch(_){} lightWheelPick(e); });
+    w.addEventListener("pointermove", function(e){ if(down){ e.preventDefault(); lightWheelPick(e); } });
+    ["pointerup", "pointercancel"].forEach(function(t){ w.addEventListener(t, function(){ down = false; }); });
+    ["touchstart", "touchmove"].forEach(function(t){ w.addEventListener(t, function(e){ e.preventDefault(); }, { passive:false }); });
+  })();
   $("playHush").addEventListener("click", function(){ hushPlay(0.8); $("playStatus").textContent = "Shh... listen to the echo fade away."; });
   $("playDone").addEventListener("click", finishPlay);
   (function(){ // drag a finger around the color wheel
