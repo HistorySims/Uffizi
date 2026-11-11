@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-11a";
+  window.APP_VERSION = "2026-11-11b";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-11a"></script>
+<script src="works.js?v=2026-11-11b"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -1524,7 +1524,7 @@
     $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
     if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
     showActCanvas("light");
-    $("frameFind").classList.toggle("no-map", !!light.cfg.porch); // the minimap would show the painting in its old light
+    $("frameFind").classList.add("no-map"); // the minimap would show the painting in its old light, and the shadows would draw over it
     $("lightPanel").classList.remove("hidden");
     if(light.cfg.hue){ paintWheel($("lightWheel"), light, light.plain); }
     redrawActivity(); updateLightStatus();
