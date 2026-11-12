@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-12c";
+  window.APP_VERSION = "2026-11-12d";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-12c"></script>
+<script src="works.js?v=2026-11-12d"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -190,10 +190,13 @@
   .tube-btn[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.18);color:var(--gold-bright);}
   .tube-dab{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);box-shadow:inset -3px -3px 5px rgba(0,0,0,.25);
     background-image:radial-gradient(circle at 33% 28%, rgba(255,255,255,.85) 0, rgba(255,255,255,.3) 16%, rgba(255,255,255,0) 34%);}
-  .palette-canvas{width:100%;height:96px;border-radius:14px;background:#f3efe6;touch-action:none;cursor:crosshair;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08);}
+  .palette-canvas{width:100%;height:min(34vh,280px);border-radius:14px;background:#f3efe6;touch-action:none;cursor:crosshair;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08);}
   .palette-pick{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--gold-bright);font-family:var(--serif);font-style:italic;min-height:30px;}
   .palette-chosen{width:30px;height:30px;flex:none;box-shadow:inset -4px -5px 7px rgba(0,0,0,.28);
     background-image:radial-gradient(circle at 33% 28%, rgba(255,255,255,.85) 0, rgba(255,255,255,.3) 16%, rgba(255,255,255,0) 34%);}
+  /* the palette slides away while you paint, so the painting gets the room; "Mix more" brings it back */
+  .palette-wrap.tucked .palette-tubes,.palette-wrap.tucked .palette-canvas{display:none;}
+  .palette-toggle{min-height:34px !important;padding:0 12px !important;font-size:.8rem !important;}
   .palette-chosen.empty{border-style:dashed;background-image:none;box-shadow:none;}
   .light-status{font-family:var(--serif);font-style:italic;font-size:1.12rem;color:var(--gold-bright);min-height:1.5em;text-align:center;}
   .caption-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
@@ -368,7 +371,7 @@
         <div class="palette-wrap hidden" id="paletteWrap">
           <div class="palette-tubes" id="paletteTubes" role="group" aria-label="Squirt a paint"></div>
           <canvas class="palette-canvas" id="paletteCanvas" aria-label="Your palette: drag to mix, tap to pick a color"></canvas>
-          <div class="palette-pick"><span class="swatch palette-chosen empty" id="paletteChosen" aria-hidden="true"></span><span id="paletteHint" aria-live="polite"></span></div>
+          <div class="palette-pick"><span class="swatch palette-chosen empty" id="paletteChosen" aria-hidden="true"></span><span id="paletteHint" aria-live="polite"></span><button class="btn btn-ghost palette-toggle hidden" id="paletteToggle" type="button">Mix more</button></div>
         </div>
         <div class="paint-row paint-actions">
           <button class="btn btn-ghost" id="paintClear">Start over</button>
@@ -867,6 +870,7 @@
     if(s.focus && state.findPhase === "revealed"){ s = { box:s.focus }; }
     if(s.circle && lasso.zoom && state.findPhase === "revealed"){ s = { box:lasso.zoom }; }
     if(s.stickers && s.stickers.scene && stk.phase === "build"){ s = { box:s.stickers.scene.buildBox }; }
+    if(s.face && face.compare && s.face.whole){ s = { box:{ x:0, y:0, w:1, h:1 } }; } // compare a face in the whole painting
     var sz = osdImgSize(); if(!sz) return;
     var rect;
     if(s.box){ rect = new OpenSeadragon.Rect(s.box.x*sz.x, s.box.y*sz.y, s.box.w*sz.x, s.box.h*sz.y); }
@@ -1299,7 +1303,8 @@
   }
 
   /* ----- palette: squirt paints, smear them together with a finger, tap the mix to pick it,
-     then paint with it (paint.palette:{tubes:[{name, hex}]}). The palette is a small grid of
+     then paint with it (paint.palette:{tubes:[{name, hex}]}). Picking a color tucks the palette away
+     so the painting gets the room; "Mix more" brings it back. The palette is a small grid of
      cells, each holding an amount of paint and how much of each tube is in it. Colors mix like
      pigment, not light: a weighted geometric mean in linear light, so white makes tints, black
      dulls, and blue with yellow goes green instead of gray. */
@@ -1307,6 +1312,13 @@
   var PAL_SLOTS = [[0.1,0.33],[0.27,0.67],[0.44,0.33],[0.61,0.67],[0.78,0.33],[0.92,0.67],[0.2,0.3],[0.52,0.7]];
   function setupPalette(cfg){
     pal.cfg = cfg; pal.next = 0; pal.loaded = -1; pal.knife = null; pal.down = null; pal.picked = null; pal.pickAt = null;
+    tuckPalette(false); $("paletteToggle").classList.add("hidden");
+    // while mixing, the palette and the painting share the room: the palette gets about half
+    var pc = $("paletteCanvas"), stage = $("frameFind").parentNode;
+    pc.style.height = "0px"; var room = stage.clientHeight;
+    pc.style.height = Math.round(Math.max(96, Math.min(300, room * 0.48))) + "px";
+    // the grid of cells has the palette's own shape, so round globs stay round
+    pal.H = Math.max(60, Math.min(220, Math.round(pal.W * (pc.clientHeight || 96) / (pc.clientWidth || 288))));
     pal.h = new Float32Array(pal.W * pal.H); pal.mix = new Float32Array(pal.W * pal.H * cfg.tubes.length);
     pal.lin = cfg.tubes.map(function(t){ var n = parseInt(t.hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255].map(function(v){ return Math.pow(Math.max(v, 3) / 255, 2.2); }); });
     var row = $("paletteTubes"); row.innerHTML = "";
@@ -1322,6 +1334,12 @@
     drawPalette();
   }
   function paletteHint(t){ $("paletteHint").textContent = t; }
+  function tuckPalette(on){
+    $("paletteWrap").classList.toggle("tucked", on);
+    $("paletteToggle").textContent = on ? "Mix more" : "Hide palette";
+    if(on){ loadTube(-1); paletteHint(pal.cfg && pal.cfg.paintHint || "Now paint with it!"); }
+    else { requestAnimationFrame(drawPalette); if(pal.picked){ paletteHint("Squeeze, mix, then tap a new color."); } }
+  }
   // tap a tube to pick it up, then tap the palette where the paint should go
   function loadTube(k){
     pal.loaded = k;
@@ -1525,8 +1543,9 @@
     paint.colors = [paintColor(hex, hex)]; paint.color = 0;
     $("paletteChosen").style.backgroundColor = hex; $("paletteChosen").classList.remove("empty");
     $("paintBrushes").style.color = hex;
-    paletteHint(pal.cfg.paintHint || "Now paint with it!");
     drawPalette();
+    // tuck the palette away so the painting gets the room
+    $("paletteToggle").classList.remove("hidden"); tuckPalette(true);
   }
   function hexHsl(hex){
     var n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
@@ -2421,7 +2440,8 @@
   /* ----- change a face: parts of a painted face (eyebrows) lifted off the painting so they can be moved -----
      Each part is the painter's own stroke as a see-through cut-out, with three points (inner end,
      middle, outer end) that slide up and down. Every column of the cut-out slides with them, so
-     the stroke tilts and bends but stays the painter's brushwork. A patch of bare skin covers the
+     the stroke tilts and bends but stays the painter's brushwork. whole:{split, ask}: comparing steps
+     back to the whole painting, the divider resting at split, with a question shown. A patch of bare skin covers the
      place the strokes were painted (and, optionally, a sharp close-up of the face lies over the zoomed-in
      painting). With every point back at zero nothing is redrawn: the real painting shows.
      Places are fractions of the painting. up, down: how far a point may travel (fractions of its
@@ -2568,10 +2588,14 @@
     redrawActivity();
   }
   function setFaceCompare(on){
+    var was = face.compare, cfg = face.cfg;
     face.compare = on; cancelAnimationFrame(face.anim);
-    if(on){ face.split = 0.5; }
+    if(on){ face.split = cfg && cfg.whole ? cfg.whole.split : 0.5; }
     $("faceCompare").textContent = on ? "Stop comparing" : "Compare";
     $("faceCompare").setAttribute("aria-pressed", String(on));
+    // whole: step back to see the face in the whole painting while comparing (and in again after)
+    if(cfg && cfg.whole && was !== on && osd && STOPS[state.findIndex] && STOPS[state.findIndex].face){ fitToStop(STOPS[state.findIndex]); }
+    if(cfg){ updateFaceStatus(); }
     redrawActivity();
   }
   function faceGoTo(target){ // glide every point to a new place
@@ -2614,7 +2638,8 @@
   }
   function updateFaceStatus(){
     var cfg = face.cfg, ask = cfg.ask || ["How does the face look now?"];
-    $("faceStatus").textContent = faceAtRest() ? (cfg.rest || "This is how the artist painted it.") : ask[Math.max(0, face.asked - 1) % ask.length];
+    $("faceStatus").textContent = face.compare && cfg.whole ? cfg.whole.ask
+      : faceAtRest() ? (cfg.rest || "This is how the artist painted it.") : ask[Math.max(0, face.asked - 1) % ask.length];
   }
   function finishFace(){
     var s = STOPS[state.findIndex];
@@ -2623,11 +2648,12 @@
     $("facePanel").classList.add("hidden");
     showActivityCaption(s, "");
     // show theirs next to the real one, sweeping the divider in from the right
+    var to = face.cfg.whole ? face.cfg.whole.split : 0.5;
     setFaceCompare(true); face.split = 1;
     var t0 = performance.now();
     var step = function(now){
       var t = Math.min(1, (now - t0) / 900), ease = 1 - Math.pow(1 - t, 3);
-      face.split = 1 - 0.5 * ease; redrawActivity();
+      face.split = 1 - (1 - to) * ease; redrawActivity();
       if(t < 1){ face.anim = requestAnimationFrame(step); }
     };
     face.anim = requestAnimationFrame(step);
@@ -3495,6 +3521,7 @@
   // iPhones ignore touch-action here and drag the whole page along with a finger that draws, so
   // the painting seems to shake: while an activity is on the painting, its touches stay on it
   ["touchstart", "touchmove"].forEach(function(t){ $("actCanvas").addEventListener(t, function(e){ if(act.mode){ e.preventDefault(); } }, { passive:false }); });
+  $("paletteToggle").addEventListener("click", function(){ tuckPalette(!$("paletteWrap").classList.contains("tucked")); });
   (function(){ // the palette: drag to mix, tap to pick; the page must not scroll under the finger
     var c = $("paletteCanvas");
     c.addEventListener("pointerdown", paletteDown); c.addEventListener("pointermove", paletteMove);

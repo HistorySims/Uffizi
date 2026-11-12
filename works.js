@@ -331,7 +331,7 @@ window.WORKS = [
           // lights to try (tap one again for Hopper's plain morning light): mul is multiplied into the painting, glow screened on top
           filters:[ {name:"Moonlight", dot:"#22346e", mul:[0.16,0.22,0.46], glow:[2,8,26]},
                     {name:"Golden hour", dot:"#e8b14a", mul:[1,0.79,0.44], glow:[40,22,0]},
-                    {name:"Sunset", dot:"#d9542f", mul:[1,0.56,0.42], glow:[30,4,0]},
+                    {name:"Sunset", dot:"#d9542f", mul:[1,0.86,0.77], glow:[16,3,0]},
                     {name:"Bright white", dot:"#ffffff", mul:[1,1,1], glow:[72,72,72]} ],
           clock:{ painter:"That's Hopper's time!", shade:"The roof shades the wall." }, mark:"7 A.M.",
           // the wall and the door frame as they would look in full sun (Hopper's painted shadows taken out)
@@ -855,18 +855,20 @@ window.WORKS = [
       {find:"Can you find the long chain hanging from her neck?", cx:0.4793, cy:0.4618, box:{x:0.3596, y:0.3513, w:0.2395, h:0.2409}, areas:[{poly:[[0.3945,0.3634],[0.4394,0.3634],[0.4244,0.4517],[0.4095,0.527],[0.3696,0.527],[0.3795,0.4417]]},{x:0.5312, y:0.3634, w:0.0449, h:0.2209}], hint:"on both sides of her purple bow", title:"A long, long chain", body:"The chain loops around her neck and hangs all the way down to her waist. Look closely at how Sargent painted it: not link by link, but with quick little dashes of light paint."},
       {find:"Can you find the white flowers on the curtain?", cx:0.7588, cy:0.1004, box:{x:0.659, y:0, w:0.2395, h:0.261}, hint:"up high, on the right", title:"Flowers in a hurry", body:"From far away they're flowers. Up close, each one is only a few dabs of white paint! Sargent painted the room fast and loose, so that your eyes go to Mrs. Thursby instead."},
       {find:"Sargent signed his name on this painting. Can you find it?", cx:0.1999, cy:0.018, box:{x:0.0003, y:0, w:0.4192, h:0.0703}, areas:[{x:0.0203, y:0, w:0.3593, h:0.0402}], hint:"way up at the top, on the left", title:"John S. Sargent", body:"There it is, in the top corner, in dark paint on a dark wall: John S. Sargent. It almost hides in the shadows. He signed it with the same quick, loopy strokes he used for everything else."},
-      {find:"Sargent painted each eyebrow with one quick stroke. Drag them up or down, or tap a pair below. How does her face change?", cx:0.4893, cy:0.3052, box:{x:0.3646, y:0.2389, w:0.2495, h:0.1325},
+      {find:"Move her eyebrows! Drag them up or down, or tap a pair below. How does her face change?", cx:0.4893, cy:0.3052, box:{x:0.3646, y:0.2389, w:0.2495, h:0.1325},
         face:{ real:"Sargent's", back:"Put them back", rest:"These are the eyebrows Sargent painted.",
+          // comparing steps back to the whole painting; the divider rests just right of her face
+          whole:{ split:0.6, ask:"What feeling did Sargent give her?" },
           ask:["How does she feel now?", "What is she thinking now?", "What would she say now?"],
           // bare skin for the place the eyebrows were painted
           erase:{src:"images/thursby-brow-erase.png", x:0.4146, y:0.2959, w:0.1071, h:0.0127},
           up:0.0082, down:0.0022,
-          // Sargent's two strokes: the one on our left, then the one on our right
+          // Sargent's two eyebrows (each built of many small brushstrokes): the one on our left, then the one on our right
           parts:[ {src:"images/thursby-brow-l.png", x:0.4161, y:0.2967, w:0.0443, h:0.0075, inner:"right", line:[0.783,0.477,0.578]},
                   {src:"images/thursby-brow-r.png", x:0.4702, y:0.3005, w:0.0503, h:0.0077, inner:"left", line:[0.488,0.439,0.613]} ],
           // shapes to try: both up and arched; inner ends down; inner ends up; one up and one down
           presets:[ [[0.75,1,0.6],[0.75,1,0.6]], [[-1,-0.35,0.55],[-1,-0.35,0.55]], [[0.85,0.3,-0.7],[0.85,0.3,-0.7]], [[0.5,0.9,0.6],[-0.8,-0.6,-0.3]] ] },
-        title:"Two little strokes", body:"Eyebrows are tiny, but they do a lot of talking. Up high, and a face looks surprised. Down in the middle, grumpy. Up in the middle, worried. Sargent set Mrs. Thursby's low and steady, the way you look when you're sure of yourself."}
+        title:"Sargent's choice", body:"You made her surprised, grumpy, worried. Sargent could have painted any of those. Instead he kept her eyebrows quiet and let her whole body do the talking. Slide across her face. What feeling did Sargent give her?"}
     ],
     done:[
       "John Singer Sargent painted Mrs. Charles Thursby around 1898. Her first name was Alice. The painting is six and a half feet tall, so she's just about life-size.",
