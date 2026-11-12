@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-12e";
+  window.APP_VERSION = "2026-11-12f";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-12e"></script>
+<script src="works.js?v=2026-11-12f"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -244,6 +244,12 @@
   #facePanel .paint-actions{flex-wrap:nowrap;gap:6px;}
   #facePanel .paint-actions .btn{padding:0 12px;white-space:nowrap;}
   @media (max-width:420px){ #facePanel .paint-actions .btn{padding:0 10px;font-size:.8rem;} }
+  .wp-tray{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:420px;}
+  .wp-btn{width:44px;height:44px;border-radius:10px;border:2px solid var(--foam-faint);background-size:cover;background-position:center;padding:0;}
+  .wp-btn[aria-pressed="true"]{border-color:var(--gold-bright);box-shadow:0 0 0 2px var(--gold-bright);}
+  #collageStatus{white-space:nowrap;font-size:min(1.05rem,4.2vw);}
+  #collagePanel .paint-actions{flex-wrap:nowrap;gap:6px;}
+  #collagePanel .paint-actions .btn{padding:0 12px;white-space:nowrap;}
   .paint-canvas:focus{outline:none;}
   .paint-canvas:focus-visible{outline:2px solid var(--gold-bright);outline-offset:-2px;}
   #stickerGo{display:none;}
@@ -418,6 +424,15 @@
           <button class="btn btn-ghost" id="faceBack">Put them back</button>
           <button class="btn btn-ghost" id="faceCompare" aria-pressed="false">Compare</button>
           <button class="btn btn-primary" id="faceDone">I'm done</button>
+        </div>
+      </div>
+      <div class="paint-panel hidden" id="collagePanel">
+        <div class="light-status" id="collageStatus" aria-live="polite"></div>
+        <div class="wp-tray" id="wpTray" role="group" aria-label="Choose a wallpaper"></div>
+        <div class="paint-row paint-actions">
+          <button class="btn btn-ghost" id="collageUndo" disabled>Undo</button>
+          <button class="btn btn-ghost" id="collageCompare" aria-pressed="false">Compare</button>
+          <button class="btn btn-primary" id="collageDone" disabled>I'm done</button>
         </div>
       </div>
       <div class="paint-panel hidden" id="playPanel">
@@ -892,7 +907,7 @@
     $("showMeBtn").classList.add("hidden");
     setFeedback("", "");
     resetReveal();
-    $("findProgress").textContent = (currentPainting.freeTap || s.paint || s.light || s.stickers || s.play || s.night || s.beads || s.circle || s.face ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
+    $("findProgress").textContent = (currentPainting.freeTap || s.paint || s.light || s.stickers || s.play || s.night || s.beads || s.circle || s.face || s.collage ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
     if(s.paint){ enterPaint(s); return; }
     if(s.stickers){ enterStickers(s); return; }
     if(s.light){ enterLight(s); return; }
@@ -901,6 +916,7 @@
     if(s.beads){ enterBeads(s); return; }
     if(s.circle){ enterCircle(s); return; }
     if(s.face){ enterFace(s); return; }
+    if(s.collage){ enterCollage(s); return; }
     $("frameFind").classList.add("seeking");
     $("findQ").textContent = currentPainting.freeTap ? s.find : (s.find + " Tap it!");
     updateGuides();
@@ -926,7 +942,8 @@
   function exitActivity(){
     cancelAnimationFrame(act.raf); act.raf = 0; act.mode = null;
     actCanvas().classList.add("hidden");
-    $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden"); $("playPanel").classList.add("hidden"); $("nightPanel").classList.add("hidden"); $("simplePanel").classList.add("hidden"); $("facePanel").classList.add("hidden");
+    $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden"); $("playPanel").classList.add("hidden"); $("nightPanel").classList.add("hidden"); $("simplePanel").classList.add("hidden"); $("facePanel").classList.add("hidden"); $("collagePanel").classList.add("hidden");
+    col.drawing = null; col.slide = false; col.compare = false; cancelAnimationFrame(col.anim);
     face.grabs = {}; face.nav = {}; face.slide = false; face.compare = false; cancelAnimationFrame(face.anim); cancelAnimationFrame(face.tween);
     cancelAnimationFrame(beads.raf); beads.drag = null; lasso.drawing = false; cancelAnimationFrame(lasso.raf);
     night.loadId++; cancelAnimationFrame(night.raf); night.raf = 0; cancelAnimationFrame(night.anim); night.compare = false; night.slide = false; $("frameFind").classList.remove("night-mode", "no-map");
@@ -942,7 +959,7 @@
     if(!act.ctx || !osd || !act.mode || actCanvas().classList.contains("hidden")) return;
     sizeActCanvas();
     act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height);
-    if(act.mode === "paint"){ drawPaintLayer(); } else if(act.mode === "light"){ drawLightLayer(); } else if(act.mode === "play"){ drawPlayLayer(); } else if(act.mode === "night"){ drawNightLayer(); } else if(act.mode === "beads"){ drawBeadsLayer(); } else if(act.mode === "circle"){ drawCircleLayer(); } else if(act.mode === "face"){ drawFaceLayer(); } else { drawStickerLayer(); }
+    if(act.mode === "paint"){ drawPaintLayer(); } else if(act.mode === "light"){ drawLightLayer(); } else if(act.mode === "play"){ drawPlayLayer(); } else if(act.mode === "night"){ drawNightLayer(); } else if(act.mode === "beads"){ drawBeadsLayer(); } else if(act.mode === "circle"){ drawCircleLayer(); } else if(act.mode === "face"){ drawFaceLayer(); } else if(act.mode === "collage"){ drawCollageLayer(); } else { drawStickerLayer(); }
   }
   function canvasPoint(e){
     var r = actCanvas().getBoundingClientRect();
@@ -2693,6 +2710,182 @@
     };
     face.anim = requestAnimationFrame(step);
   }
+  /* ----- collage: block off patches of the background and fill them with wallpapers -----
+     Draw a shape with a finger; it is straightened into a cut-paper shape with a rhinestone edge and
+     filled with the chosen wallpaper. The people and things in front (figure: the painting with its
+     background made see-through) are drawn back over the patches, so they stay in front. Tap a patch
+     to give it the wallpaper you have chosen. Patches are kept in painting pixels.
+     cfg: {figure, wallpapers:[{name, src} | {name, color}], real, done} */
+  var col = { cfg:null, figure:null, wps:[], pats:[], wp:0, patches:[], drawing:null, compare:false, split:0.5, slide:false, anim:0 };
+  function enterCollage(s){
+    var cfg = s.collage;
+    act.mode = "collage"; col.cfg = cfg; col.patches = []; col.wp = 0;
+    col.figure = new Image(); col.figure.onload = function(){ if(act.mode === "collage"){ redrawActivity(); } }; col.figure.src = cfg.figure;
+    col.wps = cfg.wallpapers.map(function(w){
+      if(!w.src) return null;
+      var im = new Image(); im.onload = function(){ if(act.mode === "collage"){ redrawActivity(); } }; im.src = w.src; return im;
+    });
+    col.pats = cfg.wallpapers.map(function(){ return null; });
+    var tray = $("wpTray"); tray.innerHTML = "";
+    cfg.wallpapers.forEach(function(w, i){
+      var b = document.createElement("button"); b.type = "button"; b.className = "wp-btn"; b.setAttribute("aria-label", w.name);
+      if(w.src){ b.style.backgroundImage = "url(" + w.src + ")"; } else { b.style.background = w.color; }
+      b.setAttribute("aria-pressed", String(i === 0));
+      b.addEventListener("click", function(){ col.wp = i; pressOnly(tray, b); collageCount(); });
+      tray.appendChild(b);
+    });
+    resumeCollage(s, false);
+  }
+  function resumeCollage(s, again){
+    state.findPhase = "collage";
+    if(again){ col.patches = []; }
+    col.drawing = null; col.slide = false; setCollageCompare(false);
+    $("findQ").textContent = s.find;
+    $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
+    if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
+    showActCanvas("collage");
+    $("frameFind").classList.add("no-map");
+    $("collagePanel").classList.remove("hidden");
+    collageCount(); redrawActivity(); updateGuides();
+  }
+  function collageCount(){
+    var n = col.patches.length, w = col.cfg.wallpapers[col.wp].name;
+    $("collageUndo").disabled = !n; $("collageDone").disabled = !n;
+    $("collageStatus").textContent = (n ? (n === 1 ? "1 patch" : n + " patches") + " · " : "Draw on the wall · ") + "Wallpaper: " + w;
+  }
+  function setCollageCompare(on){
+    col.compare = on; cancelAnimationFrame(col.anim);
+    if(on){ col.split = 0.5; }
+    $("collageCompare").textContent = on ? "Stop comparing" : "Compare";
+    $("collageCompare").setAttribute("aria-pressed", String(on));
+    redrawActivity();
+  }
+  function collageFill(ctx, i){ // a wallpaper as a fill, scaled so it stays the size Thomas used
+    var w = col.cfg.wallpapers[i];
+    if(!w.src){ return w.color; }
+    var im = col.wps[i]; if(!im || !im.complete || !im.naturalWidth) return "rgba(255,255,255,.5)";
+    if(!col.pats[i]){ col.pats[i] = ctx.createPattern(im, "repeat"); }
+    var k = imgPxToScreen() * (w.scale || 1), o = toScreen({ x:0, y:0 });
+    col.pats[i].setTransform(new DOMMatrix([k, 0, 0, k, o.x, o.y]));
+    return col.pats[i];
+  }
+  function collagePath(ctx, pts){
+    ctx.beginPath();
+    pts.forEach(function(p, i){ var q = toScreen(p); if(i){ ctx.lineTo(q.x, q.y); } else { ctx.moveTo(q.x, q.y); } });
+    ctx.closePath();
+  }
+  function collageEdge(ctx, pts){ // a line of little rhinestones along the cut edge
+    var d = act.dpr, gap = 7 * d, r = 1.7 * d;
+    for(var i = 0; i < pts.length; i++){
+      var a = toScreen(pts[i]), b = toScreen(pts[(i + 1) % pts.length]), L = Math.hypot(b.x - a.x, b.y - a.y), n = Math.max(1, Math.round(L / gap));
+      for(var j = 0; j < n; j++){
+        var t = j / n, x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t;
+        ctx.fillStyle = "rgba(40,30,20,.55)"; ctx.beginPath(); ctx.arc(x + 0.5 * d, y + 0.6 * d, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = (i + j) % 3 ? "#f4efe4" : "#e6c56a"; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.arc(x - 0.5 * d, y - 0.5 * d, r * 0.4, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+  function drawCollageLayer(){
+    var ctx = act.ctx, sz = osdImgSize(); if(!sz) return;
+    var R = paintingRect(), cut = col.compare ? R.x0 + (R.x1 - R.x0) * col.split : R.x1;
+    var tl = toScreen({ x:0, y:0 }), br = toScreen({ x:sz.x, y:sz.y });
+    if(col.patches.length){
+      ctx.save();
+      ctx.beginPath(); ctx.rect(R.x0 - 2, R.y0 - 2, Math.max(0, cut - R.x0 + 2), R.y1 - R.y0 + 4); ctx.clip();
+      col.patches.forEach(function(pt){ collagePath(ctx, pt.pts); ctx.fillStyle = collageFill(ctx, pt.wp); ctx.fill(); });
+      col.patches.forEach(function(pt){ collageEdge(ctx, pt.pts); });
+      // what stands in front goes back on top
+      if(col.figure.complete && col.figure.naturalWidth){ ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high"; ctx.drawImage(col.figure, tl.x, tl.y, br.x - tl.x, br.y - tl.y); }
+      ctx.restore();
+    }
+    var dr = col.drawing;
+    if(dr && dr.pts.length > 1){ // the line being drawn
+      ctx.save(); ctx.lineWidth = 3 * act.dpr; ctx.lineJoin = ctx.lineCap = "round";
+      ctx.setLineDash([8 * act.dpr, 6 * act.dpr]); ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 3 * act.dpr;
+      ctx.beginPath(); dr.pts.forEach(function(p, i){ var q = toScreen(p); if(i){ ctx.lineTo(q.x, q.y); } else { ctx.moveTo(q.x, q.y); } }); ctx.stroke();
+      ctx.restore();
+    }
+    if(col.compare){ drawDivider(ctx, R, cut, col.cfg.real || "The real one"); }
+  }
+  function collageImgPoint(e){ var p = toImage(e); return { x:p.x, y:p.y }; }
+  function inPolyPts(x, y, pts){
+    var c = false;
+    for(var i = 0, j = pts.length - 1; i < pts.length; j = i++){
+      if(((pts[i].y > y) !== (pts[j].y > y)) && (x < (pts[j].x - pts[i].x) * (y - pts[i].y) / (pts[j].y - pts[i].y) + pts[i].x)){ c = !c; }
+    }
+    return c;
+  }
+  function simplifyPts(pts, tol){ // Douglas-Peucker: a wobbly finger line becomes a few straight cuts
+    if(pts.length < 3) return pts.slice();
+    var keep = [0, pts.length - 1], stack = [[0, pts.length - 1]];
+    while(stack.length){
+      var se = stack.pop(), a = pts[se[0]], b = pts[se[1]], best = -1, bi = -1, L = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      for(var i = se[0] + 1; i < se[1]; i++){
+        var d = Math.abs((b.x - a.x) * (a.y - pts[i].y) - (a.x - pts[i].x) * (b.y - a.y)) / L;
+        if(d > best){ best = d; bi = i; }
+      }
+      if(best > tol){ keep.push(bi); stack.push([se[0], bi], [bi, se[1]]); }
+    }
+    keep.sort(function(x, y){ return x - y; });
+    return keep.map(function(i){ return pts[i]; });
+  }
+  function collageDown(e){
+    if(!osd) return;
+    e.preventDefault();
+    try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
+    if(col.compare){ cancelAnimationFrame(col.anim); col.slide = true; collageSlide(e); return; }
+    if(state.findPhase !== "collage" || col.drawing) return;
+    col.drawing = { id:e.pointerId, pts:[collageImgPoint(e)], x:e.clientX, y:e.clientY, far:0 };
+  }
+  function collageMove(e){
+    if(col.slide){ e.preventDefault(); collageSlide(e); return; }
+    var dr = col.drawing; if(!dr || dr.id !== e.pointerId) return;
+    e.preventDefault();
+    dr.far = Math.max(dr.far, Math.hypot(e.clientX - dr.x, e.clientY - dr.y));
+    dr.pts.push(collageImgPoint(e)); redrawActivity();
+  }
+  function collageUp(e){
+    col.slide = false;
+    var dr = col.drawing; if(!dr || dr.id !== e.pointerId) return;
+    col.drawing = null;
+    var sz = osdImgSize(), k = imgPxToScreen() / act.dpr; // CSS px per painting px
+    if(dr.far < 12){ // a tap: a patch under the finger takes the chosen wallpaper
+      var p = dr.pts[0];
+      for(var i = col.patches.length - 1; i >= 0; i--){ if(inPolyPts(p.x, p.y, col.patches[i].pts)){ col.patches[i].wp = col.wp; break; } }
+      redrawActivity(); return;
+    }
+    var pts = simplifyPts(dr.pts, 9 / k).map(function(q){ return { x:Math.max(0, Math.min(sz.x, q.x)), y:Math.max(0, Math.min(sz.y, q.y)) }; });
+    // a single straight swipe makes a band: give it the swipe's length and some thickness
+    if(pts.length === 2){
+      var a = pts[0], b = pts[1], L = Math.hypot(b.x - a.x, b.y - a.y) || 1, nx = -(b.y - a.y) / L * 18 / k, ny = (b.x - a.x) / L * 18 / k;
+      pts = [{ x:a.x + nx, y:a.y + ny }, { x:b.x + nx, y:b.y + ny }, { x:b.x - nx, y:b.y - ny }, { x:a.x - nx, y:a.y - ny }];
+    }
+    if(pts.length > 2 && Math.hypot(pts[0].x - pts[pts.length - 1].x, pts[0].y - pts[pts.length - 1].y) < 2 / k){ pts.pop(); }
+    var area = 0; for(var j = 0, m = pts.length - 1; j < pts.length; m = j++){ area += (pts[m].x + pts[j].x) * (pts[m].y - pts[j].y); }
+    if(Math.abs(area) / 2 * k * k < 600){ redrawActivity(); return; } // too small to see
+    col.patches.push({ pts:pts, wp:col.wp });
+    collageCount(); redrawActivity();
+  }
+  function collageSlide(e){
+    var R = paintingRect(), x = canvasPoint(e).x;
+    col.split = Math.max(0, Math.min(1, (x - R.x0) / Math.max(1, R.x1 - R.x0)));
+    redrawActivity();
+  }
+  function finishCollage(){
+    var s = STOPS[state.findIndex];
+    state.findPhase = "revealed"; col.drawing = null;
+    $("collagePanel").classList.add("hidden");
+    showActivityCaption(s, "");
+    setCollageCompare(true); col.split = 1;
+    var t0 = performance.now();
+    var step = function(now){
+      var t = Math.min(1, (now - t0) / 900), ease = 1 - Math.pow(1 - t, 3);
+      col.split = 1 - 0.5 * ease; redrawActivity();
+      if(t < 1){ col.anim = requestAnimationFrame(step); }
+    };
+    col.anim = requestAnimationFrame(step);
+  }
   /* ----- bead maze: wires laid along the painting's curves, each carrying a bead the color
      of its curve. Slide every bead to the far end of its wire, like the bead toy in a
      waiting room. wires: [{path:[[x,y],...] in painting fractions, color}]; r: bead radius as
@@ -3383,9 +3576,9 @@
     };
     stk.anim = requestAnimationFrame(step);
   }
-  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } else if(act.mode === "play"){ playDown(e); } else if(act.mode === "night"){ nightDown(e); } else if(act.mode === "beads"){ beadsDown(e); } else if(act.mode === "circle"){ circleDown(e); } else if(act.mode === "face"){ faceDown(e); } }
-  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } else if(act.mode === "play"){ playMove(e); } else if(act.mode === "night"){ nightMove(e); } else if(act.mode === "beads"){ beadsMove(e); } else if(act.mode === "circle"){ circleMove(e); } else if(act.mode === "face"){ faceMove(e); } }
-  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } else if(act.mode === "stickers"){ stickerUp(e); } else if(act.mode === "play"){ playUp(e); } else if(act.mode === "night"){ nightUp(e); } else if(act.mode === "beads"){ beadsUp(e); } else if(act.mode === "circle"){ circleUp(e); } else if(act.mode === "face"){ faceUp(e); } }
+  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } else if(act.mode === "play"){ playDown(e); } else if(act.mode === "night"){ nightDown(e); } else if(act.mode === "beads"){ beadsDown(e); } else if(act.mode === "circle"){ circleDown(e); } else if(act.mode === "face"){ faceDown(e); } else if(act.mode === "collage"){ collageDown(e); } }
+  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } else if(act.mode === "play"){ playMove(e); } else if(act.mode === "night"){ nightMove(e); } else if(act.mode === "beads"){ beadsMove(e); } else if(act.mode === "circle"){ circleMove(e); } else if(act.mode === "face"){ faceMove(e); } else if(act.mode === "collage"){ collageMove(e); } }
+  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } else if(act.mode === "stickers"){ stickerUp(e); } else if(act.mode === "play"){ playUp(e); } else if(act.mode === "night"){ nightUp(e); } else if(act.mode === "beads"){ beadsUp(e); } else if(act.mode === "circle"){ circleUp(e); } else if(act.mode === "face"){ faceUp(e); } else if(act.mode === "collage"){ collageUp(e); } }
   function setFeedback(txt, cls){
     var f=$("feedback"); f.textContent=txt; f.className="feedback";
     if(txt){ if(cls) f.classList.add(cls); void f.offsetWidth; f.classList.add("show"); }
@@ -3622,16 +3815,19 @@
   $("faceBack").addEventListener("click", function(){ setFacePreset(-1); faceGoTo(face.vals.map(function(){ return [0, 0, 0]; })); });
   $("faceCompare").addEventListener("click", function(){ setFaceCompare(!face.compare); });
   $("faceDone").addEventListener("click", finishFace);
+  $("collageUndo").addEventListener("click", function(){ col.patches.pop(); collageCount(); redrawActivity(); });
+  $("collageCompare").addEventListener("click", function(){ setCollageCompare(!col.compare); });
+  $("collageDone").addEventListener("click", finishCollage);
   $("actAgainBtn").addEventListener("click", function(){
     var s = STOPS[state.findIndex];
-    if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); } else if(s.stickers){ resumeStickers(s); } else if(s.play){ resumePlay(s); } else if(s.night){ resumeNight(s); } else if(s.beads){ resumeBeads(s); } else if(s.circle){ resumeCircle(s); } else if(s.face){ resumeFace(s); }
+    if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); } else if(s.stickers){ resumeStickers(s); } else if(s.play){ resumePlay(s); } else if(s.night){ resumeNight(s); } else if(s.beads){ resumeBeads(s); } else if(s.circle){ resumeCircle(s); } else if(s.face){ resumeFace(s); } else if(s.collage){ resumeCollage(s, true); }
   });
   $("quitFind").addEventListener("click", function(){ if(state.demo){ show("demo"); } else { showGallery(); } });
   $("againBtn").addEventListener("click", startLooking);
   $("doneBtn").addEventListener("click", function(){ if(state.demo){ show("demo"); } else { showGallery(); } });
 
   /* ---------- hidden demo page for testing: index.html#demo ---------- */
-  var DEMO_KINDS = { paint:"Paint", light:"Move the sun", stickers:"Stickers", play:"Play the painting", night:"Find the night", beads:"Bead maze", circle:"Circle it", face:"Move the eyebrows" };
+  var DEMO_KINDS = { paint:"Paint", light:"Move the sun", stickers:"Stickers", play:"Play the painting", night:"Find the night", beads:"Bead maze", circle:"Circle it", face:"Move the eyebrows", collage:"Wallpaper" };
   function demoJump(painting, i){
     state.demo = true;
     currentMuseum = MUSEUMS.filter(function(m){ return m.id === painting.museum; })[0] || currentMuseum;

@@ -15,7 +15,7 @@ window.MUSEUMS = [
   {
     // a special exhibit: American Stories from Sargent to O'Keeffe (works on loan from the Newark Museum of Art)
     id:"bruce", name:"The Bruce", city:"Greenwich, Connecticut",
-    card:"American Stories from Sargent to O'Keeffe. First up: a lady who can't sit still.",
+    card:"American Stories from Sargent to O'Keeffe: a lady who can't sit still, and a room made of patterns.",
     intro:"A special exhibit of American art, on loan from the Newark Museum of Art. It's at the Bruce until October 10, 2027.",
     cover:"images/mrs-charles-thursby.jpg", coverPos:"50% 26%"
   }
@@ -40,6 +40,9 @@ window.MUSEUMS = [
 //     wall (dx, dy = where the painted shadow's far edge is at the artist's sun). The painted shadows are hidden:
 //     relight brightens a shadow's shape back to the lit color; patches cover it with nearby clean background
 //     (copied from sx,sy; a narrower source width sw is repeated across).
+//   collage:{figure, wallpapers, real} = draw shapes on the background and fill them with wallpapers. figure = the
+//     painting with its background see-through (drawn back on top, so people and things stay in front);
+//     wallpapers = [{name, src} (a tile at the painting's own scale) or {name, color}].
 //   face:{crop, erase, parts, up, down, presets, ask, rest, real, back} = move parts of a painted face (eyebrows).
 //     crop (optional) = a sharp close-up laid over the zoomed-in painting; parts = the painter's own strokes as see-through
 //     cut-outs (inner = which side is nearer the nose, line = where the stroke's middle runs at its inner end,
@@ -874,6 +877,45 @@ window.WORKS = [
       "John Singer Sargent painted Mrs. Charles Thursby around 1898. Her first name was Alice. The painting is six and a half feet tall, so she's just about life-size.",
       "Back then, most ladies in portraits sat still and looked calm. Alice leans forward with her hands on her hips, as if she can't wait to get going. People had a name for women like her: New Women. Busy, bold, and sure of themselves.",
       "At the Bruce, look for the room called Identity. Its wall asks two questions: How do you see yourself? How do you want others to see you? What do you think Alice would say? Then find the big, sparkly portrait near her, Isn't She Lovely, Tracey Norman. How are the two women alike?"
+    ]
+  },
+
+  {
+    id:"thomas", museum:"bruce", title:"Isn't She Lovely, Tracey Norman", artist:"Mickalene Thomas", role:"Identity",
+    card:"A famous model in a room full of patterns, rhinestones and color.",
+    subtitle:"A room made of patterns, and a woman who knows who she is.",
+    alt:"Isn't She Lovely, Tracey Norman by Mickalene Thomas: a woman in a black one-shoulder dress sits on a white wicker stool beside a patterned armchair, with a little dog at her feet, in a room of bright color blocks, wallpapers and black-and-white photos",
+    intro:"You've met Tracey. Now let's look closely at all the pieces of her room.",
+    src:"images/isnt-she-lovely.jpg", tiles:"images/isnt-she-lovely.jpg", thumbPos:"60% 25%",
+    music:"audio/lovely-summertime.mp3",
+    prompts:[
+      "Just look. This is Tracey Norman, sitting in a room full of color.",
+      "How many different patterns can you count? Stripes, flowers, checks, zigzags...",
+      "Look for sparkles. Parts of this painting are covered in tiny rhinestones!",
+      "How is Tracey sitting? How do you think she feels?",
+      "If you could step into this room, which spot would you sit in?"
+    ],
+    stops:[
+      {find:"Look for sparkles! Can you find her shiny necklace?", cx:0.61, cy:0.22, box:{x:0.55, y:0.16, w:0.13, h:0.11}, title:"Thousands of rhinestones", body:"Her necklace is made of real rhinestones, glued right onto the painting! Thomas uses them all over: look along the edges of her dress and the chair. In the museum, they sparkle as you walk past."},
+      {find:"Can you find the little dog?", cx:0.68, cy:0.85, box:{x:0.6, y:0.72, w:0.16, h:0.28}, title:"A black-and-white friend", body:"A fluffy little dog sits by her feet. Look: the dog is black and white, like an old photograph, even though the room around it is full of color."},
+      {find:"Can you find the white stool she's sitting on?", cx:0.575, cy:0.7, box:{x:0.48, y:0.58, w:0.2, h:0.34}, title:"Woven like a basket", body:"Tracey sits on a little wicker stool, woven like a basket. It's black and white too. Thomas mixes photographs and paint, so some things look real and others look painted."},
+      {find:"Find a pattern that looks like wallpaper from long ago.", cx:0.11, cy:0.29, box:{x:0.035, y:0.08, w:0.14, h:0.42}, title:"Groovy waves", body:"Orange and brown waves, just like the wallpaper in lots of homes in the 1970s. That's when Tracey Norman was a famous model. Thomas fills her rooms with patterns from the homes she grew up in."},
+      {find:"Can you find a pillow made of lots of different patterns?", cx:0.89, cy:0.45, box:{x:0.79, y:0.33, w:0.21, h:0.3}, title:"Patterns on patterns", body:"Plaid, checks, stripes and spots, all on one pillow, on a chair covered in even more patterns! Thomas cuts and pieces things together, like a quilt or a collage."},
+      {find:"Some parts of the room are like black-and-white photos. Can you find the leaves?", cx:0.87, cy:0.15, box:{x:0.73, y:0.0, w:0.27, h:0.34}, areas:[{x:0.74, y:0.0, w:0.26, h:0.3},{poly:[[0.16,0.62],[0.25,0.55],[0.31,0.53],[0.3,0.94],[0.16,0.97]]}], focus:{x:0.73, y:0.0, w:0.27, h:0.34}, hint:"in the top right corner, or on the bottom of her dress", title:"Pictures glued in", body:"The leaves in the corner are a black-and-white photo, glued right into the painting. There are more on the bottom of her long dress. Thomas builds her pictures from lots of pieces: paint, photos, fabric patterns and rhinestones."},
+      {find:"Thomas builds her backgrounds patch by patch. Your turn! Pick a wallpaper, then draw a shape on the wall to cover it. Tap a patch to change it.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        collage:{ figure:"images/isnt-she-lovely-figure.webp", real:"Thomas's",
+          // Thomas's own patterns from this painting (tiles at the painting's scale), then a plaid, wood paneling and flat colors
+          wallpapers:[ {name:"Groovy waves", src:"images/thomas-wallpapers/waves.jpg"}, {name:"Gold flowers", src:"images/thomas-wallpapers/damask.jpg"},
+                       {name:"Blue swirls", src:"images/thomas-wallpapers/paisley.jpg"}, {name:"Zigzags", src:"images/thomas-wallpapers/zigzag.jpg"},
+                       {name:"Leaves", src:"images/thomas-wallpapers/leaves.jpg"}, {name:"Plaid", src:"images/thomas-wallpapers/plaid.jpg"},
+                       {name:"Wood", src:"images/thomas-wallpapers/wood.jpg"},
+                       {name:"Pink", color:"#d652b9"}, {name:"Sky blue", color:"#6ec1ec"}, {name:"Yellow", color:"#f1d23a"}, {name:"Red", color:"#e43a3f"} ] },
+        title:"Your room for Tracey", body:"Slide across to see Thomas's room. She chose every patch: bright blocks of color, patterns from the 1970s, black-and-white photos. Each one says something about Tracey and the world she grew up in. What does your room say about her?"}
+    ],
+    done:[
+      "Mickalene Thomas made Isn't She Lovely, Tracey Norman in 2022, with paint, rhinestones and printed pictures, all put together like a collage. It is eight feet wide!",
+      "Tracey Norman grew up in Newark, New Jersey, and became a famous model in the 1970s. Her face was on boxes of hair color in stores all over the country. She was one of the first Black transgender models, and today she is celebrated for being exactly who she is.",
+      "At the Bruce, find her in the room called Identity, near Mrs. Charles Thursby. Two women, painted 125 years apart, both sitting in a way that says: here I am. Stand between them. What's the same? What's different?"
     ]
   }
 ];
