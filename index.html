@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-12a";
+  window.APP_VERSION = "2026-11-12b";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-12a"></script>
+<script src="works.js?v=2026-11-12b"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -799,7 +799,9 @@
     });
     return osd;
   }
-  function osdLoad(){ if(ensureOSD()){ osd.open({ type:"image", url: currentPainting.tiles }); } }
+  // a painting's tiles: one image, or (.dzi) a zoom pyramid, so a very detailed painting loads only the parts in view
+  function tileSource(p){ return /\.dzi$/.test(p.tiles) ? p.tiles : { type:"image", url:p.tiles }; }
+  function osdLoad(){ if(ensureOSD()){ osd.open(tileSource(currentPainting)); } }
   function ensureOSDLook(){
     if(osdLook || typeof OpenSeadragon === "undefined") return osdLook;
     osdLook = OpenSeadragon(osdConfig("osdLook"));
@@ -807,7 +809,7 @@
     osdLook.addHandler("open", function(){ requestAnimationFrame(function(){ try{ osdLook.viewport.goHome(true); }catch(_){} }); });
     return osdLook;
   }
-  function osdLookLoad(){ if(ensureOSDLook()){ osdLook.open({ type:"image", url: currentPainting.tiles }); } }
+  function osdLookLoad(){ if(ensureOSDLook()){ osdLook.open(tileSource(currentPainting)); } }
   function osdImgSize(){ var it = osd && osd.world.getItemAt(0); return it ? it.getContentSize() : null; }
   function osdHome(){ if(osd){ try{ osd.viewport.goHome(true); }catch(_){} } }
   function clearOverlays(){
@@ -2376,8 +2378,8 @@
      Each part is the painter's own stroke as a see-through cut-out, with three points (inner end,
      middle, outer end) that slide up and down. Every column of the cut-out slides with them, so
      the stroke tilts and bends but stays the painter's brushwork. A patch of bare skin covers the
-     place the strokes were painted, and a sharp close-up of the face lies over the zoomed-in
-     painting. With every point back at zero nothing is redrawn: the real painting shows.
+     place the strokes were painted (and, optionally, a sharp close-up of the face lies over the zoomed-in
+     painting). With every point back at zero nothing is redrawn: the real painting shows.
      Places are fractions of the painting. up, down: how far a point may travel (fractions of its
      height). A part's line: where the stroke's middle runs at its three points (fractions of the
      cut-out's height). Presets, per part: [inner, middle, outer], 1 = all the way up, -1 = down. */
@@ -2391,7 +2393,7 @@
     var cfg = s.face;
     act.mode = "face"; face.cfg = cfg; face.moves = 0; face.asked = 0;
     face.vals = cfg.parts.map(function(){ return [0, 0, 0]; });
-    face.crop = faceImg(cfg.crop.src); face.erase = faceImg(cfg.erase.src);
+    face.crop = cfg.crop ? faceImg(cfg.crop.src) : null; face.erase = faceImg(cfg.erase.src);
     face.imgs = cfg.parts.map(function(p){ return faceImg(p.src); });
     $("faceBack").textContent = cfg.back || "Put them back";
     renderFacePresets();
@@ -2445,7 +2447,7 @@
     var ctx = act.ctx, cfg = face.cfg, sz = osdImgSize(); if(!sz) return;
     var R = paintingRect(), cut = face.compare ? R.x0 + (R.x1 - R.x0) * face.split : R.x1;
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
-    facePiece(ctx, face.crop, cfg.crop, sz); // the sharp close-up, exactly as painted
+    if(cfg.crop){ facePiece(ctx, face.crop, cfg.crop, sz); } // a sharp close-up, for a painting whose tiles aren't
     if(!faceAtRest() && faceLoaded()){
       ctx.save(); // yours shows left of the divider, the real painting right of it
       ctx.beginPath(); ctx.rect(R.x0 - 2, R.y0 - 2, Math.max(0, cut - R.x0 + 2), R.y1 - R.y0 + 4); ctx.clip();
@@ -3356,7 +3358,7 @@
   }
   function enterTune(){
     show("tune"); state.tuneIndex=0; state.tunePts=clonePts();
-    requestAnimationFrame(function(){ if(ensureOSDTune()){ osdTune.open({ type:"image", url: currentPainting.tiles }); } });
+    requestAnimationFrame(function(){ if(ensureOSDTune()){ osdTune.open(tileSource(currentPainting)); } });
     renderTune();
   }
   function onTuneTap(e){

@@ -40,13 +40,14 @@ window.MUSEUMS = [
 //     relight brightens a shadow's shape back to the lit color; patches cover it with nearby clean background
 //     (copied from sx,sy; a narrower source width sw is repeated across).
 //   face:{crop, erase, parts, up, down, presets, ask, rest, real, back} = move parts of a painted face (eyebrows).
-//     crop = a sharp close-up laid over the zoomed-in painting; parts = the painter's own strokes as see-through
+//     crop (optional) = a sharp close-up laid over the zoomed-in painting; parts = the painter's own strokes as see-through
 //     cut-outs (inner = which side is nearer the nose, line = where the stroke's middle runs at its inner end,
 //     middle and outer end, as fractions of the cut-out's height); erase = bare skin laid where they were painted;
 //     up, down = how far a point may go (fractions of the painting's height); presets = shapes to try, per part
 //     [inner, middle, outer], 1 = all the way up, -1 = all the way down; ask = questions shown in turn after a change.
 // Optional: role = its part in the visit (shown on the card), kind = "sculpture" etc. (default "painting"),
 // onView:false = not on display right now (card is darkened; still playable),
+// tiles = what the zoomable viewer opens: the image itself, or a .dzi zoom pyramid for a very detailed painting,
 // thumbPos = which part of a tall picture a wide thumbnail shows (CSS object-position; coverPos for a museum's cover).
 window.WORKS = [
   {
@@ -832,7 +833,7 @@ window.WORKS = [
     subtitle:"A bold pose, a purple bow, and two eyebrows that say a lot.",
     alt:"Mrs. Charles Thursby by John Singer Sargent: a woman in a dark striped jacket and a deep red skirt sits forward on the edge of a white armchair, hands on her hips, one foot on a footstool, looking straight at us",
     intro:"You've met Mrs. Thursby. Now let's look closely, from her shoes to her eyebrows.",
-    src:"images/mrs-charles-thursby.jpg", tiles:"images/mrs-charles-thursby.jpg", thumbPos:"50% 26%",
+    src:"images/mrs-charles-thursby.jpg", tiles:"images/mrs-charles-thursby.dzi", thumbPos:"50% 26%",
     music:"audio/salut-d-amour.mp3",
     prompts:[
       "Just look. This is Mrs. Thursby. She has been looking back at people for more than a hundred years.",
@@ -842,23 +843,21 @@ window.WORKS = [
       "Now look at the room around her. Which parts are sharp and clear? Which parts are quick and blurry?"
     ],
     stops:[
-      {find:"Can you find her purple bow?", cx:0.5, cy:0.455, box:{x:0.44, y:0.415, w:0.13, h:0.09}, title:"One bright spot", body:"Almost everything Mrs. Thursby wears is dark: a striped jacket and a deep red skirt. Then, right in the middle, a splash of purple! Sargent knew your eye would jump straight to it."},
-      {find:"Can you find the hand with a ring on it?", cx:0.65, cy:0.555, box:{x:0.59, y:0.52, w:0.12, h:0.075}, title:"Hands on her hips", body:"Both of her hands are on her hips, with her elbows poking out. Try it! How does it make you feel? Bossy? Brave? Ready for anything?"},
-      {find:"Can you find the little footstool?", cx:0.665, cy:0.915, box:{x:0.5, y:0.855, w:0.33, h:0.125}, title:"Ready to go", body:"One foot is up on a footstool, and she's sitting right on the edge of her chair. She isn't leaning back to rest. She looks like she might jump up any second. Where do you think she wants to go?"},
-      {find:"Can you find the long chain hanging from her neck?", cx:0.48, cy:0.46, box:{x:0.36, y:0.35, w:0.24, h:0.24}, areas:[{poly:[[0.395,0.362],[0.44,0.362],[0.425,0.45],[0.41,0.525],[0.37,0.525],[0.38,0.44]]},{x:0.532, y:0.362, w:0.045, h:0.22}], hint:"on both sides of her purple bow", title:"A long, long chain", body:"The chain loops around her neck and hangs all the way down to her waist. Look closely at how Sargent painted it: not link by link, but with quick little dashes of light paint."},
-      {find:"Can you find the white flowers on the curtain?", cx:0.76, cy:0.1, box:{x:0.66, y:0.0, w:0.24, h:0.26}, hint:"up high, on the right", title:"Flowers in a hurry", body:"From far away they're flowers. Up close, each one is only a few dabs of white paint! Sargent painted the room fast and loose, so that your eyes go to Mrs. Thursby instead."},
-      {find:"Sargent signed his name on this painting. Can you find it?", cx:0.2, cy:0.018, box:{x:0.0, y:0.0, w:0.42, h:0.07}, areas:[{x:0.02, y:0.0, w:0.36, h:0.04}], hint:"way up at the top, on the left", title:"John S. Sargent", body:"There it is, in the top corner, in dark paint on a dark wall: John S. Sargent. It almost hides in the shadows. He signed it with the same quick, loopy strokes he used for everything else."},
-      {find:"Sargent painted each eyebrow with one quick stroke. Drag them up or down, or tap a pair below. How does her face change?", cx:0.49, cy:0.304, box:{x:0.365, y:0.238, w:0.25, h:0.132},
+      {find:"Can you find her purple bow?", cx:0.4993, cy:0.4568, box:{x:0.4394, y:0.4166, w:0.1297, h:0.0904}, title:"One bright spot", body:"Almost everything Mrs. Thursby wears is dark: a striped jacket and a deep red skirt. Then, right in the middle, a splash of purple! Sargent knew your eye would jump straight to it."},
+      {find:"Can you find the hand with a ring on it?", cx:0.649, cy:0.5571, box:{x:0.5891, y:0.522, w:0.1198, h:0.0753}, title:"Hands on her hips", body:"Both of her hands are on her hips, with her elbows poking out. Try it! How does it make you feel? Bossy? Brave? Ready for anything?"},
+      {find:"Can you find the little footstool?", cx:0.664, cy:0.9185, box:{x:0.4993, y:0.8583, w:0.3293, h:0.1255}, title:"Ready to go", body:"One foot is up on a footstool, and she's sitting right on the edge of her chair. She isn't leaning back to rest. She looks like she might jump up any second. Where do you think she wants to go?"},
+      {find:"Can you find the long chain hanging from her neck?", cx:0.4793, cy:0.4618, box:{x:0.3596, y:0.3513, w:0.2395, h:0.2409}, areas:[{poly:[[0.3945,0.3634],[0.4394,0.3634],[0.4244,0.4517],[0.4095,0.527],[0.3696,0.527],[0.3795,0.4417]]},{x:0.5312, y:0.3634, w:0.0449, h:0.2209}], hint:"on both sides of her purple bow", title:"A long, long chain", body:"The chain loops around her neck and hangs all the way down to her waist. Look closely at how Sargent painted it: not link by link, but with quick little dashes of light paint."},
+      {find:"Can you find the white flowers on the curtain?", cx:0.7588, cy:0.1004, box:{x:0.659, y:0, w:0.2395, h:0.261}, hint:"up high, on the right", title:"Flowers in a hurry", body:"From far away they're flowers. Up close, each one is only a few dabs of white paint! Sargent painted the room fast and loose, so that your eyes go to Mrs. Thursby instead."},
+      {find:"Sargent signed his name on this painting. Can you find it?", cx:0.1999, cy:0.018, box:{x:0.0003, y:0, w:0.4192, h:0.0703}, areas:[{x:0.0203, y:0, w:0.3593, h:0.0402}], hint:"way up at the top, on the left", title:"John S. Sargent", body:"There it is, in the top corner, in dark paint on a dark wall: John S. Sargent. It almost hides in the shadows. He signed it with the same quick, loopy strokes he used for everything else."},
+      {find:"Sargent painted each eyebrow with one quick stroke. Drag them up or down, or tap a pair below. How does her face change?", cx:0.4893, cy:0.3052, box:{x:0.3646, y:0.2389, w:0.2495, h:0.1325},
         face:{ real:"Sargent's", back:"Put them back", rest:"These are the eyebrows Sargent painted.",
           ask:["How does she feel now?", "What is she thinking now?", "What would she say now?"],
-          // a sharp close-up of her face (soft at the edges), and where it sits on the painting
-          crop:{src:"images/thursby-face.webp", x:0.31543, y:0.20563, w:0.34689, h:0.19545},
           // bare skin for the place the eyebrows were painted
-          erase:{src:"images/thursby-brow-erase.png", x:0.41509, y:0.2946, w:0.10754, h:0.01267},
-          up:0.00813, down:0.00219,
+          erase:{src:"images/thursby-brow-erase.png", x:0.4146, y:0.2959, w:0.1071, h:0.0127},
+          up:0.0082, down:0.0022,
           // Sargent's two strokes: the one on our left, then the one on our right
-          parts:[ {src:"images/thursby-brow-l.png", x:0.41666, y:0.29538, w:0.04447, h:0.00751, inner:"right", line:[0.783,0.477,0.578]},
-                  {src:"images/thursby-brow-r.png", x:0.4709, y:0.29913, w:0.05046, h:0.00766, inner:"left", line:[0.488,0.439,0.613]} ],
+          parts:[ {src:"images/thursby-brow-l.png", x:0.4161, y:0.2967, w:0.0443, h:0.0075, inner:"right", line:[0.783,0.477,0.578]},
+                  {src:"images/thursby-brow-r.png", x:0.4702, y:0.3005, w:0.0503, h:0.0077, inner:"left", line:[0.488,0.439,0.613]} ],
           // shapes to try: both up and arched; inner ends down; inner ends up; one up and one down
           presets:[ [[0.75,1,0.6],[0.75,1,0.6]], [[-1,-0.35,0.55],[-1,-0.35,0.55]], [[0.85,0.3,-0.7],[0.85,0.3,-0.7]], [[0.5,0.9,0.6],[-0.8,-0.6,-0.3]] ] },
         title:"Two little strokes", body:"Eyebrows are tiny, but they do a lot of talking. Up high, and a face looks surprised. Down in the middle, grumpy. Up in the middle, worried. Sargent set Mrs. Thursby's low and steady, the way you look when you're sure of yourself."}
