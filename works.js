@@ -25,7 +25,8 @@ window.MUSEUMS = [
 // stops: cx/cy = point (0-1). box{x,y,w,h} = reveal+tap rectangle (0-1). Tune via the grown-ups tool.
 // Optional per stop: areas/exclude = exact tap region (tap anywhere inside areas, outside exclude), hint = custom hint wording.
 // Activity stops (instead of tap-to-find), zoomed to box:
-//   paint:{look, check, brushes, brush, colors, say, mirror?, wobble?} = paint along. look = how strokes look
+//   paint:{look, check, brushes, brush, colors, say, mirror?, wobble?} = paint along. (palette:{tubes} instead of colors:
+//     tap a tube, tap the palette where the paint goes, smear to mix, tap the mix to pick it.) look = how strokes look
 //     (wax, oil, frosting, gold, wire, soft, glow, streak); check = how the painting is judged
 //     (any, shortBroad, broadSwoosh, thinLong, colorUsed, oneLine, sameSlant, smoothLong); say = words for each result.
 //   stickers:{set, ground, area, real, done, word, start, outside, depth?, flip?, jitter?} = place stickers, then slide a
@@ -324,9 +325,14 @@ window.WORKS = [
       {find:"Look inside. Can you find the cash register?", cx:0.75, cy:0.63, box:{x:0.71, y:0.58, w:0.08, h:0.1}, title:"Nobody at the register", body:"Inside, a cash register sits on the counter, waiting for the first customer. The shelves behind it look almost empty. Is the shop about to open, or has it been closed for a long time?"},
       {find:"Look upstairs. Can you find a window with its blind pulled down?", cx:0.55, cy:0.05, box:{x:0.5, y:0.0, w:0.1, h:0.11}, title:"Someone upstairs?", body:"An upstairs window has its green blind pulled down, just like the sleepy windows in Early Sunday Morning. In his early sketches Hopper put a person in that window. Then he took them out, so the whole building feels empty."},
       {find:"Can you find the dark woods right next to the shop?", cx:0.2, cy:0.4, box:{x:0.0, y:0.05, w:0.4, h:0.75}, title:"The woods next door", body:"On one side, a bright white shop. On the other, a dark green wood. Hopper put them right next to each other, so the painting feels split in two: light and dark, neat and wild."},
-      {find:"Now you be the sun! Drag it to change the time of day. Drag on the color wheel to change the light. Can you make a sunset?", cx:0.565, cy:0.5, box:{x:0.33, y:0.13, w:0.47, h:0.74},
+      {find:"Now you be the sun! Drag it to change the time of day, then try a different light. Can you make a sunset? A night by the moon?", cx:0.565, cy:0.5, box:{x:0.33, y:0.13, w:0.47, h:0.74},
         // the sun comes up on the left here and climbs 15 degrees an hour, so Hopper's seven o'clock sun is 15 degrees up
         light:{ hopper:15, rise:"left", snap:2.5, horizon:0.9, hue:true, back:"Back to 7 A.M.", real:"Hopper's",
+          // lights to try (tap one again for Hopper's plain morning light): mul is multiplied into the painting, glow screened on top
+          filters:[ {name:"Moonlight", dot:"#22346e", mul:[0.16,0.22,0.46], glow:[2,8,26]},
+                    {name:"Golden hour", dot:"#e8b14a", mul:[1,0.79,0.44], glow:[40,22,0]},
+                    {name:"Sunset", dot:"#d9542f", mul:[1,0.56,0.42], glow:[30,4,0]},
+                    {name:"Bright white", dot:"#ffffff", mul:[1,1,1], glow:[72,72,72]} ],
           clock:{ painter:"That's Hopper's time!", shade:"The roof shades the wall." }, mark:"7 A.M.",
           // the wall and the door frame as they would look in full sun (Hopper's painted shadows taken out)
           overlays:[ {src:"images/seven-am-sunlit.webp", x:0.444824, y:0.214426, w:0.373047, h:0.307541} ],

@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-12b";
+  window.APP_VERSION = "2026-11-12c";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-12b"></script>
+<script src="works.js?v=2026-11-12c"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -187,6 +187,7 @@
   .palette-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:420px;}
   .palette-tubes{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
   .tube-btn{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 10px 0 6px;border-radius:19px;border:1.5px solid var(--foam-faint);background:#0b1210;color:var(--foam);font-size:.8rem;}
+  .tube-btn[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.18);color:var(--gold-bright);}
   .tube-dab{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);box-shadow:inset -3px -3px 5px rgba(0,0,0,.25);
     background-image:radial-gradient(circle at 33% 28%, rgba(255,255,255,.85) 0, rgba(255,255,255,.3) 16%, rgba(255,255,255,0) 34%);}
   .palette-canvas{width:100%;height:96px;border-radius:14px;background:#f3efe6;touch-action:none;cursor:crosshair;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08);}
@@ -228,6 +229,10 @@
   #lightPanel .paint-actions{flex-wrap:nowrap;gap:6px;}
   #lightPanel .paint-actions .btn{padding:0 12px;white-space:nowrap;}
   /* with a color wheel: the wheel and a column of buttons side by side, so the picture keeps its room on a phone */
+  .light-filter{display:inline-flex;flex-direction:column;align-items:center;gap:3px;min-width:68px;padding:6px 4px 5px;border-radius:12px;border:1.5px solid var(--foam-faint);background:#0b1210;color:var(--foam);font-size:.74rem;line-height:1.1;}
+  .light-filter[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.15);color:var(--gold-bright);}
+  .light-filter-dot{width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);}
+  #lightFilters{gap:6px;}
   #lightPanel.hue{display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;gap:6px 16px;}
   #lightPanel.hue #lightStatus{grid-column:1 / -1;}
   #lightPanel.hue .paint-actions{flex-direction:column;align-items:stretch;min-width:142px;} /* wide enough for "Stop comparing", so nothing shifts */
@@ -373,6 +378,7 @@
       </div>
       <div class="paint-panel hidden" id="lightPanel">
         <div class="light-status" id="lightStatus" aria-live="polite"></div>
+        <div class="paint-row hidden" id="lightFilters" role="group" aria-label="Choose the light"></div>
         <canvas class="night-wheel small hidden" id="lightWheel" aria-label="Color wheel: drag to change the color of the light"></canvas>
         <div class="paint-row paint-actions">
           <button class="btn btn-ghost" id="lightHopper">Back to Hopper's sun</button>
@@ -1300,22 +1306,28 @@
   var pal = { cfg:null, W:216, H:72, h:null, mix:null, lin:[], next:0, knife:null, down:null, picked:null, pickAt:null, out:null, raf:0 };
   var PAL_SLOTS = [[0.1,0.33],[0.27,0.67],[0.44,0.33],[0.61,0.67],[0.78,0.33],[0.92,0.67],[0.2,0.3],[0.52,0.7]];
   function setupPalette(cfg){
-    pal.cfg = cfg; pal.next = 0; pal.knife = null; pal.down = null; pal.picked = null; pal.pickAt = null;
+    pal.cfg = cfg; pal.next = 0; pal.loaded = -1; pal.knife = null; pal.down = null; pal.picked = null; pal.pickAt = null;
     pal.h = new Float32Array(pal.W * pal.H); pal.mix = new Float32Array(pal.W * pal.H * cfg.tubes.length);
     pal.lin = cfg.tubes.map(function(t){ var n = parseInt(t.hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255].map(function(v){ return Math.pow(Math.max(v, 3) / 255, 2.2); }); });
     var row = $("paletteTubes"); row.innerHTML = "";
     cfg.tubes.forEach(function(t, k){
       var b = document.createElement("button"); b.type = "button"; b.className = "tube-btn";
       b.innerHTML = '<span class="tube-dab" style="background-color:' + t.hex + '"></span><span>' + t.name + '</span>';
-      b.setAttribute("aria-label", "Squirt " + t.name);
-      b.addEventListener("click", function(){ squirt(k); });
+      b.setAttribute("aria-label", "Squirt " + t.name); b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function(){ loadTube(pal.loaded === k ? -1 : k); });
       row.appendChild(b);
     });
     $("paletteChosen").style.backgroundColor = "transparent"; $("paletteChosen").classList.add("empty");
-    paletteHint(cfg.start || "Squirt some paints onto your palette.");
+    paletteHint(cfg.start || "Tap a paint, then tap your palette to squeeze some out.");
     drawPalette();
   }
   function paletteHint(t){ $("paletteHint").textContent = t; }
+  // tap a tube to pick it up, then tap the palette where the paint should go
+  function loadTube(k){
+    pal.loaded = k;
+    Array.prototype.forEach.call($("paletteTubes").children, function(b, n){ b.setAttribute("aria-pressed", String(n === k)); });
+    if(k >= 0){ paletteHint("Now tap your palette where you want the " + pal.cfg.tubes[k].name.toLowerCase() + "."); }
+  }
   function palCellColor(i){ // the mixed color of one cell, as sRGB 0-255
     var K = pal.lin.length, out = [1, 1, 1];
     for(var k=0; k<K; k++){ var wk = pal.mix[i * K + k]; if(wk > 0){ for(var c=0; c<3; c++){ out[c] *= Math.pow(pal.lin[k][c], wk); } } }
@@ -1329,8 +1341,9 @@
     pal.h[i] = Math.min(2.2, tot);
   }
   // A squeeze from a tube: a round ribbon of paint that coils in on itself and piles up where it overlaps
-  function squirt(k){
-    var s = PAL_SLOTS[pal.next++ % PAL_SLOTS.length], cx = s[0] * pal.W, cy = s[1] * pal.H, R = 10.5;
+  function squirt(k, at){
+    var s = PAL_SLOTS[pal.next++ % PAL_SLOTS.length], R = 10.5;
+    var cx = at ? Math.max(R * 1.2, Math.min(pal.W - R * 1.2, at.x)) : s[0] * pal.W, cy = at ? Math.max(R, Math.min(pal.H - R, at.y)) : s[1] * pal.H;
     var th0 = Math.random() * Math.PI * 2, path = [];
     for(var n=0; n<=40; n++){
       var t = n / 40, rho = R * (0.6 - 0.48 * t), th = th0 + t * Math.PI * 1.7;
@@ -1499,6 +1512,7 @@
     var dn = pal.down; if(!dn) return;
     pal.down = null;
     if(dn.moved){ knifeLift(dn.last); schedulePalette(); paletteHint(pal.cfg.pickHint || "Tap your mix to pick that color."); return; }
+    if(pal.loaded >= 0){ var k = pal.loaded; loadTube(-1); squirt(k, dn.last); return; } // a tube in hand: squeeze it out right here
     // a tap picks the color under the finger (the most paint within a fingertip of it)
     var tx = Math.floor(dn.last.x), ty = Math.floor(dn.last.y), i = -1, best = 0.02, x, y;
     for(var yy=ty-3; yy<=ty+3; yy++){ for(var xx=tx-3; xx<=tx+3; xx++){
@@ -1539,7 +1553,7 @@
   function enterLight(s){
     var cfg = s.light;
     act.mode = "light"; light.cfg = cfg; light.theta = cfg.hopper; light.patches = [];
-    light.filter = [1, 1, 1]; light.at = {x:0, y:0}; light.plain = true;
+    light.filter = [1, 1, 1]; light.at = {x:0, y:0}; light.plain = true; light.glow = null; light.which = -1;
     light.img = new Image();
     light.img.onload = function(){ buildLightPatches(); redrawActivity(); };
     light.img.src = currentPainting.src;
@@ -1548,8 +1562,11 @@
     light.erases = (cfg.objects || []).map(function(o){ return o.erase ? lightImg(o.erase.src) : null; });
     light.mask = cfg.porch ? lightImg(cfg.porch.mask) : null;
     $("lightHopper").textContent = cfg.back || "Back to Hopper's sun";
-    $("lightWheel").classList.toggle("hidden", !cfg.hue); $("lightCompare").classList.toggle("hidden", !cfg.hue);
-    $("lightPanel").classList.toggle("hue", !!cfg.hue);
+    var wheel = cfg.hue && !cfg.filters; // named filters (buttons) instead of the color wheel
+    $("lightWheel").classList.toggle("hidden", !wheel); $("lightCompare").classList.toggle("hidden", !cfg.hue);
+    $("lightPanel").classList.toggle("hue", !!wheel);
+    $("lightFilters").classList.toggle("hidden", !cfg.filters);
+    renderLightFilters();
     resumeLight(s);
   }
   function resumeLight(s){
@@ -1561,7 +1578,8 @@
     showActCanvas("light");
     $("frameFind").classList.add("no-map"); // the minimap would show the painting in its old light, and the shadows would draw over it
     $("lightPanel").classList.remove("hidden");
-    if(light.cfg.hue){ paintWheel($("lightWheel"), light, light.plain); }
+    if(light.cfg.hue && !light.cfg.filters){ paintWheel($("lightWheel"), light, light.plain); }
+    markLightFilter();
     redrawActivity(); updateLightStatus();
     updateGuides();
   }
@@ -1782,6 +1800,11 @@
         ctx.globalCompositeOperation = "multiply";
         ctx.fillStyle = "rgb(" + light.filter.map(function(v){ return Math.round(v * 255); }).join(",") + ")";
         ctx.fillRect(x0, y0, w, h);
+        if(light.glow){ // and some light added on top (screen lightens, the way a bright light washes over things)
+          ctx.globalCompositeOperation = "screen";
+          ctx.fillStyle = "rgb(" + light.glow.join(",") + ")";
+          ctx.fillRect(x0, y0, w, h);
+        }
       }
       ctx.restore();
     }
@@ -1880,11 +1903,32 @@
     $("lightCompare").setAttribute("aria-pressed", String(on));
     redrawActivity();
   }
+  // named lights (light.filters:[{name, mul:[r,g,b] 0-1 multiplied in, glow:[r,g,b] 0-255 screened on top, dot}]).
+  // Tap one to light the scene with it; tap it again for plain daylight.
+  function renderLightFilters(){
+    var row = $("lightFilters"); row.innerHTML = "";
+    (light.cfg.filters || []).forEach(function(f, i){
+      var b = document.createElement("button"); b.type = "button"; b.className = "light-filter";
+      b.innerHTML = '<span class="light-filter-dot" style="background:' + f.dot + '"></span><span></span>';
+      b.lastChild.textContent = f.name; b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function(){ if(state.findPhase === "lighting"){ setLightFilter(light.which === i ? -1 : i); } });
+      row.appendChild(b);
+    });
+  }
+  function setLightFilter(i){
+    var f = i >= 0 ? light.cfg.filters[i] : null;
+    light.which = i; light.plain = !f;
+    light.filter = f ? f.mul.slice() : [1, 1, 1]; light.glow = f && f.glow ? f.glow.slice() : null;
+    markLightFilter(); updateLightStatus(); redrawActivity();
+  }
+  function markLightFilter(){
+    Array.prototype.forEach.call($("lightFilters").children, function(b, n){ b.setAttribute("aria-pressed", String(n === light.which)); });
+  }
   function lightWheelPick(e){ // the color of the light: the middle of the wheel is plain daylight, no filter
     var c = $("lightWheel"), r = c.getBoundingClientRect(), R = r.width / 2 - 3;
     var x = (e.clientX - r.left - r.width / 2) / R, y = (e.clientY - r.top - r.height / 2) / R, d = Math.sqrt(x * x + y * y);
     if(d > 1){ x /= d; y /= d; d = 1; }
-    light.plain = d < 0.14;
+    light.plain = d < 0.14; light.glow = null;
     if(light.plain){ x = 0; y = 0; light.filter = [1, 1, 1]; }
     else { light.filter = wheelFilter(wheelRgb((Math.atan2(y, x) * 180 / Math.PI + 360) % 360, d)); }
     light.at = { x:x, y:y };
@@ -1923,8 +1967,8 @@
       if(k < 1){ light.tween = requestAnimationFrame(step); }
     };
     if(light.cfg.hue){ // and the plain light he painted in
-      light.filter = [1, 1, 1]; light.at = {x:0, y:0}; light.plain = true;
-      paintWheel($("lightWheel"), light, true);
+      light.filter = [1, 1, 1]; light.at = {x:0, y:0}; light.plain = true; light.glow = null; light.which = -1;
+      if(light.cfg.filters){ markLightFilter(); } else { paintWheel($("lightWheel"), light, true); }
     }
     light.tween = requestAnimationFrame(step);
   }
