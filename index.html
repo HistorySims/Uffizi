@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-12d";
+  window.APP_VERSION = "2026-11-12e";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-12d"></script>
+<script src="works.js?v=2026-11-12e"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -927,7 +927,7 @@
     cancelAnimationFrame(act.raf); act.raf = 0; act.mode = null;
     actCanvas().classList.add("hidden");
     $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden"); $("playPanel").classList.add("hidden"); $("nightPanel").classList.add("hidden"); $("simplePanel").classList.add("hidden"); $("facePanel").classList.add("hidden");
-    face.grabs = {}; face.slide = false; face.compare = false; cancelAnimationFrame(face.anim); cancelAnimationFrame(face.tween);
+    face.grabs = {}; face.nav = {}; face.slide = false; face.compare = false; cancelAnimationFrame(face.anim); cancelAnimationFrame(face.tween);
     cancelAnimationFrame(beads.raf); beads.drag = null; lasso.drawing = false; cancelAnimationFrame(lasso.raf);
     night.loadId++; cancelAnimationFrame(night.raf); night.raf = 0; cancelAnimationFrame(night.anim); night.compare = false; night.slide = false; $("frameFind").classList.remove("night-mode", "no-map");
     hushPlay(1.5); cancelAnimationFrame(play.raf); play.raf = 0; play.ripples = []; duckBg(false);
@@ -2447,7 +2447,7 @@
      Places are fractions of the painting. up, down: how far a point may travel (fractions of its
      height). A part's line: where the stroke's middle runs at its three points (fractions of the
      cut-out's height). Presets, per part: [inner, middle, outer], 1 = all the way up, -1 = down. */
-  var face = { cfg:null, crop:null, erase:null, imgs:[], vals:[], grabs:{}, moves:0, asked:0, preset:-1, tween:0, compare:false, split:0.5, slide:false, anim:0 };
+  var face = { cfg:null, crop:null, erase:null, imgs:[], vals:[], grabs:{}, nav:{}, moves:0, asked:0, preset:-1, tween:0, compare:false, split:0.5, slide:false, anim:0 };
   function faceImg(src){
     var im = new Image();
     im.onload = function(){ if(act.mode === "face"){ redrawActivity(); } };
@@ -2465,7 +2465,7 @@
   }
   function resumeFace(s){
     state.findPhase = "face";
-    face.grabs = {}; face.slide = false; setFaceCompare(false);
+    face.grabs = {}; face.nav = {}; face.slide = false; setFaceCompare(false);
     $("findQ").textContent = s.find;
     $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
     if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
@@ -2550,16 +2550,51 @@
       face.slide = true; faceSlide(e); return;
     }
     if(state.findPhase !== "face" || !faceLoaded()) return;
-    var g = faceGrab(e); if(!g) return;
-    e.preventDefault(); cancelAnimationFrame(face.tween);
+    var g = faceGrab(e);
+    e.preventDefault();
     try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
-    g.y = canvasPoint(e).y; g.from = face.vals[g.n].slice(); g.moved = false;
+    // a second finger arriving while the first hasn't done much yet: one finger on each eyebrow moves
+    // both; anything else is a pinch, so the first finger lets go of its eyebrow and both move the view
+    var gids = Object.keys(face.grabs), nids = Object.keys(face.nav);
+    if(gids.length + nids.length === 1){
+      var first = face.grabs[gids[0]], fresh = first ? !first.moved || performance.now() - first.t0 < 350 : true;
+      if(fresh && !(g && first && first.n !== g.n)){
+        if(first){ face.vals[first.n] = first.from.slice(); delete face.grabs[gids[0]]; face.nav[gids[0]] = { x:first.cx, y:first.cy }; redrawActivity(); }
+        g = null;
+      }
+    }
+    if(!g){ face.nav[e.pointerId] = { x:e.clientX, y:e.clientY }; return; } // this finger moves the view
+    cancelAnimationFrame(face.tween);
+    g.y = canvasPoint(e).y; g.from = face.vals[g.n].slice(); g.moved = false; g.t0 = performance.now(); g.cx = e.clientX; g.cy = e.clientY;
     face.grabs[e.pointerId] = g; setFacePreset(-1);
+  }
+  // moving the view with fingers: one finger drags the painting, two pinch to zoom around the spot between them
+  function faceNavMove(e){
+    var ids = Object.keys(face.nav), r = osd.element.getBoundingClientRect(), P = OpenSeadragon.Point;
+    var before = ids.map(function(id){ return face.nav[id]; }), cx0 = 0, cy0 = 0, cx1 = 0, cy1 = 0;
+    before.forEach(function(q){ cx0 += q.x / ids.length; cy0 += q.y / ids.length; });
+    face.nav[e.pointerId] = { x:e.clientX, y:e.clientY };
+    var after = ids.map(function(id){ return face.nav[id]; });
+    after.forEach(function(q){ cx1 += q.x / ids.length; cy1 += q.y / ids.length; });
+    if(ids.length >= 2){
+      var d0 = Math.hypot(before[0].x - before[1].x, before[0].y - before[1].y), d1 = Math.hypot(after[0].x - after[1].x, after[0].y - after[1].y);
+      if(d0 > 10){ osd.viewport.zoomBy(d1 / d0, osd.viewport.pointFromPixel(new P(cx1 - r.left, cy1 - r.top), true), true); }
+    }
+    osd.viewport.panBy(osd.viewport.deltaPointsFromPixels(new P(cx0 - cx1, cy0 - cy1), true), true);
+    osd.viewport.applyConstraints(true);
+  }
+  function faceWheel(e){ // a mouse wheel or trackpad zooms around the pointer
+    if(act.mode !== "face" || state.findPhase !== "face" || face.compare || !osd) return;
+    e.preventDefault();
+    var r = osd.element.getBoundingClientRect();
+    osd.viewport.zoomBy(Math.pow(1.0018, -e.deltaY), osd.viewport.pointFromPixel(new OpenSeadragon.Point(e.clientX - r.left, e.clientY - r.top), true), true);
+    osd.viewport.applyConstraints(true);
   }
   function faceMove(e){
     if(face.slide){ e.preventDefault(); faceSlide(e); return; }
+    if(face.nav[e.pointerId]){ e.preventDefault(); faceNavMove(e); return; }
     var g = face.grabs[e.pointerId]; if(!g) return;
-    e.preventDefault();
+    e.preventDefault(); g.cx = e.clientX; g.cy = e.clientY;
     var sz = osdImgSize(), cfg = face.cfg, v = face.vals[g.n];
     var d = (canvasPoint(e).y - g.y) / (imgPxToScreen() * sz.y); // the finger's travel, as a fraction of the painting's height
     if(g.i === 1){ // the middle carries the whole stroke along, keeping its shape
@@ -2570,7 +2605,7 @@
     redrawActivity();
   }
   function faceUp(e){
-    face.slide = false;
+    face.slide = false; delete face.nav[e.pointerId];
     var g = face.grabs[e.pointerId]; if(!g) return;
     delete face.grabs[e.pointerId];
     if(!g.moved) return;
@@ -3515,6 +3550,7 @@
   $("showMeBtn").addEventListener("click", function(){ revealStop(state.findIndex, false); });
   $("nextFindBtn").addEventListener("click", nextFind);
   $("actCanvas").addEventListener("pointerdown", activityDown);
+  $("actCanvas").addEventListener("wheel", faceWheel, { passive:false });
   $("actCanvas").addEventListener("pointermove", activityMove);
   $("actCanvas").addEventListener("pointerup", activityUp);
   $("actCanvas").addEventListener("pointercancel", activityUp);
