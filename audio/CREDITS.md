@@ -26,6 +26,12 @@ of Congress recordings below come from its National Jukebox, via Internet Archiv
 | the-swan.mp3 | Camille Saint-Saëns, *The Swan* (1886), with Godard, on flute | Georges Barrère, 1913 | [Library of Congress](https://archive.org/details/loc-jukebox-648576-the-swan) | Public domain | Music, Pink and Blue No. 2 |
 | meditation.mp3 | Jules Massenet, *Méditation*, from *Thaïs* (1894) | Mischa Elman, violin, with Josef Bonime, 1919 | [Library of Congress](https://archive.org/details/loc-jukebox-290619-meditation) | Public domain | La Fortune |
 
+## The Bruce
+
+| File | Music | Recording | Source | License | Paired with |
+|---|---|---|---|---|---|
+| salut-d-amour.mp3 | Edward Elgar, *Salut d'amour* (1888) | Maud Powell, violin, with George Falkenstein, piano, Victor, 1913. Powell was an American violinist, and a famous one, in the same years Alice Thursby sat for Sargent | [Library of Congress](https://archive.org/details/loc-jukebox-133678-salut-d-amour) | Public domain | Mrs. Charles Thursby |
+
 ## The Uffizi
 
 | File | Music | Recording | Source | License | Paired with |
