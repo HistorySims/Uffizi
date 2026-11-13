@@ -40,6 +40,9 @@ window.MUSEUMS = [
 //     wall (dx, dy = where the painted shadow's far edge is at the artist's sun). The painted shadows are hidden:
 //     relight brightens a shadow's shape back to the lit color; patches cover it with nearby clean background
 //     (copied from sx,sy; a narrower source width sw is repeated across).
+//   frames:{canvas, wall, frames, real, ask} = try other frames on the painting, pick the one that suits it, then
+//     compare with the artist's own. canvas = the painted area (the photo includes the real frame); wall = the photo
+//     with the real frame taken out; frames = [{name, src, x,y,w,h, dot, say} | {name, real:true} | {name} (none)].
 //   collage:{figure, wallpapers, real} = draw shapes on the background and fill them with wallpapers. figure = the
 //     painting with its background see-through (drawn back on top, so people and things stay in front);
 //     wallpapers = [{name, src} (a tile at the painting's own scale) or {name, color}].
@@ -567,18 +570,27 @@ window.WORKS = [
       "If you were at this party, where would you want to stand?"
     ],
     stops:[
-      {find:"Can you find Lady Liberty, shining gold?", cx:0.275, cy:0.55, box:{x:0.2, y:0.4, w:0.15, h:0.28}, title:"Lady Liberty", body:"The Statue of Liberty is the guest of honor. Stettheimer made her gold and built her up so she seems to pop right out of the picture. She stands on a tall white base that says LIBERTY, welcoming every ship into the harbor."},
-      {find:"Can you find a little boat puffing across the water?", cx:0.473, cy:0.526, box:{x:0.42, y:0.495, w:0.11, h:0.06}, title:"Puff, puff", body:"A little steamboat chugs across the harbor, its smokestack puffing away. In those days, boats like this carried people back and forth across New York's busy waters all day long."},
-      {find:"Can you find a string of tiny party flags?", cx:0.64, cy:0.58, box:{x:0.52, y:0.54, w:0.24, h:0.08}, title:"Dressed for a party", body:"This gray warship is strung with a line of little colored flags, all the way up to the top of its mast. Sailors call that 'dressing ship,' and they do it to celebrate. Even the battleships came to the party."},
-      {find:"Can you find an airplane in the sky?", cx:0.25, cy:0.29, box:{x:0.2, y:0.25, w:0.1, h:0.08}, title:"A brand-new flying machine", body:"Look up! An old-fashioned airplane with two sets of wings zooms over the city. Airplanes were still new and exciting back then, so of course Stettheimer invited one to the party."},
-      {find:"Something else is floating in the sky, shaped like a giant cigar. Can you find it?", cx:0.74, cy:0.29, box:{x:0.68, y:0.26, w:0.12, h:0.06}, title:"An airship", body:"That long floating shape is an airship, a kind of giant balloon with an engine. Stettheimer filled her sky with every kind of flying thing, to make the celebration feel even bigger."},
-      {find:"Can you find the words NEW YORK 1918?", cx:0.505, cy:0.815, box:{x:0.44, y:0.76, w:0.13, h:0.1}, title:"Signed by the city", body:"Down at the bottom, two figures hold up a shield that says NEW YORK 1918, with a little golden eagle perched on top. It's like the city wrote its own name on the painting."},
-      {find:"Now look outside the painting. Can you find the golden eagle on top of the frame?", cx:0.5, cy:0.12, box:{x:0.35, y:0.06, w:0.3, h:0.12}, title:"The carved eagle", body:"The party doesn't stop at the edge of the canvas. The frame is wrapped in a twisted red, white, and blue rope with tassels, and a carved golden eagle spreads its wings on top. Stettheimer often designed special frames for her paintings, and this one is part of the fun."}
+      {find:"This painting is a party for America! Find the biggest flag, waving in the wind.", cx:0.65, cy:0.69, box:{x:0.52, y:0.62, w:0.26, h:0.15}, title:"Stars and stripes", body:"A giant American flag flaps over the battleship, so big it hangs right off the edge of the ship. Stettheimer painted this as World War I was ending, and the whole city was cheering."},
+      {find:"Ships dress up for parties too. Can you find a string of tiny party flags?", cx:0.64, cy:0.58, box:{x:0.52, y:0.54, w:0.24, h:0.08}, title:"Dressed for a party", body:"This gray warship is strung with a line of little colored flags, all the way up to the top of its mast. Sailors call that 'dressing ship,' and they do it to celebrate. Even the battleships came to the party."},
+      {find:"Every party needs a guest of honor. Can you find Lady Liberty, shining gold?", cx:0.275, cy:0.55, box:{x:0.2, y:0.4, w:0.15, h:0.28}, title:"The guest of honor", body:"The Statue of Liberty stands for freedom, and here she gets a party all her own. Stettheimer made her gold and built her up with thick paint so she pops right out of the picture, on a tall white base that says LIBERTY."},
+      {find:"The party is also for new inventions! Can you find an airplane in the sky?", cx:0.25, cy:0.29, box:{x:0.2, y:0.25, w:0.1, h:0.08}, title:"A brand-new flying machine", body:"An airplane zooms over the city. The first airplane had flown only fifteen years before this painting, so airplanes were still new and amazing. People came out just to watch them fly."},
+      {find:"Something else is floating in the sky, shaped like a giant cigar. Can you find it?", cx:0.74, cy:0.29, box:{x:0.68, y:0.26, w:0.12, h:0.06}, title:"An airship", body:"That long floating shape is an airship: a giant balloon with an engine, steered through the sky. In 1918 it was one of the newest, most exciting ways to fly."},
+      {find:"Find the tallest skyscraper in the city.", cx:0.39, cy:0.3, box:{x:0.32, y:0.18, w:0.3, h:0.3}, areas:[{x:0.36, y:0.19, w:0.05, h:0.27},{x:0.49, y:0.2, w:0.04, h:0.26}], focus:{x:0.32, y:0.18, w:0.3, h:0.3}, hint:"up in the middle, above the city", title:"Reaching for the sky", body:"In 1918, New York had the tallest buildings in the world. Steel frames and new electric elevators let builders stack floor on floor on floor. Stettheimer painted them shooting up like fireworks."},
+      {find:"Stettheimer's frame is part of the party. Try some other frames on her painting. Which one suits it best?", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        frames:{ real:"Stettheimer's", ask:"Does it suit the party?", wall:"images/frames/wall.jpg",
+          canvas:{x:0.16396, y:0.18311, w:0.67339, h:0.72412},
+          frames:[ {name:"Stettheimer's own", real:true, dot:"background:repeating-linear-gradient(45deg,#b8433a 0 4px,#efe6d2 4px 8px,#3d5878 8px 12px,#efe6d2 12px 16px);", say:"You picked Stettheimer's own frame, the one she made for this painting!"},
+                   {name:"Gaudy gold", src:"images/frames/gold.webp", x:0.03058, y:0.08301, w:0.94014, h:0.92432, dot:"border:5px solid #c79a35;box-shadow:inset 0 0 0 2px #f5d77a;background:#e9e6df;"},
+                   {name:"Plain black", src:"images/frames/black.webp", x:0.11321, y:0.14502, w:0.77489, h:0.80029, dot:"border:3px solid #111;background:#e9e6df;"},
+                   {name:"Craftsman oak", src:"images/frames/oak.webp", x:0.03383, y:0.10742, w:0.93364, h:0.87549, dot:"border:5px solid #6e4524;background:#e9e6df;"},
+                   {name:"Thin silver", src:"images/frames/silver.webp", x:0.12362, y:0.15283, w:0.75407, h:0.78467, dot:"border:2px solid #c4c6c8;background:#e9e6df;"},
+                   {name:"No frame", dot:"border:1px dashed #9aa3ad;background:#e9e6df;"} ] },
+        title:"A frame for a party", body:"Stettheimer was painting a loud, happy celebration, so she designed a frame to join the fun: red, white and blue rope with tassels, and a golden eagle on top, like party decorations. Slide across to compare. A plain frame can make a painting feel calm. Hers makes it feel like a parade."}
     ],
     done:[
       "Florine Stettheimer painted New York/Liberty in 1918 and 1919, just as a terrible world war was ending. The city was ready to celebrate, and so was she: flags, ships, airplanes, skyscrapers, and Lady Liberty in gold.",
       "Stettheimer lived in New York with her mother and her sisters, and together they threw famous parties for artists, writers, and dancers. Her paintings often look like parties too: bright, busy, and full of fun little details.",
-      "The Whitney got this painting in 2017, so it's one of the newer arrivals at the museum. When you see it, find Lady Liberty, the puffing steamboat, the party flags, and the carved eagle on top of the frame."
+      "The Whitney got this painting in 2017, so it's one of the newer arrivals at the museum. When you see it, find the flags, the airplane and the airship, then step back and look at the frame: the rope, the tassels and the carved eagle on top."
     ]
   },
   {

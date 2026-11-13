@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-12g";
+  window.APP_VERSION = "2026-11-13a";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-12g"></script>
+<script src="works.js?v=2026-11-13a"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -250,6 +250,11 @@
   #collageStatus{white-space:nowrap;font-size:min(1.05rem,4.2vw);}
   #collagePanel .paint-actions{flex-wrap:nowrap;gap:6px;}
   #collagePanel .paint-actions .btn{padding:0 12px;white-space:nowrap;}
+  .frame-tray{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:430px;}
+  .frame-btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 10px 0 6px;border-radius:12px;border:1.5px solid var(--foam-faint);background:#0b1210;color:var(--foam);font-size:.8rem;}
+  .frame-btn[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.15);color:var(--gold-bright);}
+  .frame-dot{width:22px;height:28px;border-radius:3px;box-sizing:border-box;flex:none;}
+  #framesStatus{white-space:nowrap;font-size:min(1.05rem,4.2vw);}
   .paint-canvas:focus{outline:none;}
   .paint-canvas:focus-visible{outline:2px solid var(--gold-bright);outline-offset:-2px;}
   #stickerGo{display:none;}
@@ -433,6 +438,13 @@
           <button class="btn btn-ghost" id="collageUndo" disabled>Undo</button>
           <button class="btn btn-ghost" id="collageCompare" aria-pressed="false">Compare</button>
           <button class="btn btn-primary" id="collageDone" disabled>I'm done</button>
+        </div>
+      </div>
+      <div class="paint-panel hidden" id="framesPanel">
+        <div class="light-status" id="framesStatus" aria-live="polite"></div>
+        <div class="frame-tray" id="frameTray" role="group" aria-label="Try a frame"></div>
+        <div class="paint-row paint-actions">
+          <button class="btn btn-primary" id="framesDone">This one suits it!</button>
         </div>
       </div>
       <div class="paint-panel hidden" id="playPanel">
@@ -907,7 +919,7 @@
     $("showMeBtn").classList.add("hidden");
     setFeedback("", "");
     resetReveal();
-    $("findProgress").textContent = (currentPainting.freeTap || s.paint || s.light || s.stickers || s.play || s.night || s.beads || s.circle || s.face || s.collage ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
+    $("findProgress").textContent = (currentPainting.freeTap || s.paint || s.light || s.stickers || s.play || s.night || s.beads || s.circle || s.face || s.collage || s.frames ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
     if(s.paint){ enterPaint(s); return; }
     if(s.stickers){ enterStickers(s); return; }
     if(s.light){ enterLight(s); return; }
@@ -917,6 +929,7 @@
     if(s.circle){ enterCircle(s); return; }
     if(s.face){ enterFace(s); return; }
     if(s.collage){ enterCollage(s); return; }
+    if(s.frames){ enterFrames(s); return; }
     $("frameFind").classList.add("seeking");
     $("findQ").textContent = currentPainting.freeTap ? s.find : (s.find + " Tap it!");
     updateGuides();
@@ -942,7 +955,8 @@
   function exitActivity(){
     cancelAnimationFrame(act.raf); act.raf = 0; act.mode = null;
     actCanvas().classList.add("hidden");
-    $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden"); $("playPanel").classList.add("hidden"); $("nightPanel").classList.add("hidden"); $("simplePanel").classList.add("hidden"); $("facePanel").classList.add("hidden"); $("collagePanel").classList.add("hidden");
+    $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden"); $("playPanel").classList.add("hidden"); $("nightPanel").classList.add("hidden"); $("simplePanel").classList.add("hidden"); $("facePanel").classList.add("hidden"); $("collagePanel").classList.add("hidden"); $("framesPanel").classList.add("hidden");
+    fr.compare = false; fr.slide = false; cancelAnimationFrame(fr.anim);
     col.drawing = null; col.slide = false; col.compare = false; cancelAnimationFrame(col.anim);
     face.grabs = {}; face.nav = {}; face.slide = false; face.compare = false; cancelAnimationFrame(face.anim); cancelAnimationFrame(face.tween);
     cancelAnimationFrame(beads.raf); beads.drag = null; lasso.drawing = false; cancelAnimationFrame(lasso.raf);
@@ -959,7 +973,7 @@
     if(!act.ctx || !osd || !act.mode || actCanvas().classList.contains("hidden")) return;
     sizeActCanvas();
     act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height);
-    if(act.mode === "paint"){ drawPaintLayer(); } else if(act.mode === "light"){ drawLightLayer(); } else if(act.mode === "play"){ drawPlayLayer(); } else if(act.mode === "night"){ drawNightLayer(); } else if(act.mode === "beads"){ drawBeadsLayer(); } else if(act.mode === "circle"){ drawCircleLayer(); } else if(act.mode === "face"){ drawFaceLayer(); } else if(act.mode === "collage"){ drawCollageLayer(); } else { drawStickerLayer(); }
+    if(act.mode === "paint"){ drawPaintLayer(); } else if(act.mode === "light"){ drawLightLayer(); } else if(act.mode === "play"){ drawPlayLayer(); } else if(act.mode === "night"){ drawNightLayer(); } else if(act.mode === "beads"){ drawBeadsLayer(); } else if(act.mode === "circle"){ drawCircleLayer(); } else if(act.mode === "face"){ drawFaceLayer(); } else if(act.mode === "collage"){ drawCollageLayer(); } else if(act.mode === "frames"){ drawFramesLayer(); } else { drawStickerLayer(); }
   }
   function canvasPoint(e){
     var r = actCanvas().getBoundingClientRect();
@@ -2886,6 +2900,85 @@
     };
     col.anim = requestAnimationFrame(step);
   }
+  /* ----- frames: try other frames on a painting -----
+     cfg: {canvas:{x,y,w,h} (the painted canvas, fractions of the picture), wall (the wall without the real
+     frame), frames:[{name, src?, x,y,w,h (fractions), dot (a little picture of it, CSS)}]. A frame with no src
+     and real:true is the artist's own (the photo as it is); one with no src and no real is no frame at all.
+     Pick one with "This one suits it!", then a slider shows it next to the artist's own. */
+  var fr = { cfg:null, imgs:[], wall:null, paint:null, i:0, picked:-1, compare:false, split:0.5, slide:false, anim:0 };
+  function frImg(src){ var im = new Image(); im.onload = function(){ if(act.mode === "frames"){ redrawActivity(); } }; im.src = src; return im; }
+  function enterFrames(s){
+    var cfg = s.frames;
+    act.mode = "frames"; fr.cfg = cfg; fr.i = 0;
+    fr.wall = frImg(cfg.wall); fr.paint = frImg(currentPainting.src);
+    fr.imgs = cfg.frames.map(function(f){ return f.src ? frImg(f.src) : null; });
+    var tray = $("frameTray"); tray.innerHTML = "";
+    cfg.frames.forEach(function(f, i){
+      var b = document.createElement("button"); b.type = "button"; b.className = "frame-btn";
+      b.innerHTML = '<span class="frame-dot"></span><span></span>';
+      b.firstChild.style.cssText = f.dot; b.lastChild.textContent = f.name;
+      b.setAttribute("aria-pressed", String(i === 0));
+      b.addEventListener("click", function(){ if(state.findPhase !== "frames") return; fr.i = i; pressOnly(tray, b); framesStatus(); redrawActivity(); });
+      tray.appendChild(b);
+    });
+    resumeFrames(s);
+  }
+  function resumeFrames(s){
+    state.findPhase = "frames"; fr.picked = -1; fr.slide = false; fr.compare = false; cancelAnimationFrame(fr.anim);
+    $("findQ").textContent = s.find;
+    $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
+    if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
+    showActCanvas("frames"); $("frameFind").classList.add("no-map");
+    $("framesPanel").classList.remove("hidden");
+    framesStatus(); redrawActivity(); updateGuides();
+  }
+  function framesStatus(){ $("framesStatus").textContent = fr.cfg.frames[fr.i].name + ". " + (fr.cfg.ask || "Does it suit the painting?"); }
+  function frRect(r, sz){ var a = toScreen({ x:r.x * sz.x, y:r.y * sz.y }), b = toScreen({ x:(r.x + r.w) * sz.x, y:(r.y + r.h) * sz.y }); return { x:a.x, y:a.y, w:b.x - a.x, h:b.y - a.y }; }
+  function ok(im){ return im && im.complete && im.naturalWidth; }
+  function drawFramed(ctx, i, sz){ // the painting in frame i (nothing to draw for the artist's own)
+    var f = fr.cfg.frames[i]; if(f.real) return true;
+    if(!ok(fr.wall) || !ok(fr.paint) || (f.src && !ok(fr.imgs[i]))) return false;
+    var all = frRect({ x:0, y:0, w:1, h:1 }, sz), c = fr.cfg.canvas, cr = frRect(c, sz), pw = fr.paint.naturalWidth, ph = fr.paint.naturalHeight;
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(fr.wall, all.x, all.y, all.w, all.h);
+    ctx.drawImage(fr.paint, c.x * pw, c.y * ph, c.w * pw, c.h * ph, cr.x, cr.y, cr.w, cr.h);
+    if(f.src){ var r = frRect(f, sz); ctx.drawImage(fr.imgs[i], r.x, r.y, r.w, r.h); }
+    return true;
+  }
+  function drawFramesLayer(){
+    var ctx = act.ctx, sz = osdImgSize(); if(!sz) return;
+    var R = paintingRect(), cut = fr.compare ? R.x0 + (R.x1 - R.x0) * fr.split : R.x1;
+    ctx.save(); ctx.beginPath(); ctx.rect(R.x0 - 2, R.y0 - 2, Math.max(0, cut - R.x0 + 2), R.y1 - R.y0 + 4); ctx.clip();
+    drawFramed(ctx, fr.compare ? fr.picked : fr.i, sz);
+    ctx.restore();
+    if(fr.compare){ drawDivider(ctx, R, cut, fr.cfg.real || "The real one"); }
+  }
+  function framesDown(e){
+    if(!fr.compare || !osd) return;
+    e.preventDefault(); cancelAnimationFrame(fr.anim);
+    try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
+    fr.slide = true; framesMove(e);
+  }
+  function framesMove(e){
+    if(!fr.slide) return;
+    e.preventDefault();
+    var R = paintingRect(), x = canvasPoint(e).x;
+    fr.split = Math.max(0, Math.min(1, (x - R.x0) / Math.max(1, R.x1 - R.x0))); redrawActivity();
+  }
+  function finishFrames(){
+    var s = STOPS[state.findIndex], f = fr.cfg.frames[fr.i];
+    state.findPhase = "revealed"; fr.picked = fr.i;
+    $("framesPanel").classList.add("hidden");
+    showActivityCaption(s, f.say || ("You picked " + f.name.toLowerCase() + "."));
+    if(f.real){ redrawActivity(); return; } // they chose the artist's own: nothing to compare
+    fr.compare = true; fr.split = 1;
+    var t0 = performance.now(), step = function(now){
+      var t = Math.min(1, (now - t0) / 900), ease = 1 - Math.pow(1 - t, 3);
+      fr.split = 1 - 0.5 * ease; redrawActivity();
+      if(t < 1){ fr.anim = requestAnimationFrame(step); }
+    };
+    fr.anim = requestAnimationFrame(step);
+  }
   /* ----- bead maze: wires laid along the painting's curves, each carrying a bead the color
      of its curve. Slide every bead to the far end of its wire, like the bead toy in a
      waiting room. wires: [{path:[[x,y],...] in painting fractions, color}]; r: bead radius as
@@ -3576,9 +3669,9 @@
     };
     stk.anim = requestAnimationFrame(step);
   }
-  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } else if(act.mode === "play"){ playDown(e); } else if(act.mode === "night"){ nightDown(e); } else if(act.mode === "beads"){ beadsDown(e); } else if(act.mode === "circle"){ circleDown(e); } else if(act.mode === "face"){ faceDown(e); } else if(act.mode === "collage"){ collageDown(e); } }
-  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } else if(act.mode === "play"){ playMove(e); } else if(act.mode === "night"){ nightMove(e); } else if(act.mode === "beads"){ beadsMove(e); } else if(act.mode === "circle"){ circleMove(e); } else if(act.mode === "face"){ faceMove(e); } else if(act.mode === "collage"){ collageMove(e); } }
-  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } else if(act.mode === "stickers"){ stickerUp(e); } else if(act.mode === "play"){ playUp(e); } else if(act.mode === "night"){ nightUp(e); } else if(act.mode === "beads"){ beadsUp(e); } else if(act.mode === "circle"){ circleUp(e); } else if(act.mode === "face"){ faceUp(e); } else if(act.mode === "collage"){ collageUp(e); } }
+  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } else if(act.mode === "play"){ playDown(e); } else if(act.mode === "night"){ nightDown(e); } else if(act.mode === "beads"){ beadsDown(e); } else if(act.mode === "circle"){ circleDown(e); } else if(act.mode === "face"){ faceDown(e); } else if(act.mode === "collage"){ collageDown(e); } else if(act.mode === "frames"){ framesDown(e); } }
+  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } else if(act.mode === "play"){ playMove(e); } else if(act.mode === "night"){ nightMove(e); } else if(act.mode === "beads"){ beadsMove(e); } else if(act.mode === "circle"){ circleMove(e); } else if(act.mode === "face"){ faceMove(e); } else if(act.mode === "collage"){ collageMove(e); } else if(act.mode === "frames"){ framesMove(e); } }
+  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } else if(act.mode === "stickers"){ stickerUp(e); } else if(act.mode === "play"){ playUp(e); } else if(act.mode === "night"){ nightUp(e); } else if(act.mode === "beads"){ beadsUp(e); } else if(act.mode === "circle"){ circleUp(e); } else if(act.mode === "face"){ faceUp(e); } else if(act.mode === "collage"){ collageUp(e); } else if(act.mode === "frames"){ fr.slide = false; } }
   function setFeedback(txt, cls){
     var f=$("feedback"); f.textContent=txt; f.className="feedback";
     if(txt){ if(cls) f.classList.add(cls); void f.offsetWidth; f.classList.add("show"); }
@@ -3818,16 +3911,17 @@
   $("collageUndo").addEventListener("click", function(){ col.patches.pop(); collageCount(); redrawActivity(); });
   $("collageCompare").addEventListener("click", function(){ setCollageCompare(!col.compare); });
   $("collageDone").addEventListener("click", finishCollage);
+  $("framesDone").addEventListener("click", finishFrames);
   $("actAgainBtn").addEventListener("click", function(){
     var s = STOPS[state.findIndex];
-    if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); } else if(s.stickers){ resumeStickers(s); } else if(s.play){ resumePlay(s); } else if(s.night){ resumeNight(s); } else if(s.beads){ resumeBeads(s); } else if(s.circle){ resumeCircle(s); } else if(s.face){ resumeFace(s); } else if(s.collage){ resumeCollage(s, true); }
+    if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); } else if(s.stickers){ resumeStickers(s); } else if(s.play){ resumePlay(s); } else if(s.night){ resumeNight(s); } else if(s.beads){ resumeBeads(s); } else if(s.circle){ resumeCircle(s); } else if(s.face){ resumeFace(s); } else if(s.collage){ resumeCollage(s, true); } else if(s.frames){ resumeFrames(s); }
   });
   $("quitFind").addEventListener("click", function(){ if(state.demo){ show("demo"); } else { showGallery(); } });
   $("againBtn").addEventListener("click", startLooking);
   $("doneBtn").addEventListener("click", function(){ if(state.demo){ show("demo"); } else { showGallery(); } });
 
   /* ---------- hidden demo page for testing: index.html#demo ---------- */
-  var DEMO_KINDS = { paint:"Paint", light:"Move the sun", stickers:"Stickers", play:"Play the painting", night:"Find the night", beads:"Bead maze", circle:"Circle it", face:"Move the eyebrows", collage:"Wallpaper" };
+  var DEMO_KINDS = { paint:"Paint", light:"Move the sun", stickers:"Stickers", play:"Play the painting", night:"Find the night", beads:"Bead maze", circle:"Circle it", face:"Move the eyebrows", collage:"Wallpaper", frames:"Frames" };
   function demoJump(painting, i){
     state.demo = true;
     currentMuseum = MUSEUMS.filter(function(m){ return m.id === painting.museum; })[0] || currentMuseum;
