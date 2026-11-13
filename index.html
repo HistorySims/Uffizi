@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-13d";
+  window.APP_VERSION = "2026-11-13e";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-13d"></script>
+<script src="works.js?v=2026-11-13e"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -503,7 +503,8 @@
         </div>
       </div>
       <div class="caption" id="findIntro">
-        <h2>Let's go exploring</h2>
+        <div class="eyebrow hidden" id="findIntroEyebrow" style="margin-bottom:6px">Meet the artist</div>
+        <h2 id="findIntroTitle">Let's go exploring</h2>
         <p id="findIntroText">You looked at the whole painting. Now let's find some things hiding inside it.</p>
         <button class="btn btn-primary" id="startFindBtn">First clue</button>
       </div>
@@ -607,7 +608,7 @@
     $("startEyebrow").textContent = roleLabel(painting) || "A looking game";
     $("startTitle").textContent = painting.title;
     $("startSubtitle").textContent = painting.subtitle;
-    $("findIntroText").textContent = painting.intro;
+    setFindIntro(!!painting.meet);
     document.title = "Looking at " + painting.title;
     renderDoneCopy();
     applySrc(painting.src);
@@ -904,6 +905,7 @@
   function enterFind(){
     cancelAnimationFrame(state.raf);
     show("find");
+    setFindIntro(!!currentPainting.meet);
     $("findIntro").classList.remove("hidden");
     $("findCaption").classList.add("hidden");
     $("showMeBtn").classList.add("hidden");
@@ -3958,7 +3960,17 @@
   $("skipLook").addEventListener("click", function(){ cancelAnimationFrame(state.raf); $("promptText").classList.remove("show"); enterFind(); });
   $("muteLook").addEventListener("click", toggleMute);
   $("muteFind").addEventListener("click", toggleMute);
-  $("startFindBtn").addEventListener("click", function(){ beginSeeking(0); });
+  // After looking and before the first clue: meet the artist (work.meet), then "Let's go exploring".
+  function setFindIntro(meet){
+    var w = currentPainting; state.meeting = meet;
+    $("findIntroEyebrow").classList.toggle("hidden", !meet);
+    $("findIntroEyebrow").textContent = w.meetLabel || "Meet the artist";
+    $("findIntroTitle").textContent = meet ? w.artist : "Let's go exploring";
+    $("findIntroText").textContent = meet ? w.meet : w.intro;
+    $("startFindBtn").textContent = meet ? "Next" : "First clue";
+    updateGuides();
+  }
+  $("startFindBtn").addEventListener("click", function(){ if(state.meeting){ setFindIntro(false); } else { beginSeeking(0); } });
   $("showMeBtn").addEventListener("click", function(){ revealStop(state.findIndex, false); });
   $("nextFindBtn").addEventListener("click", nextFind);
   $("actCanvas").addEventListener("pointerdown", activityDown);
