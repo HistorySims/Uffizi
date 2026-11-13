@@ -31,6 +31,7 @@ of Congress recordings below come from its National Jukebox, via Internet Archiv
 | File | Music | Recording | Source | License | Paired with |
 |---|---|---|---|---|---|
 | salut-d-amour.mp3 | Edward Elgar, *Salut d'amour* (1888) | Maud Powell, violin, with George Falkenstein, piano, Victor, 1913. Powell was an American violinist, and a famous one, in the same years Alice Thursby sat for Sargent | [Library of Congress](https://archive.org/details/loc-jukebox-133678-salut-d-amour) | Public domain | Mrs. Charles Thursby |
+| lovely-summertime.mp3 | Harold A. Robe, *Lovely Summertime* (1919) | Joseph C. Smith's Orchestra, Victor, 1919 | [Library of Congress](https://archive.org/details/loc-jukebox-34031-lovely-summertime) | Public domain | Isn't She Lovely, Tracey Norman |
 
 ## The Uffizi
 

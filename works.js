@@ -15,7 +15,7 @@ window.MUSEUMS = [
   {
     // a special exhibit: American Stories from Sargent to O'Keeffe (works on loan from the Newark Museum of Art)
     id:"bruce", name:"The Bruce", city:"Greenwich, Connecticut",
-    card:"American Stories from Sargent to O'Keeffe. First up: a lady who can't sit still.",
+    card:"American Stories from Sargent to O'Keeffe: a lady who can't sit still, and a room made of patterns.",
     intro:"A special exhibit of American art, on loan from the Newark Museum of Art. It's at the Bruce until October 10, 2027.",
     cover:"images/mrs-charles-thursby.jpg", coverPos:"50% 26%"
   }
@@ -25,7 +25,8 @@ window.MUSEUMS = [
 // stops: cx/cy = point (0-1). box{x,y,w,h} = reveal+tap rectangle (0-1). Tune via the grown-ups tool.
 // Optional per stop: areas/exclude = exact tap region (tap anywhere inside areas, outside exclude), hint = custom hint wording.
 // Activity stops (instead of tap-to-find), zoomed to box:
-//   paint:{look, check, brushes, brush, colors, say, mirror?, wobble?} = paint along. look = how strokes look
+//   paint:{look, check, brushes, brush, colors, say, mirror?, wobble?} = paint along. (palette:{tubes} instead of colors:
+//     tap a tube, tap the palette where the paint goes, smear to mix, tap the mix to pick it.) look = how strokes look
 //     (wax, oil, frosting, gold, wire, soft, glow, streak); check = how the painting is judged
 //     (any, shortBroad, broadSwoosh, thinLong, colorUsed, oneLine, sameSlant, smoothLong); say = words for each result.
 //   stickers:{set, ground, area, real, done, word, start, outside, depth?, flip?, jitter?} = place stickers, then slide a
@@ -39,14 +40,21 @@ window.MUSEUMS = [
 //     wall (dx, dy = where the painted shadow's far edge is at the artist's sun). The painted shadows are hidden:
 //     relight brightens a shadow's shape back to the lit color; patches cover it with nearby clean background
 //     (copied from sx,sy; a narrower source width sw is repeated across).
+//   frames:{canvas, wall, frames, real, ask} = try other frames on the painting, pick the one that suits it, then
+//     compare with the artist's own. canvas = the painted area (the photo includes the real frame); wall = the photo
+//     with the real frame taken out; frames = [{name, src, x,y,w,h, dot, say} | {name, real:true} | {name} (none)].
+//   collage:{figure, wallpapers, real} = draw shapes on the background and fill them with wallpapers. figure = the
+//     painting with its background see-through (drawn back on top, so people and things stay in front);
+//     wallpapers = [{name, src} (a tile at the painting's own scale) or {name, color}].
 //   face:{crop, erase, parts, up, down, presets, ask, rest, real, back} = move parts of a painted face (eyebrows).
-//     crop = a sharp close-up laid over the zoomed-in painting; parts = the painter's own strokes as see-through
+//     crop (optional) = a sharp close-up laid over the zoomed-in painting; parts = the painter's own strokes as see-through
 //     cut-outs (inner = which side is nearer the nose, line = where the stroke's middle runs at its inner end,
 //     middle and outer end, as fractions of the cut-out's height); erase = bare skin laid where they were painted;
 //     up, down = how far a point may go (fractions of the painting's height); presets = shapes to try, per part
 //     [inner, middle, outer], 1 = all the way up, -1 = all the way down; ask = questions shown in turn after a change.
 // Optional: role = its part in the visit (shown on the card), kind = "sculpture" etc. (default "painting"),
 // onView:false = not on display right now (card is darkened; still playable),
+// tiles = what the zoomable viewer opens: the image itself, or a .dzi zoom pyramid for a very detailed painting,
 // thumbPos = which part of a tall picture a wide thumbnail shows (CSS object-position; coverPos for a museum's cover).
 window.WORKS = [
   {
@@ -323,9 +331,14 @@ window.WORKS = [
       {find:"Look inside. Can you find the cash register?", cx:0.75, cy:0.63, box:{x:0.71, y:0.58, w:0.08, h:0.1}, title:"Nobody at the register", body:"Inside, a cash register sits on the counter, waiting for the first customer. The shelves behind it look almost empty. Is the shop about to open, or has it been closed for a long time?"},
       {find:"Look upstairs. Can you find a window with its blind pulled down?", cx:0.55, cy:0.05, box:{x:0.5, y:0.0, w:0.1, h:0.11}, title:"Someone upstairs?", body:"An upstairs window has its green blind pulled down, just like the sleepy windows in Early Sunday Morning. In his early sketches Hopper put a person in that window. Then he took them out, so the whole building feels empty."},
       {find:"Can you find the dark woods right next to the shop?", cx:0.2, cy:0.4, box:{x:0.0, y:0.05, w:0.4, h:0.75}, title:"The woods next door", body:"On one side, a bright white shop. On the other, a dark green wood. Hopper put them right next to each other, so the painting feels split in two: light and dark, neat and wild."},
-      {find:"Now you be the sun! Drag it to change the time of day. Drag on the color wheel to change the light. Can you make a sunset?", cx:0.565, cy:0.5, box:{x:0.33, y:0.13, w:0.47, h:0.74},
+      {find:"Now you be the sun! Drag it to change the time of day, then try a different light. Can you make a sunset? A night by the moon?", cx:0.565, cy:0.5, box:{x:0.33, y:0.13, w:0.47, h:0.74},
         // the sun comes up on the left here and climbs 15 degrees an hour, so Hopper's seven o'clock sun is 15 degrees up
         light:{ hopper:15, rise:"left", snap:2.5, horizon:0.9, hue:true, back:"Back to 7 A.M.", real:"Hopper's",
+          // lights to try (tap one again for Hopper's plain morning light): mul is multiplied into the painting, glow screened on top
+          filters:[ {name:"Moonlight", dot:"#22346e", mul:[0.16,0.22,0.46], glow:[2,8,26]},
+                    {name:"Golden hour", dot:"#e8b14a", mul:[1,0.79,0.44], glow:[40,22,0]},
+                    {name:"Sunset", dot:"#d9542f", mul:[1,0.86,0.77], glow:[16,3,0]},
+                    {name:"Bright white", dot:"#ffffff", mul:[1,1,1], glow:[72,72,72]} ],
           clock:{ painter:"That's Hopper's time!", shade:"The roof shades the wall." }, mark:"7 A.M.",
           // the wall and the door frame as they would look in full sun (Hopper's painted shadows taken out)
           overlays:[ {src:"images/seven-am-sunlit.webp", x:0.444824, y:0.214426, w:0.373047, h:0.307541} ],
@@ -557,18 +570,27 @@ window.WORKS = [
       "If you were at this party, where would you want to stand?"
     ],
     stops:[
-      {find:"Can you find Lady Liberty, shining gold?", cx:0.275, cy:0.55, box:{x:0.2, y:0.4, w:0.15, h:0.28}, title:"Lady Liberty", body:"The Statue of Liberty is the guest of honor. Stettheimer made her gold and built her up so she seems to pop right out of the picture. She stands on a tall white base that says LIBERTY, welcoming every ship into the harbor."},
-      {find:"Can you find a little boat puffing across the water?", cx:0.473, cy:0.526, box:{x:0.42, y:0.495, w:0.11, h:0.06}, title:"Puff, puff", body:"A little steamboat chugs across the harbor, its smokestack puffing away. In those days, boats like this carried people back and forth across New York's busy waters all day long."},
-      {find:"Can you find a string of tiny party flags?", cx:0.64, cy:0.58, box:{x:0.52, y:0.54, w:0.24, h:0.08}, title:"Dressed for a party", body:"This gray warship is strung with a line of little colored flags, all the way up to the top of its mast. Sailors call that 'dressing ship,' and they do it to celebrate. Even the battleships came to the party."},
-      {find:"Can you find an airplane in the sky?", cx:0.25, cy:0.29, box:{x:0.2, y:0.25, w:0.1, h:0.08}, title:"A brand-new flying machine", body:"Look up! An old-fashioned airplane with two sets of wings zooms over the city. Airplanes were still new and exciting back then, so of course Stettheimer invited one to the party."},
-      {find:"Something else is floating in the sky, shaped like a giant cigar. Can you find it?", cx:0.74, cy:0.29, box:{x:0.68, y:0.26, w:0.12, h:0.06}, title:"An airship", body:"That long floating shape is an airship, a kind of giant balloon with an engine. Stettheimer filled her sky with every kind of flying thing, to make the celebration feel even bigger."},
-      {find:"Can you find the words NEW YORK 1918?", cx:0.505, cy:0.815, box:{x:0.44, y:0.76, w:0.13, h:0.1}, title:"Signed by the city", body:"Down at the bottom, two figures hold up a shield that says NEW YORK 1918, with a little golden eagle perched on top. It's like the city wrote its own name on the painting."},
-      {find:"Now look outside the painting. Can you find the golden eagle on top of the frame?", cx:0.5, cy:0.12, box:{x:0.35, y:0.06, w:0.3, h:0.12}, title:"The carved eagle", body:"The party doesn't stop at the edge of the canvas. The frame is wrapped in a twisted red, white, and blue rope with tassels, and a carved golden eagle spreads its wings on top. Stettheimer often designed special frames for her paintings, and this one is part of the fun."}
+      {find:"This painting is a party for America! Find the biggest flag, waving in the wind.", cx:0.65, cy:0.69, box:{x:0.52, y:0.62, w:0.26, h:0.15}, title:"Stars and stripes", body:"A giant American flag flaps over the battleship, so big it hangs right off the edge of the ship. Stettheimer painted this as World War I was ending, and the whole city was cheering."},
+      {find:"Ships dress up for parties too. Can you find a string of tiny party flags?", cx:0.64, cy:0.58, box:{x:0.52, y:0.54, w:0.24, h:0.08}, title:"Dressed for a party", body:"This gray warship is strung with a line of little colored flags, all the way up to the top of its mast. Sailors call that 'dressing ship,' and they do it to celebrate. Even the battleships came to the party."},
+      {find:"Every party needs a guest of honor. Can you find Lady Liberty, shining gold?", cx:0.275, cy:0.55, box:{x:0.2, y:0.4, w:0.15, h:0.28}, title:"The guest of honor", body:"The Statue of Liberty stands for freedom, and here she gets a party all her own. Stettheimer made her gold and built her up with thick paint so she pops right out of the picture, on a tall white base that says LIBERTY."},
+      {find:"The party is also for new inventions! Can you find an airplane in the sky?", cx:0.25, cy:0.29, box:{x:0.2, y:0.25, w:0.1, h:0.08}, title:"A brand-new flying machine", body:"An airplane zooms over the city. The first airplane had flown only fifteen years before this painting, so airplanes were still new and amazing. People came out just to watch them fly."},
+      {find:"Something else is floating in the sky, shaped like a giant cigar. Can you find it?", cx:0.74, cy:0.29, box:{x:0.68, y:0.26, w:0.12, h:0.06}, title:"An airship", body:"That long floating shape is an airship: a giant balloon with an engine, steered through the sky. In 1918 it was one of the newest, most exciting ways to fly."},
+      {find:"Find the tallest skyscraper in the city.", cx:0.39, cy:0.3, box:{x:0.32, y:0.18, w:0.3, h:0.3}, areas:[{x:0.36, y:0.19, w:0.05, h:0.27},{x:0.49, y:0.2, w:0.04, h:0.26}], focus:{x:0.32, y:0.18, w:0.3, h:0.3}, hint:"up in the middle, above the city", title:"Reaching for the sky", body:"In 1918, New York had the tallest buildings in the world. Steel frames and new electric elevators let builders stack floor on floor on floor. Stettheimer painted them shooting up like fireworks."},
+      {find:"Stettheimer's frame is part of the party. Try some other frames on her painting. Which one suits it best?", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        frames:{ real:"Stettheimer's", ask:"Does it suit the party?", wall:"images/frames/wall.jpg",
+          canvas:{x:0.16396, y:0.18311, w:0.67339, h:0.72412},
+          frames:[ {name:"Stettheimer's own", real:true, dot:"background:repeating-linear-gradient(45deg,#b8433a 0 4px,#efe6d2 4px 8px,#3d5878 8px 12px,#efe6d2 12px 16px);", say:"You picked Stettheimer's own frame, the one she made for this painting!"},
+                   {name:"Fancy gold", src:"images/frames/gold.webp", x:0.03058, y:0.08301, w:0.94014, h:0.92432, dot:"border:5px solid #c79a35;box-shadow:inset 0 0 0 2px #f5d77a;background:#e9e6df;"},
+                   {name:"Plain black", src:"images/frames/black.webp", x:0.11321, y:0.14502, w:0.77489, h:0.80029, dot:"border:3px solid #111;background:#e9e6df;"},
+                   {name:"Craftsman oak", src:"images/frames/oak.webp", x:0.03383, y:0.10742, w:0.93364, h:0.87549, dot:"border:5px solid #6e4524;background:#e9e6df;"},
+                   {name:"Thin silver", src:"images/frames/silver.webp", x:0.12362, y:0.15283, w:0.75407, h:0.78467, dot:"border:2px solid #c4c6c8;background:#e9e6df;"},
+                   {name:"No frame", dot:"border:1px dashed #9aa3ad;background:#e9e6df;"} ] },
+        title:"A frame for a party", body:"Stettheimer was painting a loud, happy celebration, so she designed a frame to join the fun: red, white and blue rope with tassels, and a golden eagle on top, like party decorations. Slide across to compare. A plain frame can make a painting feel calm. Hers makes it feel like a parade."}
     ],
     done:[
       "Florine Stettheimer painted New York/Liberty in 1918 and 1919, just as a terrible world war was ending. The city was ready to celebrate, and so was she: flags, ships, airplanes, skyscrapers, and Lady Liberty in gold.",
       "Stettheimer lived in New York with her mother and her sisters, and together they threw famous parties for artists, writers, and dancers. Her paintings often look like parties too: bright, busy, and full of fun little details.",
-      "The Whitney got this painting in 2017, so it's one of the newer arrivals at the museum. When you see it, find Lady Liberty, the puffing steamboat, the party flags, and the carved eagle on top of the frame."
+      "The Whitney got this painting in 2017, so it's one of the newer arrivals at the museum. When you see it, find the flags, the airplane and the airship, then step back and look at the frame: the rope, the tassels and the carved eagle on top."
     ]
   },
   {
@@ -832,7 +854,7 @@ window.WORKS = [
     subtitle:"A bold pose, a purple bow, and two eyebrows that say a lot.",
     alt:"Mrs. Charles Thursby by John Singer Sargent: a woman in a dark striped jacket and a deep red skirt sits forward on the edge of a white armchair, hands on her hips, one foot on a footstool, looking straight at us",
     intro:"You've met Mrs. Thursby. Now let's look closely, from her shoes to her eyebrows.",
-    src:"images/mrs-charles-thursby.jpg", tiles:"images/mrs-charles-thursby.jpg", thumbPos:"50% 26%",
+    src:"images/mrs-charles-thursby.jpg", tiles:"images/mrs-charles-thursby.dzi", thumbPos:"50% 26%",
     music:"audio/salut-d-amour.mp3",
     prompts:[
       "Just look. This is Mrs. Thursby. She has been looking back at people for more than a hundred years.",
@@ -842,31 +864,70 @@ window.WORKS = [
       "Now look at the room around her. Which parts are sharp and clear? Which parts are quick and blurry?"
     ],
     stops:[
-      {find:"Can you find her purple bow?", cx:0.5, cy:0.455, box:{x:0.44, y:0.415, w:0.13, h:0.09}, title:"One bright spot", body:"Almost everything Mrs. Thursby wears is dark: a striped jacket and a deep red skirt. Then, right in the middle, a splash of purple! Sargent knew your eye would jump straight to it."},
-      {find:"Can you find the hand with a ring on it?", cx:0.65, cy:0.555, box:{x:0.59, y:0.52, w:0.12, h:0.075}, title:"Hands on her hips", body:"Both of her hands are on her hips, with her elbows poking out. Try it! How does it make you feel? Bossy? Brave? Ready for anything?"},
-      {find:"Can you find the little footstool?", cx:0.665, cy:0.915, box:{x:0.5, y:0.855, w:0.33, h:0.125}, title:"Ready to go", body:"One foot is up on a footstool, and she's sitting right on the edge of her chair. She isn't leaning back to rest. She looks like she might jump up any second. Where do you think she wants to go?"},
-      {find:"Can you find the long chain hanging from her neck?", cx:0.48, cy:0.46, box:{x:0.36, y:0.35, w:0.24, h:0.24}, areas:[{poly:[[0.395,0.362],[0.44,0.362],[0.425,0.45],[0.41,0.525],[0.37,0.525],[0.38,0.44]]},{x:0.532, y:0.362, w:0.045, h:0.22}], hint:"on both sides of her purple bow", title:"A long, long chain", body:"The chain loops around her neck and hangs all the way down to her waist. Look closely at how Sargent painted it: not link by link, but with quick little dashes of light paint."},
-      {find:"Can you find the white flowers on the curtain?", cx:0.76, cy:0.1, box:{x:0.66, y:0.0, w:0.24, h:0.26}, hint:"up high, on the right", title:"Flowers in a hurry", body:"From far away they're flowers. Up close, each one is only a few dabs of white paint! Sargent painted the room fast and loose, so that your eyes go to Mrs. Thursby instead."},
-      {find:"Sargent signed his name on this painting. Can you find it?", cx:0.2, cy:0.018, box:{x:0.0, y:0.0, w:0.42, h:0.07}, areas:[{x:0.02, y:0.0, w:0.36, h:0.04}], hint:"way up at the top, on the left", title:"John S. Sargent", body:"There it is, in the top corner, in dark paint on a dark wall: John S. Sargent. It almost hides in the shadows. He signed it with the same quick, loopy strokes he used for everything else."},
-      {find:"Sargent painted each eyebrow with one quick stroke. Drag them up or down, or tap a pair below. How does her face change?", cx:0.49, cy:0.304, box:{x:0.365, y:0.238, w:0.25, h:0.132},
+      {find:"Can you find her purple bow?", cx:0.4993, cy:0.4568, box:{x:0.4394, y:0.4166, w:0.1297, h:0.0904}, title:"One bright spot", body:"Almost everything Mrs. Thursby wears is dark: a striped jacket and a deep red skirt. Then, right in the middle, a splash of purple! Sargent knew your eye would jump straight to it."},
+      {find:"Can you find the hand with a ring on it?", cx:0.649, cy:0.5571, box:{x:0.5891, y:0.522, w:0.1198, h:0.0753}, title:"Hands on her hips", body:"Both of her hands are on her hips, with her elbows poking out. Try it! How does it make you feel? Bossy? Brave? Ready for anything?"},
+      {find:"Can you find the little footstool?", cx:0.664, cy:0.9185, box:{x:0.4993, y:0.8583, w:0.3293, h:0.1255}, title:"Ready to go", body:"One foot is up on a footstool, and she's sitting right on the edge of her chair. She isn't leaning back to rest. She looks like she might jump up any second. Where do you think she wants to go?"},
+      {find:"Can you find the long chain hanging from her neck?", cx:0.4793, cy:0.4618, box:{x:0.3596, y:0.3513, w:0.2395, h:0.2409}, areas:[{poly:[[0.3945,0.3634],[0.4394,0.3634],[0.4244,0.4517],[0.4095,0.527],[0.3696,0.527],[0.3795,0.4417]]},{x:0.5312, y:0.3634, w:0.0449, h:0.2209}], hint:"on both sides of her purple bow", title:"A long, long chain", body:"The chain loops around her neck and hangs all the way down to her waist. Look closely at how Sargent painted it: not link by link, but with quick little dashes of light paint."},
+      {find:"Can you find the white flowers on the curtain?", cx:0.7588, cy:0.1004, box:{x:0.659, y:0, w:0.2395, h:0.261}, hint:"up high, on the right", title:"Flowers in a hurry", body:"From far away they're flowers. Up close, each one is only a few dabs of white paint! Sargent painted the room fast and loose, so that your eyes go to Mrs. Thursby instead."},
+      {find:"Sargent signed his name on this painting. Can you find it?", cx:0.1999, cy:0.018, box:{x:0.0003, y:0, w:0.4192, h:0.0703}, areas:[{x:0.0203, y:0, w:0.3593, h:0.0402}], hint:"way up at the top, on the left", title:"John S. Sargent", body:"There it is, in the top corner, in dark paint on a dark wall: John S. Sargent. It almost hides in the shadows. He signed it with the same quick, loopy strokes he used for everything else."},
+      {find:"Move her eyebrows! Drag them up or down, or tap a pair below. Pinch to look closer. How does her face change?", cx:0.4893, cy:0.3052, box:{x:0.3646, y:0.2389, w:0.2495, h:0.1325},
         face:{ real:"Sargent's", back:"Put them back", rest:"These are the eyebrows Sargent painted.",
+          // comparing steps back to the whole painting; the divider rests just right of her face
+          whole:{ split:0.6, ask:"What feeling did Sargent give her?" },
           ask:["How does she feel now?", "What is she thinking now?", "What would she say now?"],
-          // a sharp close-up of her face (soft at the edges), and where it sits on the painting
-          crop:{src:"images/thursby-face.webp", x:0.31543, y:0.20563, w:0.34689, h:0.19545},
           // bare skin for the place the eyebrows were painted
-          erase:{src:"images/thursby-brow-erase.png", x:0.41509, y:0.2946, w:0.10754, h:0.01267},
-          up:0.00813, down:0.00219,
-          // Sargent's two strokes: the one on our left, then the one on our right
-          parts:[ {src:"images/thursby-brow-l.png", x:0.41666, y:0.29538, w:0.04447, h:0.00751, inner:"right", line:[0.783,0.477,0.578]},
-                  {src:"images/thursby-brow-r.png", x:0.4709, y:0.29913, w:0.05046, h:0.00766, inner:"left", line:[0.488,0.439,0.613]} ],
+          erase:{src:"images/thursby-brow-erase.png", x:0.4146, y:0.2959, w:0.1071, h:0.0127},
+          up:0.0082, down:0.0022,
+          // Sargent's two eyebrows (each built of many small brushstrokes): the one on our left, then the one on our right
+          parts:[ {src:"images/thursby-brow-l.png", x:0.4161, y:0.2967, w:0.0443, h:0.0075, inner:"right", line:[0.783,0.477,0.578]},
+                  {src:"images/thursby-brow-r.png", x:0.4702, y:0.3005, w:0.0503, h:0.0077, inner:"left", line:[0.488,0.439,0.613]} ],
           // shapes to try: both up and arched; inner ends down; inner ends up; one up and one down
           presets:[ [[0.75,1,0.6],[0.75,1,0.6]], [[-1,-0.35,0.55],[-1,-0.35,0.55]], [[0.85,0.3,-0.7],[0.85,0.3,-0.7]], [[0.5,0.9,0.6],[-0.8,-0.6,-0.3]] ] },
-        title:"Two little strokes", body:"Eyebrows are tiny, but they do a lot of talking. Up high, and a face looks surprised. Down in the middle, grumpy. Up in the middle, worried. Sargent set Mrs. Thursby's low and steady, the way you look when you're sure of yourself."}
+        title:"Sargent's choice", body:"You made her surprised, grumpy, worried. Sargent could have painted any of those. Instead he kept her eyebrows quiet and let her whole body do the talking. Slide across her face. What feeling did Sargent give her?"}
     ],
     done:[
       "John Singer Sargent painted Mrs. Charles Thursby around 1898. Her first name was Alice. The painting is six and a half feet tall, so she's just about life-size.",
       "Back then, most ladies in portraits sat still and looked calm. Alice leans forward with her hands on her hips, as if she can't wait to get going. People had a name for women like her: New Women. Busy, bold, and sure of themselves.",
       "At the Bruce, look for the room called Identity. Its wall asks two questions: How do you see yourself? How do you want others to see you? What do you think Alice would say? Then find the big, sparkly portrait near her, Isn't She Lovely, Tracey Norman. How are the two women alike?"
+    ]
+  },
+
+  {
+    id:"thomas", museum:"bruce", title:"Isn't She Lovely, Tracey Norman", artist:"Mickalene Thomas", role:"Identity",
+    card:"A famous model in a room full of patterns, rhinestones and color.",
+    subtitle:"A room made of patterns, and a woman who knows who she is.",
+    alt:"Isn't She Lovely, Tracey Norman by Mickalene Thomas: a woman in a black one-shoulder dress sits on a white wicker stool beside a patterned armchair, with a little dog at her feet, in a room of bright color blocks, wallpapers and black-and-white photos",
+    intro:"You've met Tracey. Now let's look closely at all the pieces of her room.",
+    src:"images/isnt-she-lovely.jpg", tiles:"images/isnt-she-lovely.jpg", thumbPos:"60% 25%",
+    music:"audio/lovely-summertime.mp3",
+    prompts:[
+      "Just look. This is Tracey Norman, sitting in a room full of color.",
+      "How many different patterns can you count? Stripes, flowers, checks, zigzags...",
+      "Look for sparkles. Parts of this painting are covered in tiny rhinestones!",
+      "How is Tracey sitting? How do you think she feels?",
+      "If you could step into this room, which spot would you sit in?"
+    ],
+    stops:[
+      {find:"Look for sparkles! Can you find her shiny necklace?", cx:0.61, cy:0.22, box:{x:0.55, y:0.16, w:0.13, h:0.11}, title:"Thousands of rhinestones", body:"Her necklace is made of real rhinestones, glued right onto the painting! Thomas uses them all over: look along the edges of her dress and the chair. In the museum, they sparkle as you walk past."},
+      {find:"Can you find the little dog?", cx:0.68, cy:0.85, box:{x:0.6, y:0.72, w:0.16, h:0.28}, title:"A black-and-white friend", body:"A fluffy little dog sits by her feet. Look: the dog is black and white, like an old photograph, even though the room around it is full of color."},
+      {find:"Can you find the white stool she's sitting on?", cx:0.575, cy:0.7, box:{x:0.48, y:0.58, w:0.2, h:0.34}, title:"Woven like a basket", body:"Tracey sits on a little wicker stool, woven like a basket. It's black and white too. Thomas mixes photographs and paint, so some things look real and others look painted."},
+      {find:"Find a pattern that looks like wallpaper from long ago.", cx:0.11, cy:0.29, box:{x:0.035, y:0.08, w:0.14, h:0.42}, title:"Groovy waves", body:"Orange and brown waves, just like the wallpaper in lots of homes in the 1970s. That's when Tracey Norman was a famous model. Thomas fills her rooms with patterns from the homes she grew up in."},
+      {find:"Can you find a pillow made of lots of different patterns?", cx:0.89, cy:0.45, box:{x:0.79, y:0.33, w:0.21, h:0.3}, title:"Patterns on patterns", body:"Plaid, checks, stripes and spots, all on one pillow, on a chair covered in even more patterns! Thomas cuts and pieces things together, like a quilt or a collage."},
+      {find:"Some parts of the room are like black-and-white photos. Can you find the leaves?", cx:0.87, cy:0.15, box:{x:0.73, y:0.0, w:0.27, h:0.34}, areas:[{x:0.74, y:0.0, w:0.26, h:0.3},{poly:[[0.16,0.62],[0.25,0.55],[0.31,0.53],[0.3,0.94],[0.16,0.97]]}], focus:{x:0.73, y:0.0, w:0.27, h:0.34}, hint:"in the top right corner, or on the bottom of her dress", title:"Pictures glued in", body:"The leaves in the corner are a black-and-white photo, glued right into the painting. There are more on the bottom of her long dress. Thomas builds her pictures from lots of pieces: paint, photos, fabric patterns and rhinestones."},
+      {find:"Thomas builds her backgrounds patch by patch. Your turn! Pick a wallpaper, then draw a shape on the wall to cover it. Tap a patch to change it.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        collage:{ figure:"images/isnt-she-lovely-figure.webp", real:"Thomas's",
+          // Thomas's own patterns from this painting (tiles at the painting's scale), then a plaid, wood paneling and flat colors
+          wallpapers:[ {name:"Groovy waves", src:"images/thomas-wallpapers/waves.jpg"}, {name:"Gold flowers", src:"images/thomas-wallpapers/damask.jpg"},
+                       {name:"Blue swirls", src:"images/thomas-wallpapers/paisley.jpg"}, {name:"Zigzags", src:"images/thomas-wallpapers/zigzag.jpg"},
+                       {name:"Leaves", src:"images/thomas-wallpapers/leaves.jpg"}, {name:"Plaid", src:"images/thomas-wallpapers/plaid.jpg"},
+                       {name:"Wood", src:"images/thomas-wallpapers/wood.jpg"},
+                       {name:"Pink", color:"#d652b9"}, {name:"Sky blue", color:"#6ec1ec"}, {name:"Yellow", color:"#f1d23a"}, {name:"Red", color:"#e43a3f"} ] },
+        title:"Your room for Tracey", body:"Slide across to see Thomas's room. She chose every patch: bright blocks of color, patterns from the 1970s, black-and-white photos. Each one says something about Tracey and the world she grew up in. What does your room say about her?"}
+    ],
+    done:[
+      "Mickalene Thomas made Isn't She Lovely, Tracey Norman in 2022, with paint, rhinestones and printed pictures, all put together like a collage. It is eight feet wide!",
+      "Tracey Norman grew up in Newark, New Jersey, and became a famous model in the 1970s. Her face was on boxes of hair color in stores all over the country. She was one of the first Black transgender models, and today she is celebrated for being exactly who she is.",
+      "At the Bruce, find her in the room called Identity, near Mrs. Charles Thursby. Two women, painted 125 years apart, both sitting in a way that says: here I am. Stand between them. What's the same? What's different?"
     ]
   }
 ];

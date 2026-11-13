@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-12a";
+  window.APP_VERSION = "2026-11-13b";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-12a"></script>
+<script src="works.js?v=2026-11-13b"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -187,12 +187,16 @@
   .palette-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;max-width:420px;}
   .palette-tubes{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
   .tube-btn{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 10px 0 6px;border-radius:19px;border:1.5px solid var(--foam-faint);background:#0b1210;color:var(--foam);font-size:.8rem;}
+  .tube-btn[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.18);color:var(--gold-bright);}
   .tube-dab{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);box-shadow:inset -3px -3px 5px rgba(0,0,0,.25);
     background-image:radial-gradient(circle at 33% 28%, rgba(255,255,255,.85) 0, rgba(255,255,255,.3) 16%, rgba(255,255,255,0) 34%);}
-  .palette-canvas{width:100%;height:96px;border-radius:14px;background:#f3efe6;touch-action:none;cursor:crosshair;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08);}
+  .palette-canvas{width:100%;height:min(34vh,280px);border-radius:14px;background:#f3efe6;touch-action:none;cursor:crosshair;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08);}
   .palette-pick{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--gold-bright);font-family:var(--serif);font-style:italic;min-height:30px;}
   .palette-chosen{width:30px;height:30px;flex:none;box-shadow:inset -4px -5px 7px rgba(0,0,0,.28);
     background-image:radial-gradient(circle at 33% 28%, rgba(255,255,255,.85) 0, rgba(255,255,255,.3) 16%, rgba(255,255,255,0) 34%);}
+  /* the palette slides away while you paint, so the painting gets the room; "Mix more" brings it back */
+  .palette-wrap.tucked .palette-tubes,.palette-wrap.tucked .palette-canvas{display:none;}
+  .palette-toggle{min-height:34px !important;padding:0 12px !important;font-size:.8rem !important;}
   .palette-chosen.empty{border-style:dashed;background-image:none;box-shadow:none;}
   .light-status{font-family:var(--serif);font-style:italic;font-size:1.12rem;color:var(--gold-bright);min-height:1.5em;text-align:center;}
   .caption-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
@@ -228,6 +232,10 @@
   #lightPanel .paint-actions{flex-wrap:nowrap;gap:6px;}
   #lightPanel .paint-actions .btn{padding:0 12px;white-space:nowrap;}
   /* with a color wheel: the wheel and a column of buttons side by side, so the picture keeps its room on a phone */
+  .light-filter{display:inline-flex;flex-direction:column;align-items:center;gap:3px;min-width:68px;padding:6px 4px 5px;border-radius:12px;border:1.5px solid var(--foam-faint);background:#0b1210;color:var(--foam);font-size:.74rem;line-height:1.1;}
+  .light-filter[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.15);color:var(--gold-bright);}
+  .light-filter-dot{width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);}
+  #lightFilters{gap:6px;}
   #lightPanel.hue{display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;gap:6px 16px;}
   #lightPanel.hue #lightStatus{grid-column:1 / -1;}
   #lightPanel.hue .paint-actions{flex-direction:column;align-items:stretch;min-width:142px;} /* wide enough for "Stop comparing", so nothing shifts */
@@ -236,6 +244,17 @@
   #facePanel .paint-actions{flex-wrap:nowrap;gap:6px;}
   #facePanel .paint-actions .btn{padding:0 12px;white-space:nowrap;}
   @media (max-width:420px){ #facePanel .paint-actions .btn{padding:0 10px;font-size:.8rem;} }
+  .wp-tray{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:420px;}
+  .wp-btn{width:44px;height:44px;border-radius:10px;border:2px solid var(--foam-faint);background-size:cover;background-position:center;padding:0;}
+  .wp-btn[aria-pressed="true"]{border-color:var(--gold-bright);box-shadow:0 0 0 2px var(--gold-bright);}
+  #collageStatus{white-space:nowrap;font-size:min(1.05rem,4.2vw);}
+  #collagePanel .paint-actions{flex-wrap:nowrap;gap:6px;}
+  #collagePanel .paint-actions .btn{padding:0 12px;white-space:nowrap;}
+  .frame-tray{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:430px;}
+  .frame-btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 10px 0 6px;border-radius:12px;border:1.5px solid var(--foam-faint);background:#0b1210;color:var(--foam);font-size:.8rem;}
+  .frame-btn[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.15);color:var(--gold-bright);}
+  .frame-dot{width:22px;height:28px;border-radius:3px;box-sizing:border-box;flex:none;}
+  #framesStatus{white-space:nowrap;font-size:min(1.05rem,4.2vw);}
   .paint-canvas:focus{outline:none;}
   .paint-canvas:focus-visible{outline:2px solid var(--gold-bright);outline-offset:-2px;}
   #stickerGo{display:none;}
@@ -363,7 +382,7 @@
         <div class="palette-wrap hidden" id="paletteWrap">
           <div class="palette-tubes" id="paletteTubes" role="group" aria-label="Squirt a paint"></div>
           <canvas class="palette-canvas" id="paletteCanvas" aria-label="Your palette: drag to mix, tap to pick a color"></canvas>
-          <div class="palette-pick"><span class="swatch palette-chosen empty" id="paletteChosen" aria-hidden="true"></span><span id="paletteHint" aria-live="polite"></span></div>
+          <div class="palette-pick"><span class="swatch palette-chosen empty" id="paletteChosen" aria-hidden="true"></span><span id="paletteHint" aria-live="polite"></span><button class="btn btn-ghost palette-toggle hidden" id="paletteToggle" type="button">Mix more</button></div>
         </div>
         <div class="paint-row paint-actions">
           <button class="btn btn-ghost" id="paintClear">Start over</button>
@@ -373,6 +392,7 @@
       </div>
       <div class="paint-panel hidden" id="lightPanel">
         <div class="light-status" id="lightStatus" aria-live="polite"></div>
+        <div class="paint-row hidden" id="lightFilters" role="group" aria-label="Choose the light"></div>
         <canvas class="night-wheel small hidden" id="lightWheel" aria-label="Color wheel: drag to change the color of the light"></canvas>
         <div class="paint-row paint-actions">
           <button class="btn btn-ghost" id="lightHopper">Back to Hopper's sun</button>
@@ -409,6 +429,22 @@
           <button class="btn btn-ghost" id="faceBack">Put them back</button>
           <button class="btn btn-ghost" id="faceCompare" aria-pressed="false">Compare</button>
           <button class="btn btn-primary" id="faceDone">I'm done</button>
+        </div>
+      </div>
+      <div class="paint-panel hidden" id="collagePanel">
+        <div class="light-status" id="collageStatus" aria-live="polite"></div>
+        <div class="wp-tray" id="wpTray" role="group" aria-label="Choose a wallpaper"></div>
+        <div class="paint-row paint-actions">
+          <button class="btn btn-ghost" id="collageUndo" disabled>Undo</button>
+          <button class="btn btn-ghost" id="collageCompare" aria-pressed="false">Compare</button>
+          <button class="btn btn-primary" id="collageDone" disabled>I'm done</button>
+        </div>
+      </div>
+      <div class="paint-panel hidden" id="framesPanel">
+        <div class="light-status" id="framesStatus" aria-live="polite"></div>
+        <div class="frame-tray" id="frameTray" role="group" aria-label="Try a frame"></div>
+        <div class="paint-row paint-actions">
+          <button class="btn btn-primary" id="framesDone">This one suits it!</button>
         </div>
       </div>
       <div class="paint-panel hidden" id="playPanel">
@@ -799,7 +835,9 @@
     });
     return osd;
   }
-  function osdLoad(){ if(ensureOSD()){ osd.open({ type:"image", url: currentPainting.tiles }); } }
+  // a painting's tiles: one image, or (.dzi) a zoom pyramid, so a very detailed painting loads only the parts in view
+  function tileSource(p){ return /\.dzi$/.test(p.tiles) ? p.tiles : { type:"image", url:p.tiles }; }
+  function osdLoad(){ if(ensureOSD()){ osd.open(tileSource(currentPainting)); } }
   function ensureOSDLook(){
     if(osdLook || typeof OpenSeadragon === "undefined") return osdLook;
     osdLook = OpenSeadragon(osdConfig("osdLook"));
@@ -807,7 +845,7 @@
     osdLook.addHandler("open", function(){ requestAnimationFrame(function(){ try{ osdLook.viewport.goHome(true); }catch(_){} }); });
     return osdLook;
   }
-  function osdLookLoad(){ if(ensureOSDLook()){ osdLook.open({ type:"image", url: currentPainting.tiles }); } }
+  function osdLookLoad(){ if(ensureOSDLook()){ osdLook.open(tileSource(currentPainting)); } }
   function osdImgSize(){ var it = osd && osd.world.getItemAt(0); return it ? it.getContentSize() : null; }
   function osdHome(){ if(osd){ try{ osd.viewport.goHome(true); }catch(_){} } }
   function clearOverlays(){
@@ -859,6 +897,7 @@
     if(s.focus && state.findPhase === "revealed"){ s = { box:s.focus }; }
     if(s.circle && lasso.zoom && state.findPhase === "revealed"){ s = { box:lasso.zoom }; }
     if(s.stickers && s.stickers.scene && stk.phase === "build"){ s = { box:s.stickers.scene.buildBox }; }
+    if(s.face && face.compare && s.face.whole){ s = { box:{ x:0, y:0, w:1, h:1 } }; } // compare a face in the whole painting
     var sz = osdImgSize(); if(!sz) return;
     var rect;
     if(s.box){ rect = new OpenSeadragon.Rect(s.box.x*sz.x, s.box.y*sz.y, s.box.w*sz.x, s.box.h*sz.y); }
@@ -880,7 +919,7 @@
     $("showMeBtn").classList.add("hidden");
     setFeedback("", "");
     resetReveal();
-    $("findProgress").textContent = (currentPainting.freeTap || s.paint || s.light || s.stickers || s.play || s.night || s.beads || s.circle || s.face ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
+    $("findProgress").textContent = (currentPainting.freeTap || s.paint || s.light || s.stickers || s.play || s.night || s.beads || s.circle || s.face || s.collage || s.frames ? "Look " : "Find ") + (i+1) + " of " + STOPS.length;
     if(s.paint){ enterPaint(s); return; }
     if(s.stickers){ enterStickers(s); return; }
     if(s.light){ enterLight(s); return; }
@@ -889,6 +928,8 @@
     if(s.beads){ enterBeads(s); return; }
     if(s.circle){ enterCircle(s); return; }
     if(s.face){ enterFace(s); return; }
+    if(s.collage){ enterCollage(s); return; }
+    if(s.frames){ enterFrames(s); return; }
     $("frameFind").classList.add("seeking");
     $("findQ").textContent = currentPainting.freeTap ? s.find : (s.find + " Tap it!");
     updateGuides();
@@ -914,8 +955,10 @@
   function exitActivity(){
     cancelAnimationFrame(act.raf); act.raf = 0; act.mode = null;
     actCanvas().classList.add("hidden");
-    $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden"); $("playPanel").classList.add("hidden"); $("nightPanel").classList.add("hidden"); $("simplePanel").classList.add("hidden"); $("facePanel").classList.add("hidden");
-    face.grabs = {}; face.slide = false; face.compare = false; cancelAnimationFrame(face.anim); cancelAnimationFrame(face.tween);
+    $("paintPanel").classList.add("hidden"); $("lightPanel").classList.add("hidden"); $("stickerPanel").classList.add("hidden"); $("playPanel").classList.add("hidden"); $("nightPanel").classList.add("hidden"); $("simplePanel").classList.add("hidden"); $("facePanel").classList.add("hidden"); $("collagePanel").classList.add("hidden"); $("framesPanel").classList.add("hidden");
+    fr.compare = false; fr.slide = false; cancelAnimationFrame(fr.anim);
+    col.drawing = null; col.slide = false; col.compare = false; cancelAnimationFrame(col.anim);
+    face.grabs = {}; face.nav = {}; face.slide = false; face.compare = false; cancelAnimationFrame(face.anim); cancelAnimationFrame(face.tween);
     cancelAnimationFrame(beads.raf); beads.drag = null; lasso.drawing = false; cancelAnimationFrame(lasso.raf);
     night.loadId++; cancelAnimationFrame(night.raf); night.raf = 0; cancelAnimationFrame(night.anim); night.compare = false; night.slide = false; $("frameFind").classList.remove("night-mode", "no-map");
     hushPlay(1.5); cancelAnimationFrame(play.raf); play.raf = 0; play.ripples = []; duckBg(false);
@@ -930,7 +973,7 @@
     if(!act.ctx || !osd || !act.mode || actCanvas().classList.contains("hidden")) return;
     sizeActCanvas();
     act.ctx.clearRect(0,0,actCanvas().width,actCanvas().height);
-    if(act.mode === "paint"){ drawPaintLayer(); } else if(act.mode === "light"){ drawLightLayer(); } else if(act.mode === "play"){ drawPlayLayer(); } else if(act.mode === "night"){ drawNightLayer(); } else if(act.mode === "beads"){ drawBeadsLayer(); } else if(act.mode === "circle"){ drawCircleLayer(); } else if(act.mode === "face"){ drawFaceLayer(); } else { drawStickerLayer(); }
+    if(act.mode === "paint"){ drawPaintLayer(); } else if(act.mode === "light"){ drawLightLayer(); } else if(act.mode === "play"){ drawPlayLayer(); } else if(act.mode === "night"){ drawNightLayer(); } else if(act.mode === "beads"){ drawBeadsLayer(); } else if(act.mode === "circle"){ drawCircleLayer(); } else if(act.mode === "face"){ drawFaceLayer(); } else if(act.mode === "collage"){ drawCollageLayer(); } else if(act.mode === "frames"){ drawFramesLayer(); } else { drawStickerLayer(); }
   }
   function canvasPoint(e){
     var r = actCanvas().getBoundingClientRect();
@@ -1291,29 +1334,49 @@
   }
 
   /* ----- palette: squirt paints, smear them together with a finger, tap the mix to pick it,
-     then paint with it (paint.palette:{tubes:[{name, hex}]}). The palette is a small grid of
+     then paint with it (paint.palette:{tubes:[{name, hex}]}). Picking a color tucks the palette away
+     so the painting gets the room; "Mix more" brings it back. The palette is a small grid of
      cells, each holding an amount of paint and how much of each tube is in it. Colors mix like
      pigment, not light: a weighted geometric mean in linear light, so white makes tints, black
      dulls, and blue with yellow goes green instead of gray. */
   var pal = { cfg:null, W:216, H:72, h:null, mix:null, lin:[], next:0, knife:null, down:null, picked:null, pickAt:null, out:null, raf:0 };
   var PAL_SLOTS = [[0.1,0.33],[0.27,0.67],[0.44,0.33],[0.61,0.67],[0.78,0.33],[0.92,0.67],[0.2,0.3],[0.52,0.7]];
   function setupPalette(cfg){
-    pal.cfg = cfg; pal.next = 0; pal.knife = null; pal.down = null; pal.picked = null; pal.pickAt = null;
+    pal.cfg = cfg; pal.next = 0; pal.loaded = -1; pal.knife = null; pal.down = null; pal.picked = null; pal.pickAt = null;
+    tuckPalette(false); $("paletteToggle").classList.add("hidden");
+    // while mixing, the palette and the painting share the room: the palette gets about half
+    var pc = $("paletteCanvas"), stage = $("frameFind").parentNode;
+    pc.style.height = "0px"; var room = stage.clientHeight;
+    pc.style.height = Math.round(Math.max(96, Math.min(300, room * 0.48))) + "px";
+    // the grid of cells has the palette's own shape, so round globs stay round
+    pal.H = Math.max(60, Math.min(220, Math.round(pal.W * (pc.clientHeight || 96) / (pc.clientWidth || 288))));
     pal.h = new Float32Array(pal.W * pal.H); pal.mix = new Float32Array(pal.W * pal.H * cfg.tubes.length);
     pal.lin = cfg.tubes.map(function(t){ var n = parseInt(t.hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255].map(function(v){ return Math.pow(Math.max(v, 3) / 255, 2.2); }); });
     var row = $("paletteTubes"); row.innerHTML = "";
     cfg.tubes.forEach(function(t, k){
       var b = document.createElement("button"); b.type = "button"; b.className = "tube-btn";
       b.innerHTML = '<span class="tube-dab" style="background-color:' + t.hex + '"></span><span>' + t.name + '</span>';
-      b.setAttribute("aria-label", "Squirt " + t.name);
-      b.addEventListener("click", function(){ squirt(k); });
+      b.setAttribute("aria-label", "Squirt " + t.name); b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function(){ loadTube(pal.loaded === k ? -1 : k); });
       row.appendChild(b);
     });
     $("paletteChosen").style.backgroundColor = "transparent"; $("paletteChosen").classList.add("empty");
-    paletteHint(cfg.start || "Squirt some paints onto your palette.");
+    paletteHint(cfg.start || "Tap a paint, then tap your palette to squeeze some out.");
     drawPalette();
   }
   function paletteHint(t){ $("paletteHint").textContent = t; }
+  function tuckPalette(on){
+    $("paletteWrap").classList.toggle("tucked", on);
+    $("paletteToggle").textContent = on ? "Mix more" : "Hide palette";
+    if(on){ loadTube(-1); paletteHint(pal.cfg && pal.cfg.paintHint || "Now paint with it!"); }
+    else { requestAnimationFrame(drawPalette); if(pal.picked){ paletteHint("Squeeze, mix, then tap a new color."); } }
+  }
+  // tap a tube to pick it up, then tap the palette where the paint should go
+  function loadTube(k){
+    pal.loaded = k;
+    Array.prototype.forEach.call($("paletteTubes").children, function(b, n){ b.setAttribute("aria-pressed", String(n === k)); });
+    if(k >= 0){ paletteHint("Now tap your palette where you want the " + pal.cfg.tubes[k].name.toLowerCase() + "."); }
+  }
   function palCellColor(i){ // the mixed color of one cell, as sRGB 0-255
     var K = pal.lin.length, out = [1, 1, 1];
     for(var k=0; k<K; k++){ var wk = pal.mix[i * K + k]; if(wk > 0){ for(var c=0; c<3; c++){ out[c] *= Math.pow(pal.lin[k][c], wk); } } }
@@ -1327,8 +1390,9 @@
     pal.h[i] = Math.min(2.2, tot);
   }
   // A squeeze from a tube: a round ribbon of paint that coils in on itself and piles up where it overlaps
-  function squirt(k){
-    var s = PAL_SLOTS[pal.next++ % PAL_SLOTS.length], cx = s[0] * pal.W, cy = s[1] * pal.H, R = 10.5;
+  function squirt(k, at){
+    var s = PAL_SLOTS[pal.next++ % PAL_SLOTS.length], R = 10.5;
+    var cx = at ? Math.max(R * 1.2, Math.min(pal.W - R * 1.2, at.x)) : s[0] * pal.W, cy = at ? Math.max(R, Math.min(pal.H - R, at.y)) : s[1] * pal.H;
     var th0 = Math.random() * Math.PI * 2, path = [];
     for(var n=0; n<=40; n++){
       var t = n / 40, rho = R * (0.6 - 0.48 * t), th = th0 + t * Math.PI * 1.7;
@@ -1497,6 +1561,7 @@
     var dn = pal.down; if(!dn) return;
     pal.down = null;
     if(dn.moved){ knifeLift(dn.last); schedulePalette(); paletteHint(pal.cfg.pickHint || "Tap your mix to pick that color."); return; }
+    if(pal.loaded >= 0){ var k = pal.loaded; loadTube(-1); squirt(k, dn.last); return; } // a tube in hand: squeeze it out right here
     // a tap picks the color under the finger (the most paint within a fingertip of it)
     var tx = Math.floor(dn.last.x), ty = Math.floor(dn.last.y), i = -1, best = 0.02, x, y;
     for(var yy=ty-3; yy<=ty+3; yy++){ for(var xx=tx-3; xx<=tx+3; xx++){
@@ -1509,8 +1574,9 @@
     paint.colors = [paintColor(hex, hex)]; paint.color = 0;
     $("paletteChosen").style.backgroundColor = hex; $("paletteChosen").classList.remove("empty");
     $("paintBrushes").style.color = hex;
-    paletteHint(pal.cfg.paintHint || "Now paint with it!");
     drawPalette();
+    // tuck the palette away so the painting gets the room
+    $("paletteToggle").classList.remove("hidden"); tuckPalette(true);
   }
   function hexHsl(hex){
     var n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
@@ -1537,7 +1603,7 @@
   function enterLight(s){
     var cfg = s.light;
     act.mode = "light"; light.cfg = cfg; light.theta = cfg.hopper; light.patches = [];
-    light.filter = [1, 1, 1]; light.at = {x:0, y:0}; light.plain = true;
+    light.filter = [1, 1, 1]; light.at = {x:0, y:0}; light.plain = true; light.glow = null; light.which = -1;
     light.img = new Image();
     light.img.onload = function(){ buildLightPatches(); redrawActivity(); };
     light.img.src = currentPainting.src;
@@ -1546,8 +1612,11 @@
     light.erases = (cfg.objects || []).map(function(o){ return o.erase ? lightImg(o.erase.src) : null; });
     light.mask = cfg.porch ? lightImg(cfg.porch.mask) : null;
     $("lightHopper").textContent = cfg.back || "Back to Hopper's sun";
-    $("lightWheel").classList.toggle("hidden", !cfg.hue); $("lightCompare").classList.toggle("hidden", !cfg.hue);
-    $("lightPanel").classList.toggle("hue", !!cfg.hue);
+    var wheel = cfg.hue && !cfg.filters; // named filters (buttons) instead of the color wheel
+    $("lightWheel").classList.toggle("hidden", !wheel); $("lightCompare").classList.toggle("hidden", !cfg.hue);
+    $("lightPanel").classList.toggle("hue", !!wheel);
+    $("lightFilters").classList.toggle("hidden", !cfg.filters);
+    renderLightFilters();
     resumeLight(s);
   }
   function resumeLight(s){
@@ -1559,7 +1628,8 @@
     showActCanvas("light");
     $("frameFind").classList.add("no-map"); // the minimap would show the painting in its old light, and the shadows would draw over it
     $("lightPanel").classList.remove("hidden");
-    if(light.cfg.hue){ paintWheel($("lightWheel"), light, light.plain); }
+    if(light.cfg.hue && !light.cfg.filters){ paintWheel($("lightWheel"), light, light.plain); }
+    markLightFilter();
     redrawActivity(); updateLightStatus();
     updateGuides();
   }
@@ -1780,6 +1850,11 @@
         ctx.globalCompositeOperation = "multiply";
         ctx.fillStyle = "rgb(" + light.filter.map(function(v){ return Math.round(v * 255); }).join(",") + ")";
         ctx.fillRect(x0, y0, w, h);
+        if(light.glow){ // and some light added on top (screen lightens, the way a bright light washes over things)
+          ctx.globalCompositeOperation = "screen";
+          ctx.fillStyle = "rgb(" + light.glow.join(",") + ")";
+          ctx.fillRect(x0, y0, w, h);
+        }
       }
       ctx.restore();
     }
@@ -1878,11 +1953,32 @@
     $("lightCompare").setAttribute("aria-pressed", String(on));
     redrawActivity();
   }
+  // named lights (light.filters:[{name, mul:[r,g,b] 0-1 multiplied in, glow:[r,g,b] 0-255 screened on top, dot}]).
+  // Tap one to light the scene with it; tap it again for plain daylight.
+  function renderLightFilters(){
+    var row = $("lightFilters"); row.innerHTML = "";
+    (light.cfg.filters || []).forEach(function(f, i){
+      var b = document.createElement("button"); b.type = "button"; b.className = "light-filter";
+      b.innerHTML = '<span class="light-filter-dot" style="background:' + f.dot + '"></span><span></span>';
+      b.lastChild.textContent = f.name; b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function(){ if(state.findPhase === "lighting"){ setLightFilter(light.which === i ? -1 : i); } });
+      row.appendChild(b);
+    });
+  }
+  function setLightFilter(i){
+    var f = i >= 0 ? light.cfg.filters[i] : null;
+    light.which = i; light.plain = !f;
+    light.filter = f ? f.mul.slice() : [1, 1, 1]; light.glow = f && f.glow ? f.glow.slice() : null;
+    markLightFilter(); updateLightStatus(); redrawActivity();
+  }
+  function markLightFilter(){
+    Array.prototype.forEach.call($("lightFilters").children, function(b, n){ b.setAttribute("aria-pressed", String(n === light.which)); });
+  }
   function lightWheelPick(e){ // the color of the light: the middle of the wheel is plain daylight, no filter
     var c = $("lightWheel"), r = c.getBoundingClientRect(), R = r.width / 2 - 3;
     var x = (e.clientX - r.left - r.width / 2) / R, y = (e.clientY - r.top - r.height / 2) / R, d = Math.sqrt(x * x + y * y);
     if(d > 1){ x /= d; y /= d; d = 1; }
-    light.plain = d < 0.14;
+    light.plain = d < 0.14; light.glow = null;
     if(light.plain){ x = 0; y = 0; light.filter = [1, 1, 1]; }
     else { light.filter = wheelFilter(wheelRgb((Math.atan2(y, x) * 180 / Math.PI + 360) % 360, d)); }
     light.at = { x:x, y:y };
@@ -1921,8 +2017,8 @@
       if(k < 1){ light.tween = requestAnimationFrame(step); }
     };
     if(light.cfg.hue){ // and the plain light he painted in
-      light.filter = [1, 1, 1]; light.at = {x:0, y:0}; light.plain = true;
-      paintWheel($("lightWheel"), light, true);
+      light.filter = [1, 1, 1]; light.at = {x:0, y:0}; light.plain = true; light.glow = null; light.which = -1;
+      if(light.cfg.filters){ markLightFilter(); } else { paintWheel($("lightWheel"), light, true); }
     }
     light.tween = requestAnimationFrame(step);
   }
@@ -2375,13 +2471,14 @@
   /* ----- change a face: parts of a painted face (eyebrows) lifted off the painting so they can be moved -----
      Each part is the painter's own stroke as a see-through cut-out, with three points (inner end,
      middle, outer end) that slide up and down. Every column of the cut-out slides with them, so
-     the stroke tilts and bends but stays the painter's brushwork. A patch of bare skin covers the
-     place the strokes were painted, and a sharp close-up of the face lies over the zoomed-in
-     painting. With every point back at zero nothing is redrawn: the real painting shows.
+     the stroke tilts and bends but stays the painter's brushwork. whole:{split, ask}: comparing steps
+     back to the whole painting, the divider resting at split, with a question shown. A patch of bare skin covers the
+     place the strokes were painted (and, optionally, a sharp close-up of the face lies over the zoomed-in
+     painting). With every point back at zero nothing is redrawn: the real painting shows.
      Places are fractions of the painting. up, down: how far a point may travel (fractions of its
      height). A part's line: where the stroke's middle runs at its three points (fractions of the
      cut-out's height). Presets, per part: [inner, middle, outer], 1 = all the way up, -1 = down. */
-  var face = { cfg:null, crop:null, erase:null, imgs:[], vals:[], grabs:{}, moves:0, asked:0, preset:-1, tween:0, compare:false, split:0.5, slide:false, anim:0 };
+  var face = { cfg:null, crop:null, erase:null, imgs:[], vals:[], grabs:{}, nav:{}, moves:0, asked:0, preset:-1, tween:0, compare:false, split:0.5, slide:false, anim:0 };
   function faceImg(src){
     var im = new Image();
     im.onload = function(){ if(act.mode === "face"){ redrawActivity(); } };
@@ -2391,7 +2488,7 @@
     var cfg = s.face;
     act.mode = "face"; face.cfg = cfg; face.moves = 0; face.asked = 0;
     face.vals = cfg.parts.map(function(){ return [0, 0, 0]; });
-    face.crop = faceImg(cfg.crop.src); face.erase = faceImg(cfg.erase.src);
+    face.crop = cfg.crop ? faceImg(cfg.crop.src) : null; face.erase = faceImg(cfg.erase.src);
     face.imgs = cfg.parts.map(function(p){ return faceImg(p.src); });
     $("faceBack").textContent = cfg.back || "Put them back";
     renderFacePresets();
@@ -2399,7 +2496,7 @@
   }
   function resumeFace(s){
     state.findPhase = "face";
-    face.grabs = {}; face.slide = false; setFaceCompare(false);
+    face.grabs = {}; face.nav = {}; face.slide = false; setFaceCompare(false);
     $("findQ").textContent = s.find;
     $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
     if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
@@ -2445,7 +2542,7 @@
     var ctx = act.ctx, cfg = face.cfg, sz = osdImgSize(); if(!sz) return;
     var R = paintingRect(), cut = face.compare ? R.x0 + (R.x1 - R.x0) * face.split : R.x1;
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
-    facePiece(ctx, face.crop, cfg.crop, sz); // the sharp close-up, exactly as painted
+    if(cfg.crop){ facePiece(ctx, face.crop, cfg.crop, sz); } // a sharp close-up, for a painting whose tiles aren't
     if(!faceAtRest() && faceLoaded()){
       ctx.save(); // yours shows left of the divider, the real painting right of it
       ctx.beginPath(); ctx.rect(R.x0 - 2, R.y0 - 2, Math.max(0, cut - R.x0 + 2), R.y1 - R.y0 + 4); ctx.clip();
@@ -2484,16 +2581,51 @@
       face.slide = true; faceSlide(e); return;
     }
     if(state.findPhase !== "face" || !faceLoaded()) return;
-    var g = faceGrab(e); if(!g) return;
-    e.preventDefault(); cancelAnimationFrame(face.tween);
+    var g = faceGrab(e);
+    e.preventDefault();
     try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
-    g.y = canvasPoint(e).y; g.from = face.vals[g.n].slice(); g.moved = false;
+    // a second finger arriving while the first hasn't done much yet: one finger on each eyebrow moves
+    // both; anything else is a pinch, so the first finger lets go of its eyebrow and both move the view
+    var gids = Object.keys(face.grabs), nids = Object.keys(face.nav);
+    if(gids.length + nids.length === 1){
+      var first = face.grabs[gids[0]], fresh = first ? !first.moved || performance.now() - first.t0 < 350 : true;
+      if(fresh && !(g && first && first.n !== g.n)){
+        if(first){ face.vals[first.n] = first.from.slice(); delete face.grabs[gids[0]]; face.nav[gids[0]] = { x:first.cx, y:first.cy }; redrawActivity(); }
+        g = null;
+      }
+    }
+    if(!g){ face.nav[e.pointerId] = { x:e.clientX, y:e.clientY }; return; } // this finger moves the view
+    cancelAnimationFrame(face.tween);
+    g.y = canvasPoint(e).y; g.from = face.vals[g.n].slice(); g.moved = false; g.t0 = performance.now(); g.cx = e.clientX; g.cy = e.clientY;
     face.grabs[e.pointerId] = g; setFacePreset(-1);
+  }
+  // moving the view with fingers: one finger drags the painting, two pinch to zoom around the spot between them
+  function faceNavMove(e){
+    var ids = Object.keys(face.nav), r = osd.element.getBoundingClientRect(), P = OpenSeadragon.Point;
+    var before = ids.map(function(id){ return face.nav[id]; }), cx0 = 0, cy0 = 0, cx1 = 0, cy1 = 0;
+    before.forEach(function(q){ cx0 += q.x / ids.length; cy0 += q.y / ids.length; });
+    face.nav[e.pointerId] = { x:e.clientX, y:e.clientY };
+    var after = ids.map(function(id){ return face.nav[id]; });
+    after.forEach(function(q){ cx1 += q.x / ids.length; cy1 += q.y / ids.length; });
+    if(ids.length >= 2){
+      var d0 = Math.hypot(before[0].x - before[1].x, before[0].y - before[1].y), d1 = Math.hypot(after[0].x - after[1].x, after[0].y - after[1].y);
+      if(d0 > 10){ osd.viewport.zoomBy(d1 / d0, osd.viewport.pointFromPixel(new P(cx1 - r.left, cy1 - r.top), true), true); }
+    }
+    osd.viewport.panBy(osd.viewport.deltaPointsFromPixels(new P(cx0 - cx1, cy0 - cy1), true), true);
+    osd.viewport.applyConstraints(true);
+  }
+  function faceWheel(e){ // a mouse wheel or trackpad zooms around the pointer
+    if(act.mode !== "face" || state.findPhase !== "face" || face.compare || !osd) return;
+    e.preventDefault();
+    var r = osd.element.getBoundingClientRect();
+    osd.viewport.zoomBy(Math.pow(1.0018, -e.deltaY), osd.viewport.pointFromPixel(new OpenSeadragon.Point(e.clientX - r.left, e.clientY - r.top), true), true);
+    osd.viewport.applyConstraints(true);
   }
   function faceMove(e){
     if(face.slide){ e.preventDefault(); faceSlide(e); return; }
+    if(face.nav[e.pointerId]){ e.preventDefault(); faceNavMove(e); return; }
     var g = face.grabs[e.pointerId]; if(!g) return;
-    e.preventDefault();
+    e.preventDefault(); g.cx = e.clientX; g.cy = e.clientY;
     var sz = osdImgSize(), cfg = face.cfg, v = face.vals[g.n];
     var d = (canvasPoint(e).y - g.y) / (imgPxToScreen() * sz.y); // the finger's travel, as a fraction of the painting's height
     if(g.i === 1){ // the middle carries the whole stroke along, keeping its shape
@@ -2504,7 +2636,7 @@
     redrawActivity();
   }
   function faceUp(e){
-    face.slide = false;
+    face.slide = false; delete face.nav[e.pointerId];
     var g = face.grabs[e.pointerId]; if(!g) return;
     delete face.grabs[e.pointerId];
     if(!g.moved) return;
@@ -2522,10 +2654,14 @@
     redrawActivity();
   }
   function setFaceCompare(on){
+    var was = face.compare, cfg = face.cfg;
     face.compare = on; cancelAnimationFrame(face.anim);
-    if(on){ face.split = 0.5; }
+    if(on){ face.split = cfg && cfg.whole ? cfg.whole.split : 0.5; }
     $("faceCompare").textContent = on ? "Stop comparing" : "Compare";
     $("faceCompare").setAttribute("aria-pressed", String(on));
+    // whole: step back to see the face in the whole painting while comparing (and in again after)
+    if(cfg && cfg.whole && was !== on && osd && STOPS[state.findIndex] && STOPS[state.findIndex].face){ fitToStop(STOPS[state.findIndex]); }
+    if(cfg){ updateFaceStatus(); }
     redrawActivity();
   }
   function faceGoTo(target){ // glide every point to a new place
@@ -2568,7 +2704,8 @@
   }
   function updateFaceStatus(){
     var cfg = face.cfg, ask = cfg.ask || ["How does the face look now?"];
-    $("faceStatus").textContent = faceAtRest() ? (cfg.rest || "This is how the artist painted it.") : ask[Math.max(0, face.asked - 1) % ask.length];
+    $("faceStatus").textContent = face.compare && cfg.whole ? cfg.whole.ask
+      : faceAtRest() ? (cfg.rest || "This is how the artist painted it.") : ask[Math.max(0, face.asked - 1) % ask.length];
   }
   function finishFace(){
     var s = STOPS[state.findIndex];
@@ -2577,14 +2714,270 @@
     $("facePanel").classList.add("hidden");
     showActivityCaption(s, "");
     // show theirs next to the real one, sweeping the divider in from the right
+    var to = face.cfg.whole ? face.cfg.whole.split : 0.5;
     setFaceCompare(true); face.split = 1;
     var t0 = performance.now();
     var step = function(now){
       var t = Math.min(1, (now - t0) / 900), ease = 1 - Math.pow(1 - t, 3);
-      face.split = 1 - 0.5 * ease; redrawActivity();
+      face.split = 1 - (1 - to) * ease; redrawActivity();
       if(t < 1){ face.anim = requestAnimationFrame(step); }
     };
     face.anim = requestAnimationFrame(step);
+  }
+  /* ----- collage: block off patches of the background and fill them with wallpapers -----
+     Draw a shape with a finger; it is straightened into a cut-paper shape with a rhinestone edge and
+     filled with the chosen wallpaper. The people and things in front (figure: the painting with its
+     background made see-through) are drawn back over the patches, so they stay in front. Tap a patch
+     to give it the wallpaper you have chosen. Patches are kept in painting pixels.
+     cfg: {figure, wallpapers:[{name, src} | {name, color}], real, done} */
+  var col = { cfg:null, figure:null, wps:[], pats:[], wp:0, patches:[], drawing:null, compare:false, split:0.5, slide:false, anim:0 };
+  function enterCollage(s){
+    var cfg = s.collage;
+    act.mode = "collage"; col.cfg = cfg; col.patches = []; col.wp = 0;
+    col.figure = new Image(); col.figure.onload = function(){ if(act.mode === "collage"){ redrawActivity(); } }; col.figure.src = cfg.figure;
+    col.wps = cfg.wallpapers.map(function(w){
+      if(!w.src) return null;
+      var im = new Image(); im.onload = function(){ if(act.mode === "collage"){ redrawActivity(); } }; im.src = w.src; return im;
+    });
+    col.pats = cfg.wallpapers.map(function(){ return null; });
+    var tray = $("wpTray"); tray.innerHTML = "";
+    cfg.wallpapers.forEach(function(w, i){
+      var b = document.createElement("button"); b.type = "button"; b.className = "wp-btn"; b.setAttribute("aria-label", w.name);
+      if(w.src){ b.style.backgroundImage = "url(" + w.src + ")"; } else { b.style.background = w.color; }
+      b.setAttribute("aria-pressed", String(i === 0));
+      b.addEventListener("click", function(){ col.wp = i; pressOnly(tray, b); collageCount(); });
+      tray.appendChild(b);
+    });
+    resumeCollage(s, false);
+  }
+  function resumeCollage(s, again){
+    state.findPhase = "collage";
+    if(again){ col.patches = []; }
+    col.drawing = null; col.slide = false; setCollageCompare(false);
+    $("findQ").textContent = s.find;
+    $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
+    if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
+    showActCanvas("collage");
+    $("frameFind").classList.add("no-map");
+    $("collagePanel").classList.remove("hidden");
+    collageCount(); redrawActivity(); updateGuides();
+  }
+  function collageCount(){
+    var n = col.patches.length, w = col.cfg.wallpapers[col.wp].name;
+    $("collageUndo").disabled = !n; $("collageDone").disabled = !n;
+    $("collageStatus").textContent = (n ? (n === 1 ? "1 patch" : n + " patches") + " · " : "Draw on the wall · ") + "Wallpaper: " + w;
+  }
+  function setCollageCompare(on){
+    col.compare = on; cancelAnimationFrame(col.anim);
+    if(on){ col.split = 0.5; }
+    $("collageCompare").textContent = on ? "Stop comparing" : "Compare";
+    $("collageCompare").setAttribute("aria-pressed", String(on));
+    redrawActivity();
+  }
+  function collageFill(ctx, i){ // a wallpaper as a fill, scaled so it stays the size Thomas used
+    var w = col.cfg.wallpapers[i];
+    if(!w.src){ return w.color; }
+    var im = col.wps[i]; if(!im || !im.complete || !im.naturalWidth) return "rgba(255,255,255,.5)";
+    if(!col.pats[i]){ col.pats[i] = ctx.createPattern(im, "repeat"); }
+    var k = imgPxToScreen() * (w.scale || 1), o = toScreen({ x:0, y:0 });
+    col.pats[i].setTransform(new DOMMatrix([k, 0, 0, k, o.x, o.y]));
+    return col.pats[i];
+  }
+  function collagePath(ctx, pts){
+    ctx.beginPath();
+    pts.forEach(function(p, i){ var q = toScreen(p); if(i){ ctx.lineTo(q.x, q.y); } else { ctx.moveTo(q.x, q.y); } });
+    ctx.closePath();
+  }
+  function collageEdge(ctx, pts){ // a line of little rhinestones along the cut edge
+    var d = act.dpr, gap = 7 * d, r = 1.7 * d;
+    for(var i = 0; i < pts.length; i++){
+      var a = toScreen(pts[i]), b = toScreen(pts[(i + 1) % pts.length]), L = Math.hypot(b.x - a.x, b.y - a.y), n = Math.max(1, Math.round(L / gap));
+      for(var j = 0; j < n; j++){
+        var t = j / n, x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t;
+        ctx.fillStyle = "rgba(40,30,20,.55)"; ctx.beginPath(); ctx.arc(x + 0.5 * d, y + 0.6 * d, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = (i + j) % 3 ? "#f4efe4" : "#e6c56a"; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.beginPath(); ctx.arc(x - 0.5 * d, y - 0.5 * d, r * 0.4, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+  function drawCollageLayer(){
+    var ctx = act.ctx, sz = osdImgSize(); if(!sz) return;
+    var R = paintingRect(), cut = col.compare ? R.x0 + (R.x1 - R.x0) * col.split : R.x1;
+    var tl = toScreen({ x:0, y:0 }), br = toScreen({ x:sz.x, y:sz.y });
+    if(col.patches.length){
+      ctx.save();
+      ctx.beginPath(); ctx.rect(R.x0 - 2, R.y0 - 2, Math.max(0, cut - R.x0 + 2), R.y1 - R.y0 + 4); ctx.clip();
+      col.patches.forEach(function(pt){ collagePath(ctx, pt.pts); ctx.fillStyle = collageFill(ctx, pt.wp); ctx.fill(); });
+      col.patches.forEach(function(pt){ collageEdge(ctx, pt.pts); });
+      // what stands in front goes back on top
+      if(col.figure.complete && col.figure.naturalWidth){ ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high"; ctx.drawImage(col.figure, tl.x, tl.y, br.x - tl.x, br.y - tl.y); }
+      ctx.restore();
+    }
+    var dr = col.drawing;
+    if(dr && dr.pts.length > 1){ // the line being drawn
+      ctx.save(); ctx.lineWidth = 3 * act.dpr; ctx.lineJoin = ctx.lineCap = "round";
+      ctx.setLineDash([8 * act.dpr, 6 * act.dpr]); ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 3 * act.dpr;
+      ctx.beginPath(); dr.pts.forEach(function(p, i){ var q = toScreen(p); if(i){ ctx.lineTo(q.x, q.y); } else { ctx.moveTo(q.x, q.y); } }); ctx.stroke();
+      ctx.restore();
+    }
+    if(col.compare){ drawDivider(ctx, R, cut, col.cfg.real || "The real one"); }
+  }
+  function collageImgPoint(e){ var p = toImage(e); return { x:p.x, y:p.y }; }
+  function inPolyPts(x, y, pts){
+    var c = false;
+    for(var i = 0, j = pts.length - 1; i < pts.length; j = i++){
+      if(((pts[i].y > y) !== (pts[j].y > y)) && (x < (pts[j].x - pts[i].x) * (y - pts[i].y) / (pts[j].y - pts[i].y) + pts[i].x)){ c = !c; }
+    }
+    return c;
+  }
+  function simplifyPts(pts, tol){ // Douglas-Peucker: a wobbly finger line becomes a few straight cuts
+    if(pts.length < 3) return pts.slice();
+    var keep = [0, pts.length - 1], stack = [[0, pts.length - 1]];
+    while(stack.length){
+      var se = stack.pop(), a = pts[se[0]], b = pts[se[1]], best = -1, bi = -1, L = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      for(var i = se[0] + 1; i < se[1]; i++){
+        var d = Math.abs((b.x - a.x) * (a.y - pts[i].y) - (a.x - pts[i].x) * (b.y - a.y)) / L;
+        if(d > best){ best = d; bi = i; }
+      }
+      if(best > tol){ keep.push(bi); stack.push([se[0], bi], [bi, se[1]]); }
+    }
+    keep.sort(function(x, y){ return x - y; });
+    return keep.map(function(i){ return pts[i]; });
+  }
+  function collageDown(e){
+    if(!osd) return;
+    e.preventDefault();
+    try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
+    if(col.compare){ cancelAnimationFrame(col.anim); col.slide = true; collageSlide(e); return; }
+    if(state.findPhase !== "collage" || col.drawing) return;
+    col.drawing = { id:e.pointerId, pts:[collageImgPoint(e)], x:e.clientX, y:e.clientY, far:0 };
+  }
+  function collageMove(e){
+    if(col.slide){ e.preventDefault(); collageSlide(e); return; }
+    var dr = col.drawing; if(!dr || dr.id !== e.pointerId) return;
+    e.preventDefault();
+    dr.far = Math.max(dr.far, Math.hypot(e.clientX - dr.x, e.clientY - dr.y));
+    dr.pts.push(collageImgPoint(e)); redrawActivity();
+  }
+  function collageUp(e){
+    col.slide = false;
+    var dr = col.drawing; if(!dr || dr.id !== e.pointerId) return;
+    col.drawing = null;
+    var sz = osdImgSize(), k = imgPxToScreen() / act.dpr; // CSS px per painting px
+    if(dr.far < 12){ // a tap: a patch under the finger takes the chosen wallpaper
+      var p = dr.pts[0];
+      for(var i = col.patches.length - 1; i >= 0; i--){ if(inPolyPts(p.x, p.y, col.patches[i].pts)){ col.patches[i].wp = col.wp; break; } }
+      redrawActivity(); return;
+    }
+    var pts = simplifyPts(dr.pts, 9 / k).map(function(q){ return { x:Math.max(0, Math.min(sz.x, q.x)), y:Math.max(0, Math.min(sz.y, q.y)) }; });
+    // a single straight swipe makes a band: give it the swipe's length and some thickness
+    if(pts.length === 2){
+      var a = pts[0], b = pts[1], L = Math.hypot(b.x - a.x, b.y - a.y) || 1, nx = -(b.y - a.y) / L * 18 / k, ny = (b.x - a.x) / L * 18 / k;
+      pts = [{ x:a.x + nx, y:a.y + ny }, { x:b.x + nx, y:b.y + ny }, { x:b.x - nx, y:b.y - ny }, { x:a.x - nx, y:a.y - ny }];
+    }
+    if(pts.length > 2 && Math.hypot(pts[0].x - pts[pts.length - 1].x, pts[0].y - pts[pts.length - 1].y) < 2 / k){ pts.pop(); }
+    var area = 0; for(var j = 0, m = pts.length - 1; j < pts.length; m = j++){ area += (pts[m].x + pts[j].x) * (pts[m].y - pts[j].y); }
+    if(Math.abs(area) / 2 * k * k < 600){ redrawActivity(); return; } // too small to see
+    col.patches.push({ pts:pts, wp:col.wp });
+    collageCount(); redrawActivity();
+  }
+  function collageSlide(e){
+    var R = paintingRect(), x = canvasPoint(e).x;
+    col.split = Math.max(0, Math.min(1, (x - R.x0) / Math.max(1, R.x1 - R.x0)));
+    redrawActivity();
+  }
+  function finishCollage(){
+    var s = STOPS[state.findIndex];
+    state.findPhase = "revealed"; col.drawing = null;
+    $("collagePanel").classList.add("hidden");
+    showActivityCaption(s, "");
+    setCollageCompare(true); col.split = 1;
+    var t0 = performance.now();
+    var step = function(now){
+      var t = Math.min(1, (now - t0) / 900), ease = 1 - Math.pow(1 - t, 3);
+      col.split = 1 - 0.5 * ease; redrawActivity();
+      if(t < 1){ col.anim = requestAnimationFrame(step); }
+    };
+    col.anim = requestAnimationFrame(step);
+  }
+  /* ----- frames: try other frames on a painting -----
+     cfg: {canvas:{x,y,w,h} (the painted canvas, fractions of the picture), wall (the wall without the real
+     frame), frames:[{name, src?, x,y,w,h (fractions), dot (a little picture of it, CSS)}]. A frame with no src
+     and real:true is the artist's own (the photo as it is); one with no src and no real is no frame at all.
+     Pick one with "This one suits it!", then a slider shows it next to the artist's own. */
+  var fr = { cfg:null, imgs:[], wall:null, paint:null, i:0, picked:-1, compare:false, split:0.5, slide:false, anim:0 };
+  function frImg(src){ var im = new Image(); im.onload = function(){ if(act.mode === "frames"){ redrawActivity(); } }; im.src = src; return im; }
+  function enterFrames(s){
+    var cfg = s.frames;
+    act.mode = "frames"; fr.cfg = cfg; fr.i = 0;
+    fr.wall = frImg(cfg.wall); fr.paint = frImg(currentPainting.src);
+    fr.imgs = cfg.frames.map(function(f){ return f.src ? frImg(f.src) : null; });
+    var tray = $("frameTray"); tray.innerHTML = "";
+    cfg.frames.forEach(function(f, i){
+      var b = document.createElement("button"); b.type = "button"; b.className = "frame-btn";
+      b.innerHTML = '<span class="frame-dot"></span><span></span>';
+      b.firstChild.style.cssText = f.dot; b.lastChild.textContent = f.name;
+      b.setAttribute("aria-pressed", String(i === 0));
+      b.addEventListener("click", function(){ if(state.findPhase !== "frames") return; fr.i = i; pressOnly(tray, b); framesStatus(); redrawActivity(); });
+      tray.appendChild(b);
+    });
+    resumeFrames(s);
+  }
+  function resumeFrames(s){
+    state.findPhase = "frames"; fr.picked = -1; fr.slide = false; fr.compare = false; cancelAnimationFrame(fr.anim);
+    $("findQ").textContent = s.find;
+    $("findCaption").classList.add("hidden"); $("actAgainBtn").classList.add("hidden");
+    if(osd){ fitToStop(s); osd.setMouseNavEnabled(false); }
+    showActCanvas("frames"); $("frameFind").classList.add("no-map");
+    $("framesPanel").classList.remove("hidden");
+    framesStatus(); redrawActivity(); updateGuides();
+  }
+  function framesStatus(){ $("framesStatus").textContent = fr.cfg.frames[fr.i].name + ". " + (fr.cfg.ask || "Does it suit the painting?"); }
+  function frRect(r, sz){ var a = toScreen({ x:r.x * sz.x, y:r.y * sz.y }), b = toScreen({ x:(r.x + r.w) * sz.x, y:(r.y + r.h) * sz.y }); return { x:a.x, y:a.y, w:b.x - a.x, h:b.y - a.y }; }
+  function ok(im){ return im && im.complete && im.naturalWidth; }
+  function drawFramed(ctx, i, sz){ // the painting in frame i (nothing to draw for the artist's own)
+    var f = fr.cfg.frames[i]; if(f.real) return true;
+    if(!ok(fr.wall) || !ok(fr.paint) || (f.src && !ok(fr.imgs[i]))) return false;
+    var all = frRect({ x:0, y:0, w:1, h:1 }, sz), c = fr.cfg.canvas, cr = frRect(c, sz), pw = fr.paint.naturalWidth, ph = fr.paint.naturalHeight;
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(fr.wall, all.x, all.y, all.w, all.h);
+    ctx.drawImage(fr.paint, c.x * pw, c.y * ph, c.w * pw, c.h * ph, cr.x, cr.y, cr.w, cr.h);
+    if(f.src){ var r = frRect(f, sz); ctx.drawImage(fr.imgs[i], r.x, r.y, r.w, r.h); }
+    return true;
+  }
+  function drawFramesLayer(){
+    var ctx = act.ctx, sz = osdImgSize(); if(!sz) return;
+    var R = paintingRect(), cut = fr.compare ? R.x0 + (R.x1 - R.x0) * fr.split : R.x1;
+    ctx.save(); ctx.beginPath(); ctx.rect(R.x0 - 2, R.y0 - 2, Math.max(0, cut - R.x0 + 2), R.y1 - R.y0 + 4); ctx.clip();
+    drawFramed(ctx, fr.compare ? fr.picked : fr.i, sz);
+    ctx.restore();
+    if(fr.compare){ drawDivider(ctx, R, cut, fr.cfg.real || "The real one"); }
+  }
+  function framesDown(e){
+    if(!fr.compare || !osd) return;
+    e.preventDefault(); cancelAnimationFrame(fr.anim);
+    try{ actCanvas().setPointerCapture(e.pointerId); }catch(_){}
+    fr.slide = true; framesMove(e);
+  }
+  function framesMove(e){
+    if(!fr.slide) return;
+    e.preventDefault();
+    var R = paintingRect(), x = canvasPoint(e).x;
+    fr.split = Math.max(0, Math.min(1, (x - R.x0) / Math.max(1, R.x1 - R.x0))); redrawActivity();
+  }
+  function finishFrames(){
+    var s = STOPS[state.findIndex], f = fr.cfg.frames[fr.i];
+    state.findPhase = "revealed"; fr.picked = fr.i;
+    $("framesPanel").classList.add("hidden");
+    showActivityCaption(s, f.say || ("You picked " + f.name.toLowerCase() + "."));
+    if(f.real){ redrawActivity(); return; } // they chose the artist's own: nothing to compare
+    fr.compare = true; fr.split = 1;
+    var t0 = performance.now(), step = function(now){
+      var t = Math.min(1, (now - t0) / 900), ease = 1 - Math.pow(1 - t, 3);
+      fr.split = 1 - 0.5 * ease; redrawActivity();
+      if(t < 1){ fr.anim = requestAnimationFrame(step); }
+    };
+    fr.anim = requestAnimationFrame(step);
   }
   /* ----- bead maze: wires laid along the painting's curves, each carrying a bead the color
      of its curve. Slide every bead to the far end of its wire, like the bead toy in a
@@ -3276,9 +3669,9 @@
     };
     stk.anim = requestAnimationFrame(step);
   }
-  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } else if(act.mode === "play"){ playDown(e); } else if(act.mode === "night"){ nightDown(e); } else if(act.mode === "beads"){ beadsDown(e); } else if(act.mode === "circle"){ circleDown(e); } else if(act.mode === "face"){ faceDown(e); } }
-  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } else if(act.mode === "play"){ playMove(e); } else if(act.mode === "night"){ nightMove(e); } else if(act.mode === "beads"){ beadsMove(e); } else if(act.mode === "circle"){ circleMove(e); } else if(act.mode === "face"){ faceMove(e); } }
-  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } else if(act.mode === "stickers"){ stickerUp(e); } else if(act.mode === "play"){ playUp(e); } else if(act.mode === "night"){ nightUp(e); } else if(act.mode === "beads"){ beadsUp(e); } else if(act.mode === "circle"){ circleUp(e); } else if(act.mode === "face"){ faceUp(e); } }
+  function activityDown(e){ if(act.mode === "paint"){ paintDown(e); } else if(act.mode === "light"){ lightDown(e); } else if(act.mode === "stickers"){ stickerDown(e); } else if(act.mode === "play"){ playDown(e); } else if(act.mode === "night"){ nightDown(e); } else if(act.mode === "beads"){ beadsDown(e); } else if(act.mode === "circle"){ circleDown(e); } else if(act.mode === "face"){ faceDown(e); } else if(act.mode === "collage"){ collageDown(e); } else if(act.mode === "frames"){ framesDown(e); } }
+  function activityMove(e){ if(act.mode === "paint"){ paintMove(e); } else if(act.mode === "light"){ lightMove(e); } else if(act.mode === "stickers"){ stickerMove(e); } else if(act.mode === "play"){ playMove(e); } else if(act.mode === "night"){ nightMove(e); } else if(act.mode === "beads"){ beadsMove(e); } else if(act.mode === "circle"){ circleMove(e); } else if(act.mode === "face"){ faceMove(e); } else if(act.mode === "collage"){ collageMove(e); } else if(act.mode === "frames"){ framesMove(e); } }
+  function activityUp(e){ if(act.mode === "paint"){ paintUp(e); } else if(act.mode === "light"){ lightUp(e); } else if(act.mode === "stickers"){ stickerUp(e); } else if(act.mode === "play"){ playUp(e); } else if(act.mode === "night"){ nightUp(e); } else if(act.mode === "beads"){ beadsUp(e); } else if(act.mode === "circle"){ circleUp(e); } else if(act.mode === "face"){ faceUp(e); } else if(act.mode === "collage"){ collageUp(e); } else if(act.mode === "frames"){ fr.slide = false; } }
   function setFeedback(txt, cls){
     var f=$("feedback"); f.textContent=txt; f.className="feedback";
     if(txt){ if(cls) f.classList.add(cls); void f.offsetWidth; f.classList.add("show"); }
@@ -3356,7 +3749,7 @@
   }
   function enterTune(){
     show("tune"); state.tuneIndex=0; state.tunePts=clonePts();
-    requestAnimationFrame(function(){ if(ensureOSDTune()){ osdTune.open({ type:"image", url: currentPainting.tiles }); } });
+    requestAnimationFrame(function(){ if(ensureOSDTune()){ osdTune.open(tileSource(currentPainting)); } });
     renderTune();
   }
   function onTuneTap(e){
@@ -3443,12 +3836,14 @@
   $("showMeBtn").addEventListener("click", function(){ revealStop(state.findIndex, false); });
   $("nextFindBtn").addEventListener("click", nextFind);
   $("actCanvas").addEventListener("pointerdown", activityDown);
+  $("actCanvas").addEventListener("wheel", faceWheel, { passive:false });
   $("actCanvas").addEventListener("pointermove", activityMove);
   $("actCanvas").addEventListener("pointerup", activityUp);
   $("actCanvas").addEventListener("pointercancel", activityUp);
   // iPhones ignore touch-action here and drag the whole page along with a finger that draws, so
   // the painting seems to shake: while an activity is on the painting, its touches stay on it
   ["touchstart", "touchmove"].forEach(function(t){ $("actCanvas").addEventListener(t, function(e){ if(act.mode){ e.preventDefault(); } }, { passive:false }); });
+  $("paletteToggle").addEventListener("click", function(){ tuckPalette(!$("paletteWrap").classList.contains("tucked")); });
   (function(){ // the palette: drag to mix, tap to pick; the page must not scroll under the finger
     var c = $("paletteCanvas");
     c.addEventListener("pointerdown", paletteDown); c.addEventListener("pointermove", paletteMove);
@@ -3513,16 +3908,20 @@
   $("faceBack").addEventListener("click", function(){ setFacePreset(-1); faceGoTo(face.vals.map(function(){ return [0, 0, 0]; })); });
   $("faceCompare").addEventListener("click", function(){ setFaceCompare(!face.compare); });
   $("faceDone").addEventListener("click", finishFace);
+  $("collageUndo").addEventListener("click", function(){ col.patches.pop(); collageCount(); redrawActivity(); });
+  $("collageCompare").addEventListener("click", function(){ setCollageCompare(!col.compare); });
+  $("collageDone").addEventListener("click", finishCollage);
+  $("framesDone").addEventListener("click", finishFrames);
   $("actAgainBtn").addEventListener("click", function(){
     var s = STOPS[state.findIndex];
-    if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); } else if(s.stickers){ resumeStickers(s); } else if(s.play){ resumePlay(s); } else if(s.night){ resumeNight(s); } else if(s.beads){ resumeBeads(s); } else if(s.circle){ resumeCircle(s); } else if(s.face){ resumeFace(s); }
+    if(s.paint){ resumePaint(s); } else if(s.light){ resumeLight(s); } else if(s.stickers){ resumeStickers(s); } else if(s.play){ resumePlay(s); } else if(s.night){ resumeNight(s); } else if(s.beads){ resumeBeads(s); } else if(s.circle){ resumeCircle(s); } else if(s.face){ resumeFace(s); } else if(s.collage){ resumeCollage(s, true); } else if(s.frames){ resumeFrames(s); }
   });
   $("quitFind").addEventListener("click", function(){ if(state.demo){ show("demo"); } else { showGallery(); } });
   $("againBtn").addEventListener("click", startLooking);
   $("doneBtn").addEventListener("click", function(){ if(state.demo){ show("demo"); } else { showGallery(); } });
 
   /* ---------- hidden demo page for testing: index.html#demo ---------- */
-  var DEMO_KINDS = { paint:"Paint", light:"Move the sun", stickers:"Stickers", play:"Play the painting", night:"Find the night", beads:"Bead maze", circle:"Circle it", face:"Move the eyebrows" };
+  var DEMO_KINDS = { paint:"Paint", light:"Move the sun", stickers:"Stickers", play:"Play the painting", night:"Find the night", beads:"Bead maze", circle:"Circle it", face:"Move the eyebrows", collage:"Wallpaper", frames:"Frames" };
   function demoJump(painting, i){
     state.demo = true;
     currentMuseum = MUSEUMS.filter(function(m){ return m.id === painting.museum; })[0] || currentMuseum;
