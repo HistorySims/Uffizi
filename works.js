@@ -580,7 +580,7 @@ window.WORKS = [
         frames:{ real:"Stettheimer's", ask:"Does it suit the party?", wall:"images/frames/wall.jpg",
           canvas:{x:0.16396, y:0.18311, w:0.67339, h:0.72412},
           frames:[ {name:"Stettheimer's own", real:true, dot:"background:repeating-linear-gradient(45deg,#b8433a 0 4px,#efe6d2 4px 8px,#3d5878 8px 12px,#efe6d2 12px 16px);", say:"You picked Stettheimer's own frame, the one she made for this painting!"},
-                   {name:"Gaudy gold", src:"images/frames/gold.webp", x:0.03058, y:0.08301, w:0.94014, h:0.92432, dot:"border:5px solid #c79a35;box-shadow:inset 0 0 0 2px #f5d77a;background:#e9e6df;"},
+                   {name:"Fancy gold", src:"images/frames/gold.webp", x:0.03058, y:0.08301, w:0.94014, h:0.92432, dot:"border:5px solid #c79a35;box-shadow:inset 0 0 0 2px #f5d77a;background:#e9e6df;"},
                    {name:"Plain black", src:"images/frames/black.webp", x:0.11321, y:0.14502, w:0.77489, h:0.80029, dot:"border:3px solid #111;background:#e9e6df;"},
                    {name:"Craftsman oak", src:"images/frames/oak.webp", x:0.03383, y:0.10742, w:0.93364, h:0.87549, dot:"border:5px solid #6e4524;background:#e9e6df;"},
                    {name:"Thin silver", src:"images/frames/silver.webp", x:0.12362, y:0.15283, w:0.75407, h:0.78467, dot:"border:2px solid #c4c6c8;background:#e9e6df;"},
