@@ -561,7 +561,7 @@ window.WORKS = [
     alt:"New York/Liberty by Florine Stettheimer: a golden Statue of Liberty, a harbor full of ships and flags, and the city skyline, in a frame topped by a carved eagle",
     intro:"You've taken in the whole celebration. Now let's go and find the guests at this party.",
     src:"images/new-york-liberty.jpg", tiles:"images/new-york-liberty.jpg",
-    music:"audio/humoresque.mp3",
+    music:"audio/stars-and-stripes.mp3",
     prompts:[
       "Just look. This is New York City, and it's having a party. Can you feel it?",
       "Find the colors of the flag: red, white, and blue. How many places can you spot them?",
