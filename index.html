@@ -7,7 +7,7 @@
 <script>
   // The app's version. When a newer one is published, a phone may still have this page saved;
   // version.json is always fetched fresh, and if it's newer the page reloads itself once.
-  window.APP_VERSION = "2026-11-13c";
+  window.APP_VERSION = "2026-11-13d";
   (function(){
     try{
       fetch("version.json?t=" + Date.now(), { cache:"no-store" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(v){
@@ -19,7 +19,7 @@
     }catch(_){}
   })();
 </script>
-<script src="works.js?v=2026-11-13c"></script>
+<script src="works.js?v=2026-11-13d"></script>
 <title>A Looking Game</title>
 <style>
   :root{
@@ -255,6 +255,21 @@
   .frame-btn[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.15);color:var(--gold-bright);}
   .frame-dot{width:22px;height:28px;border-radius:3px;box-sizing:border-box;flex:none;}
   #framesStatus{white-space:nowrap;font-size:min(1.05rem,4.2vw);}
+  /* which one? two works side by side */
+  #pair .topbar{justify-content:space-between;}
+  .pair-q{font-family:var(--serif);font-size:min(1.35rem,5.4vw);line-height:1.3;text-align:center;padding:2px 20px 8px;min-height:2.6em;flex:0 0 auto;}
+  .pair-stage{flex:1 1 0;min-height:0;display:flex;gap:8px;padding:0 10px;}
+  .pair-cell{flex:1 1 0;min-width:0;position:relative;background:none;border:0;padding:0;transition:opacity .25s ease;}
+  .pair-win{position:absolute;overflow:hidden;border-radius:8px;display:block;} /* the part of the work on show */
+  .pair-cell img{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;pointer-events:none;}
+  .pair-cell.picked .pair-win{box-shadow:0 0 0 3px var(--gold-bright);}
+  .pair-cell.dim{opacity:.4;}
+  .pair-bottom{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 12px calc(16px + env(safe-area-inset-bottom));}
+  .pair-choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:520px;}
+  .pair-choices .btn{min-height:44px;padding:0 8px;font-size:.92rem;}
+  .pair-choices .btn[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,75,.18);color:var(--gold-bright);}
+  .pair-note{font-family:var(--serif);font-size:1.05rem;line-height:1.45;text-align:center;max-width:560px;min-height:1.4em;padding:0 6px;}
+  .pair-note b{color:var(--gold-bright);font-weight:600;}
   .paint-canvas:focus{outline:none;}
   .paint-canvas:focus-visible{outline:2px solid var(--gold-bright);outline-offset:-2px;}
   #stickerGo{display:none;}
@@ -355,6 +370,32 @@
     </div>
     <div class="stage"><div class="frame" id="frameLook"><div id="osdLook"></div></div></div>
     <div class="prompt vv-pin" data-vv-anchor="bottom"><p id="promptText"></p></div>
+  </section>
+
+  <!-- WHICH ONE? (two works side by side) -->
+  <section class="screen viewer" id="pair">
+    <div class="topbar">
+      <div class="find-progress" id="pairProgress"></div>
+      <button class="quit" id="quitPair">✕ Quit</button>
+    </div>
+    <div class="pair-q" id="pairQ" aria-live="polite"></div>
+    <div class="pair-stage" id="pairStage">
+      <button class="pair-cell" id="pairA" type="button"><span class="pair-win"><img alt="" /></span></button>
+      <button class="pair-cell" id="pairB" type="button"><span class="pair-win"><img alt="" /></span></button>
+    </div>
+    <div class="pair-bottom">
+      <div class="pair-choices" id="pairChoices">
+        <button class="btn btn-ghost" data-pick="a" type="button"></button>
+        <button class="btn btn-ghost" data-pick="b" type="button"></button>
+        <button class="btn btn-ghost" data-pick="both" type="button">Both</button>
+        <button class="btn btn-ghost" data-pick="neither" type="button">Neither</button>
+      </div>
+      <div class="pair-note" id="pairNote" aria-live="polite"></div>
+      <div class="caption-actions">
+        <button class="btn btn-ghost hidden" id="pairAgain">Play again</button>
+        <button class="btn btn-primary hidden" id="pairNext">Next</button>
+      </div>
+    </div>
   </section>
 
   <!-- FIND -->
@@ -518,7 +559,7 @@
   var STOPS = currentPainting.stops;
 
   var $ = function(id){ return document.getElementById(id); };
-  var screens = { home:$("home"), gallery:$("gallery"), start:$("start"), looking:$("looking"), find:$("find"), done:$("done"), tune:$("tune"), demo:$("demo") };
+  var screens = { home:$("home"), gallery:$("gallery"), start:$("start"), looking:$("looking"), find:$("find"), done:$("done"), tune:$("tune"), demo:$("demo"), pair:$("pair") };
   var prog = $("prog"), R = 27, C = 2*Math.PI*R;
   prog.style.strokeDasharray = C; prog.style.strokeDashoffset = 0;
 
@@ -623,7 +664,92 @@
         onChoose:function(){ selectPainting(painting); }
       }));
     });
+    pairsIn(currentMuseum).forEach(function(p, n){
+      if(!n){ var h = document.createElement("h3"); h.className = "grid-heading"; h.style.color = "var(--gold)"; h.textContent = "Look at two together"; grid.appendChild(h); }
+      grid.appendChild(makeCard({ img:p.cover, alt:"", role:"Which one?", title:p.title, sub:p.sub, text:p.card, button:"Let's compare", onChoose:function(){ state.demo = false; startPair(p); } }));
+    });
   }
+  /* ---------- which one? Two works side by side and a ladder of questions, from plain looking to thinking.
+     PAIRS: {a, b (work ids), names:[a, b], questions:[{q, view:{a:box, b:box} (the part of each to show),
+     answer ("a", "b", "both", "neither"; leave out when any answer is fine), yes (said when right or revealed),
+     say:{a, b, both, neither} or note (said after an open question)}], end:{title, body}}.
+     A question with an answer gives two tries, then shows it. Open questions accept anything. ---------- */
+  var pairSt = { p:null, i:0, tries:0, done:false, wa:null, wb:null };
+  function pairsIn(museum){ return (window.PAIRS || []).filter(function(p){ return p.museum === museum.id; }); }
+  function workById(id){ return PAINTINGS.filter(function(w){ return w.id === id; })[0]; }
+  function startPair(p){
+    pairSt.p = p; pairSt.wa = workById(p.a); pairSt.wb = workById(p.b);
+    var ia = $("pairA").querySelector("img"), ib = $("pairB").querySelector("img");
+    ia.onload = ib.onload = fitPair; ia.src = pairSt.wa.src; ib.src = pairSt.wb.src;
+    ia.alt = pairSt.wa.alt; ib.alt = pairSt.wb.alt;
+    var bs = $("pairChoices").children; bs[0].textContent = p.names[0]; bs[1].textContent = p.names[1];
+    document.title = p.title;
+    show("pair"); pairAsk(0);
+  }
+  function fitPair(){ // show the chosen part of each work as large as its cell allows
+    var p = pairSt.p; if(!p) return;
+    var q = p.questions[Math.min(pairSt.i, p.questions.length - 1)], v = (pairSt.i < p.questions.length && q.view) || {};
+    var cells = [["pairA", v.a], ["pairB", v.b]];
+    cells.forEach(function(c){ // a wide view gets a wider cell than a tall one, so neither ends up tiny
+      var im = $(c[0]).querySelector("img"), b = c[1] || { x:0, y:0, w:1, h:1 };
+      if(im.naturalWidth){ $(c[0]).style.flexGrow = Math.sqrt((b.w * im.naturalWidth) / (b.h * im.naturalHeight)).toFixed(3); }
+    });
+    cells.forEach(function(c){
+      var cell = $(c[0]), win = cell.firstChild, im = win.firstChild, b = c[1] || { x:0, y:0, w:1, h:1 };
+      if(!im.naturalWidth || !cell.clientWidth) return;
+      var W = im.naturalWidth, H = im.naturalHeight, pad = 4, cw = cell.clientWidth - pad * 2, ch = cell.clientHeight - pad * 2;
+      var k = Math.min(cw / (b.w * W), ch / (b.h * H)), ww = b.w * W * k, wh = b.h * H * k;
+      win.style.left = (pad + (cw - ww) / 2) + "px"; win.style.top = (pad + (ch - wh) / 2) + "px"; win.style.width = ww + "px"; win.style.height = wh + "px";
+      im.style.transform = "translate(" + (-b.x * W * k) + "px," + (-b.y * H * k) + "px) scale(" + k + ")";
+    });
+  }
+  function pairMark(pick){
+    $("pairA").classList.toggle("picked", pick === "a" || pick === "both"); $("pairB").classList.toggle("picked", pick === "b" || pick === "both");
+    $("pairA").classList.toggle("dim", pick === "b" || pick === "neither"); $("pairB").classList.toggle("dim", pick === "a" || pick === "neither");
+    Array.prototype.forEach.call($("pairChoices").children, function(b){ b.setAttribute("aria-pressed", String(b.dataset.pick === pick)); });
+  }
+  function pairAsk(i){
+    var p = pairSt.p; pairSt.i = i; pairSt.tries = 0; pairSt.done = false;
+    $("pairProgress").textContent = "Which one? " + (i + 1) + " of " + p.questions.length;
+    $("pairQ").textContent = p.questions[i].q;
+    $("pairNote").textContent = ""; pairMark(null);
+    $("pairChoices").classList.remove("hidden"); $("pairNext").classList.add("hidden"); $("pairAgain").classList.add("hidden");
+    $("pairNext").textContent = "Next";
+    requestAnimationFrame(fitPair);
+  }
+  function pairPick(pick){
+    var p = pairSt.p, q = p.questions[pairSt.i]; if(!p || pairSt.done || pairSt.i >= p.questions.length) return;
+    var note = $("pairNote"), name = { a:p.names[0], b:p.names[1], both:"Both", neither:"Neither" };
+    if(q.answer && pick !== q.answer){
+      pairSt.tries++;
+      if(pairSt.tries < 2){ pairMark(pick); note.textContent = "Hmm, look again!"; return; }
+      pick = q.answer; note.innerHTML = "<b>" + name[pick] + (pick === "both" || pick === "neither" ? "!" : "!") + "</b> "; note.appendChild(document.createTextNode(q.yes || ""));
+    } else if(q.answer){
+      note.innerHTML = "<b>Yes!</b> "; note.appendChild(document.createTextNode(q.yes || ""));
+    } else {
+      note.textContent = (q.say && q.say[pick]) || q.note || "";
+    }
+    pairSt.done = true; pairMark(pick);
+    $("pairNext").classList.remove("hidden");
+    requestAnimationFrame(fitPair);
+  }
+  function pairNext(){
+    var p = pairSt.p;
+    if(pairSt.i + 1 < p.questions.length){ pairAsk(pairSt.i + 1); return; }
+    if(pairSt.i >= p.questions.length){ if(state.demo){ show("demo"); } else { showGallery(); } return; }
+    pairSt.i = p.questions.length; pairMark(null); // the ending: both works whole, and something to carry to the museum
+    $("pairProgress").textContent = "Which one?";
+    $("pairQ").textContent = p.end.title; $("pairNote").textContent = p.end.body;
+    $("pairChoices").classList.add("hidden"); $("pairAgain").classList.remove("hidden"); $("pairNext").textContent = "All done";
+    requestAnimationFrame(fitPair);
+  }
+  $("pairA").addEventListener("click", function(){ pairPick("a"); });
+  $("pairB").addEventListener("click", function(){ pairPick("b"); });
+  Array.prototype.forEach.call($("pairChoices").children, function(b){ b.addEventListener("click", function(){ pairPick(b.dataset.pick); }); });
+  $("pairNext").addEventListener("click", pairNext);
+  $("pairAgain").addEventListener("click", function(){ pairAsk(0); });
+  $("quitPair").addEventListener("click", function(){ if(state.demo){ show("demo"); } else { showGallery(); } });
+  window.addEventListener("resize", function(){ if(screens.pair.classList.contains("active")){ fitPair(); } });
   function selectMuseum(museum){
     currentMuseum = museum;
     $("galleryCity").textContent = museum.city;
@@ -3953,6 +4079,13 @@
         });
         list.appendChild(box);
       });
+    });
+    (window.PAIRS || []).forEach(function(p){
+      var box = document.createElement("div"); box.className = "demo-work";
+      var h = document.createElement("h2"); h.textContent = p.title + " · which one?"; box.appendChild(h);
+      var b = document.createElement("button"); b.type = "button"; b.className = "btn btn-primary"; b.textContent = "Which one?";
+      b.addEventListener("click", function(){ state.demo = true; startPair(p); }); box.appendChild(b);
+      list.appendChild(box);
     });
   }
   function checkDemoHash(){

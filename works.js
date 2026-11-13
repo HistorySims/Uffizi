@@ -931,3 +931,32 @@ window.WORKS = [
     ]
   }
 ];
+
+// "Which one?" Two works side by side with a ladder of questions, planned backwards from the last one:
+// first plain looking (with right answers, and showing that "both" and "neither" are real answers),
+// then how each person presents herself, then open questions where any answer is fine.
+// view = the part of each work to show for a question (fractions of that work; whole work if left out).
+window.PAIRS = [
+  {
+    id:"thursby-thomas", museum:"bruce", a:"thursby", b:"thomas", names:["Mrs. Thursby", "Tracey"],
+    title:"Two portraits", sub:"Sargent and Mickalene Thomas", cover:"images/pair-thursby-thomas.jpg",
+    card:"Two women, painted 125 years apart. Which one...?",
+    questions:[
+      {q:"Which one has a dog?", answer:"b", yes:"A fluffy black-and-white dog sits at Tracey's feet."},
+      {q:"Which one is wearing a necklace?", answer:"both", view:{a:{x:0.14, y:0.22, w:0.72, h:0.36}, b:{x:0.42, y:0.0, w:0.44, h:0.66}},
+        yes:"Mrs. Thursby has a long chain. Tracey has a sparkly ring necklace. Sometimes the answer is both."},
+      {q:"Which one has a big smile?", answer:"neither", view:{a:{x:0.33, y:0.225, w:0.32, h:0.16}, b:{x:0.5, y:0.0, w:0.22, h:0.29}},
+        yes:"Long ago, almost nobody smiled in a portrait. Tracey doesn't have to smile either."},
+      {q:"Which one has her hands on her hips?", answer:"a", view:{a:{x:0.0, y:0.2, w:1, h:0.45}, b:{x:0.3, y:0.0, w:0.66, h:0.7}},
+        yes:"Mrs. Thursby: both hands, elbows out. Tracey stretches one arm across the chair instead."},
+      {q:"Which one is looking right at you?", answer:"both", view:{a:{x:0.33, y:0.225, w:0.32, h:0.16}, b:{x:0.5, y:0.0, w:0.22, h:0.29}},
+        yes:"Neither one looks away. They want you to look back."},
+      {q:"Which picture tells you more about the person in it?", note:"Sargent tells you with her pose. Thomas tells you with a whole room of patterns and color. What did you notice first?"},
+      {q:"Which one looks sure of herself?", view:{a:{x:0.0, y:0.2, w:1, h:0.45}, b:{x:0.3, y:0.0, w:0.66, h:0.7}},
+        say:{a:"What makes her look so sure? Her hands? Her eyes? The way she sits?", b:"What makes her look so sure? Her eyes? Her arm? The way she sits?", both:"Two women, 125 years apart, and both look sure of themselves. How can you tell?", neither:"Interesting! What would they need to do to look sure of themselves?"}},
+      {q:"Which one is telling you: this is who I am?",
+        say:{a:"Mrs. Thursby it is. What do you think she's telling you about herself?", b:"Tracey it is. What do you think she's telling you about herself?", both:"Both of them! What is each one telling you?", neither:"Maybe a portrait can't tell you everything. What would you ask them, if you could?"}}
+    ],
+    end:{title:"How do you want to be seen?", body:"There was no wrong answer to that last one. At the Bruce, these two hang in a room called Identity, and its wall asks: How do you see yourself? How do you want others to see you? If someone painted your portrait, how would you sit? What would be in your room?"}
+  }
+];
