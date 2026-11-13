@@ -237,7 +237,7 @@ window.WORKS = [
         title:"Paler and bluer", body:"The more air there is between you and something, the paler and bluer it looks. Leonardo noticed this, wrote about it in his notebooks, and painted it: dark, sharp trees up close, soft blue mountains far away. Painters call it aerial perspective, and it makes a flat painting feel deep."}
     ],
     done:[
-      "Here is the story. An angel named Gabriel has come to tell a young woman named Mary that she will be the mother of Jesus. Painters across the Renaissance painted this moment again and again. This is Leonardo's version, made when he was barely a teenager in Florence.",
+      "Here is the story. An angel named Gabriel has come to tell a young woman named Mary that she will be the mother of Jesus. Painters across the Renaissance painted this moment again and again. This is Leonardo's version, made when he was only about twenty, a young painter in Florence.",
       "Now look at their faces again, knowing what you know. Gabriel makes sense: he came straight from God and he is sure. Mary is harder to explain. She has just heard something that will change everything. But she raises her hand not in fear. More like she is saying: yes. As if some quiet part of her already knew.",
       "Leonardo da Vinci painted this around 1472. It lives in the Uffizi in Florence. When you stand in front of the real one, look at the wings first. Everyone does. Then look at their faces. Then look all the way down at the tiny wildflowers blooming in the grass."
     ]
