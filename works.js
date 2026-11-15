@@ -15,7 +15,7 @@ window.MUSEUMS = [
   {
     // a special exhibit: American Stories from Sargent to O'Keeffe (works on loan from the Newark Museum of Art)
     id:"bruce", name:"The Bruce", city:"Greenwich, Connecticut",
-    card:"American Stories from Sargent to O'Keeffe: a lady who can't sit still, and a room made of patterns.",
+    card:"American Stories from Sargent to O'Keeffe: two bold portraits, an arch in Rome and a square in Paris.",
     intro:"A special exhibit of American art, on loan from the Newark Museum of Art. It's at the Bruce until October 10, 2027.",
     cover:"images/mrs-charles-thursby.jpg", coverPos:"50% 26%"
   }
@@ -43,6 +43,8 @@ window.MUSEUMS = [
 //   frames:{canvas, wall, frames, real, ask} = try other frames on the painting, pick the one that suits it, then
 //     compare with the artist's own. canvas = the painted area (the photo includes the real frame); wall = the photo
 //     with the real frame taken out; frames = [{name, src, x,y,w,h, dot, say} | {name, real:true} | {name} (none)].
+//   fill:{map, colors, real} = tap a flat shape to fill it with a color. map = an image whose red value at each
+//     pixel is the number of the shape there.
 //   collage:{figure, wallpapers, real} = draw shapes on the background and fill them with wallpapers. figure = the
 //     painting with its background see-through (drawn back on top, so people and things stay in front);
 //     wallpapers = [{name, src} (a tile at the painting's own scale) or {name, color}].
@@ -951,6 +953,72 @@ window.WORKS = [
       "Tracey Norman grew up in Newark, New Jersey, and became a famous model in the 1970s. Her face was on boxes of hair color in stores all over the country. She was one of the first Black transgender models, and today she is celebrated for being exactly who she is.",
       "At the Bruce, find her in the room called Identity, near Mrs. Charles Thursby. Two women, painted 125 years apart, both sitting in a way that says: here I am. Stand between them. What's the same? What's different?"
     ]
+  },
+
+  {
+    id:"arch", museum:"bruce", title:"The Arch of Titus", artist:"George Healy, Frederic Church and Jervis McEntee", meetLabel:"Meet the artists",
+    card:"An ancient arch in Rome, a poet and his daughter, and three painters who painted themselves.",
+    subtitle:"Three friends, one canvas, and a doorway two thousand years old.",
+    alt:"The Arch of Titus by George Healy, Frederic Church and Jervis McEntee: a huge carved Roman arch with the Colosseum seen through it, a man and a girl standing beneath it, and three men in dark coats at the right, one of them sketching",
+    meet:"Three American friends painted this together in Rome, in 1871. George Healy painted portraits. Frederic Church and Jervis McEntee painted landscapes. Each one did the part he was best at, and then they painted themselves into the picture!",
+    intro:"You've stood under the arch. Now let's find who else is there.",
+    src:"images/arch-of-titus.jpg", tiles:"images/arch-of-titus.jpg", thumbPos:"50% 75%",
+    music:"audio/meditation.mp3",
+    prompts:[
+      "Just look. You're standing in Rome, under a stone arch that is almost two thousand years old.",
+      "Look up. How big is the arch compared to the people?",
+      "Look through the arch. What can you see far away?",
+      "Where is the sunlight? Where are the shadows?",
+      "Who do you think these people are? What are they doing here?"
+    ],
+    stops:[
+      {find:"Look through the arch. Can you find a huge round building, far away?", cx:0.58, cy:0.64, box:{x:0.38, y:0.56, w:0.4, h:0.17}, title:"The Colosseum", body:"That's the Colosseum, a giant stadium where the ancient Romans watched shows and contests. It was already very old when this was painted, and you can still visit it today."},
+      {find:"Can you find a man in a tall hat and a girl in a pink dress?", cx:0.4, cy:0.77, box:{x:0.31, y:0.68, w:0.17, h:0.18}, title:"A poet and his daughter", body:"The man is Henry Wadsworth Longfellow, one of the most famous American poets of his time, out for a walk with his daughter Edith. They were visiting Rome too, far from their home in Massachusetts."},
+      {find:"Can you find horses carved into the stone?", cx:0.23, cy:0.56, box:{x:0.08, y:0.48, w:0.3, h:0.16}, title:"A picture made of stone", body:"The Romans carved pictures right into the arch: horses pulling a chariot in a victory parade. The arch was built to celebrate an emperor named Titus."},
+      {find:"Look up inside the arch. Can you find the rows of little square boxes?", cx:0.42, cy:0.27, box:{x:0.1, y:0.13, w:0.7, h:0.3}, title:"A ceiling of squares", body:"The curved ceiling is carved into rows of squares, each with a stone flower inside. Look how carefully the painters showed every one, getting smaller as the arch curves away."},
+      {find:"Can you find someone drawing?", cx:0.72, cy:0.85, box:{x:0.62, y:0.73, w:0.25, h:0.25}, title:"The sketcher", body:"That's Frederic Church, one of the three painters, sitting with his sketchbook and drawing the arch. Artists often drew outdoors first, then made the big painting later in a studio."},
+      {find:"Two more painters are watching him. Can you find the one holding a palette?", cx:0.87, cy:0.8, box:{x:0.76, y:0.64, w:0.2, h:0.2}, title:"Three painters in their own painting", body:"A palette is the flat board painters mix their colors on. These are the other two artists, looking over their friend's shoulder. All three of them put themselves in the painting, like signing it with their faces."}
+    ],
+    done:[
+      "The Arch of Titus was painted in 1871 by three American artists working together in Rome. It's unusual for painters to share one canvas, but these three were good friends.",
+      "Back then, many American artists sailed across the ocean to Italy to study the old buildings and the famous paintings there. This picture is a bit like a postcard home: look where we are, and look who we met!",
+      "At the Bruce, stand back and see how tall the arch is. Then step close and find the poet, his daughter, and the three painters."
+    ]
+  },
+
+  {
+    id:"davis", museum:"bruce", title:"Place des Vosges No. 1", artist:"Stuart Davis",
+    card:"A square in Paris turned into flat, bright blocks of color.",
+    subtitle:"Pink, lilac, red and yellow: a Paris square made simple.",
+    alt:"Place des Vosges No. 1 by Stuart Davis: a row of buildings around an empty gray square, painted as flat blocks of white, pink, lilac, red and yellow with thin black lines for windows and arches",
+    meet:"Stuart Davis was an American painter who loved jazz music, city signs and bright color. In 1928 he sailed to Paris and stayed for more than a year. He painted its old streets and squares as flat, cheerful shapes.",
+    intro:"You've looked across the square. Now let's find the little things Davis kept.",
+    src:"images/place-des-vosges.jpg", tiles:"images/place-des-vosges.jpg",
+    music:"audio/canal-street-blues.mp3",
+    prompts:[
+      "Just look. This is a square in Paris, France, on a sunny day.",
+      "How many colors can you count on the buildings?",
+      "Look at the windows and doors. How did the artist make them?",
+      "Is anybody here? Where do you think everyone went?",
+      "If you lived here, which building would be yours?"
+    ],
+    stops:[
+      {find:"Can you find a tall red shape with squiggles on it?", cx:0.92, cy:0.76, box:{x:0.86, y:0.63, w:0.11, h:0.26}, title:"A splash of red", body:"It might be a sign or a poster stand. Davis loved the signs and posters on city streets. He didn't copy the words. He turned them into squiggles."},
+      {find:"Can you find a green door?", cx:0.775, cy:0.655, box:{x:0.73, y:0.59, w:0.09, h:0.12}, title:"One green door", body:"All the other doorways are just thin black lines. Only this one is filled with green. Why do you think Davis chose this door?"},
+      {find:"Can you find a little blue sign with letters?", cx:0.925, cy:0.622, box:{x:0.87, y:0.59, w:0.11, h:0.07}, title:"A street sign", body:"A tiny blue sign with white letters, just like the real street signs in Paris. It's one of the few places Davis used blue, besides the sky."},
+      {find:"Can you find a balcony that looks like a see-through box?", cx:0.14, cy:0.52, box:{x:0.03, y:0.46, w:0.22, h:0.12}, title:"Drawn, not painted", body:"Davis drew the balcony with a few black lines, and you can see right through it! He liked to draw on top of his colors, the way you might with a marker."},
+      {find:"Can you find a chimney on a roof?", cx:0.825, cy:0.06, box:{x:0.78, y:0.01, w:0.09, h:0.11}, title:"Up on the roof", body:"One skinny chimney pokes up into the blue sky. The roofs are flat gray shapes with little windows drawn on, like a row of hats."},
+      {find:"One building wears a pattern of yellow lines. Can you find it?", cx:0.8, cy:0.4, box:{x:0.62, y:0.26, w:0.35, h:0.3}, title:"Bricks, the quick way", body:"The real buildings in this square are made of red brick with pale stone stripes. Davis didn't paint every brick. A few yellow lines are enough to say: brick!"},
+      {find:"Davis chose every color. Now you choose! Pick a color, then tap any shape to fill it.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        fill:{ map:"images/place-des-vosges-map.png", real:"Davis's",
+          colors:["#e58fb0","#d9c3e6","#c8393b","#f1e58f","#d9a04e","#7fb6d9","#9aa0a6","#f4f1ea","#2f9e77","#f08a2e","#6a4fb3","#2a2f38"] },
+        title:"Your square", body:"Slide across to see Davis's colors. The real square is all red brick and gray stone. Davis gave every building its own color instead: pink, lilac, red, yellow. How does your square feel? How does his?"}
+    ],
+    done:[
+      "Stuart Davis painted Place des Vosges No. 1 in 1928, during his stay in Paris. The Place des Vosges is a real square, more than 400 years old, and you can still walk around it today.",
+      "The real buildings all match: red brick, gray roofs, stone arches. Davis kept the shapes but changed the colors, and he left out the people, the trees and the fountain. He painted how the square felt to him: bright, simple and sunny.",
+      "At the Bruce, it hangs near the big, shadowy Arch of Titus. Two Americans visiting Europe, about sixty years apart. Look from one to the other. Which place would you rather visit?"
+    ]
   }
 ];
 
@@ -980,5 +1048,24 @@ window.PAIRS = [
         say:{a:"Mrs. Thursby it is. What do you think she's telling you about herself?", b:"Tracey it is. What do you think she's telling you about herself?", both:"Both of them! What is each one telling you?", neither:"Maybe a portrait can't tell you everything. What would you ask them, if you could?"}}
     ],
     end:{title:"How do you want to be seen?", body:"There was no wrong answer to that last one. At the Bruce, these two hang in a room called Identity, and its wall asks: How do you see yourself? How do you want others to see you? If someone painted your portrait, how would you sit? What would be in your room?"}
+  },
+  {
+    id:"arch-davis", museum:"bruce", a:"arch", b:"davis", names:["The Arch", "The Square"],
+    title:"Two Americans in Europe", sub:"The Arch of Titus and Place des Vosges", cover:"images/pair-arch-davis.jpg",
+    card:"Rome and Paris, painted by visitors from America. Which one...?",
+    questions:[
+      {q:"Which one has people in it?", answer:"a", yes:"Five people stand under the arch. The square is completely empty."},
+      {q:"Which one has a blue sky?", answer:"both", yes:"Look through the arch, and above the rooftops."},
+      {q:"Which one shows nighttime?", answer:"neither", yes:"Both are sunny days. One is full of deep shadows, and the other has no shadows at all."},
+      {q:"Which one has a pink building?", answer:"b", yes:"The real building isn't pink. The painter just liked it that way."},
+      {q:"Which one shows a place far away from America?", answer:"both", yes:"The arch is in Rome, Italy. The square is in Paris, France. American artists sailed across the ocean to paint them."},
+      {q:"Which one could you use like a photo, to see just how the place looked?",
+        say:{a:"The arch painters showed every stone and shadow, almost like a camera.", b:"Interesting! The shapes are right, even if the colors are made up.", both:"Each one keeps something real: one the stones and shadows, the other the shapes.", neither:"True, a painting is never quite a photo. Somebody chose what to put in."}},
+      {q:"Which one shows how it felt to be there?",
+        say:{a:"How do you think it felt under that giant arch? Small? Amazed?", b:"How do you think the square felt to the painter? Sunny? Happy?", both:"One feels grand and old. One feels bright and playful. Both are feelings!", neither:"What would you add to a painting to show how a place feels?"}},
+      {q:"Which one is more true?",
+        say:{a:"It does look just like the real arch. Is looking right the same as being true?", b:"The colors are made up, but maybe the feeling is real. Can a feeling be true?", both:"Maybe there's more than one way to tell the truth about a place.", neither:"Maybe every painting is partly made up. Even a careful one leaves things out."}}
+    ],
+    end:{title:"Two ways to tell the truth", body:"There was no wrong answer to that last one. One painting shows how a place looked. The other shows how a place felt. Think of somewhere you love. Would you paint how it looks, or how it feels?"}
   }
 ];
