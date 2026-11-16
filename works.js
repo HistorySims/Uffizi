@@ -15,7 +15,7 @@ window.MUSEUMS = [
   {
     // a special exhibit: American Stories from Sargent to O'Keeffe (works on loan from the Newark Museum of Art)
     id:"bruce", name:"The Bruce", city:"Greenwich, Connecticut",
-    card:"American Stories from Sargent to O'Keeffe: a lady who can't sit still, and a room made of patterns.",
+    card:"American Stories from Sargent to O'Keeffe: two bold portraits, an arch in Rome and a square in Paris.",
     intro:"A special exhibit of American art, on loan from the Newark Museum of Art. It's at the Bruce until October 10, 2027.",
     cover:"images/mrs-charles-thursby.jpg", coverPos:"50% 26%"
   }
@@ -43,6 +43,8 @@ window.MUSEUMS = [
 //   frames:{canvas, wall, frames, real, ask} = try other frames on the painting, pick the one that suits it, then
 //     compare with the artist's own. canvas = the painted area (the photo includes the real frame); wall = the photo
 //     with the real frame taken out; frames = [{name, src, x,y,w,h, dot, say} | {name, real:true} | {name} (none)].
+//   fill:{map, colors, real} = tap a flat shape to fill it with a color. map = an image whose red value at each
+//     pixel is the number of the shape there.
 //   collage:{figure, wallpapers, real} = draw shapes on the background and fill them with wallpapers. figure = the
 //     painting with its background see-through (drawn back on top, so people and things stay in front);
 //     wallpapers = [{name, src} (a tile at the painting's own scale) or {name, color}].
@@ -52,6 +54,7 @@ window.MUSEUMS = [
 //     middle and outer end, as fractions of the cut-out's height); erase = bare skin laid where they were painted;
 //     up, down = how far a point may go (fractions of the painting's height); presets = shapes to try, per part
 //     [inner, middle, outer], 1 = all the way up, -1 = all the way down; ask = questions shown in turn after a change.
+// meet = two or three sentences introducing the artist, shown after the looking time and before the first clue.
 // Optional: role = its part in the visit (shown on the card), kind = "sculpture" etc. (default "painting"),
 // onView:false = not on display right now (card is darkened; still playable),
 // tiles = what the zoomable viewer opens: the image itself, or a .dzi zoom pyramid for a very detailed painting,
@@ -62,6 +65,7 @@ window.WORKS = [
     card:"A sea breeze, a shell, and a goddess arriving on shore.",
     subtitle:"Let's slow down, then go exploring.",
     alt:"The Birth of Venus by Sandro Botticelli",
+    meet:"Sandro Botticelli lived in Florence, Italy, more than 500 years ago. Botticelli was a nickname: it means 'little barrel'! He painted this for the Medici, the most powerful family in the city.",
     intro:"You looked at the whole painting. Now let's find some things hiding inside it.",
     src:"images/venus.jpg", tiles:"images/venus.jpg",
     music:"audio/la-mer.mp3", musicStart:75,
@@ -99,6 +103,7 @@ window.WORKS = [
     card:"A warm, drifting grove of flowers, dancers, and wind.",
     subtitle:"A warm, drifting garden. Move through it slowly and let each figure show you what is waking.",
     alt:"Primavera by Sandro Botticelli",
+    meet:"Sandro Botticelli started learning to paint as a teenager, in the workshop of an older painter in Florence. He loved to draw long, flowing lines, and he filled this garden with hundreds of real kinds of plants and flowers.",
     intro:"You let the whole garden settle around you. Now move slowly from figure to figure — each one is part of what is happening here.",
     src:"images/primavera.jpg", tiles:"images/primavera.jpg",
     music:"audio/vivaldi-spring.mp3",
@@ -146,6 +151,7 @@ window.WORKS = [
     card:"A quiet still life that starts to move when you look closely.",
     subtitle:"A slow mystery: is anything truly still?",
     alt:"Fruit and Insects by Rachel Ruysch",
+    meet:"Rachel Ruysch lived in Amsterdam about 300 years ago. Her father was a scientist with a famous collection of plants, insects and animals, and she grew up drawing them. She painted flowers and fruit for almost seventy years, and she had ten children, too!",
     intro:"You looked at the whole painting. Now let's hunt for the little creatures hiding inside it.",
     src:"images/fruit.jpg", tiles:"images/fruit.jpg",
     music:"audio/gnossienne-1.mp3",
@@ -175,6 +181,7 @@ window.WORKS = [
     card:"A flying hero, a sea dragon, and a rescue by the shore.",
     subtitle:"A hero, a chained princess, and a sea dragon.",
     alt:"Perseus Freeing Andromeda by Piero di Cosimo",
+    meet:"Piero di Cosimo lived in Florence about 500 years ago. People said he was a bit odd: he loved wild animals and let his garden grow any way it liked. This painting tells an old Greek story about a hero, a princess and a sea monster.",
     intro:"You looked at the whole painting. Now let's find the people and the monster in this rescue story.",
     src:"images/perseus.jpg", tiles:"images/perseus.jpg",
     music:"audio/vivaldi-2-cellos.mp3",
@@ -204,6 +211,7 @@ window.WORKS = [
     card:"An angel arrives in a garden with the most important news in the world.",
     subtitle:"Two faces, one message, a meadow full of secrets.",
     alt:"The Annunciation by Leonardo da Vinci",
+    meet:"Leonardo da Vinci was a painter, an inventor and a scientist, and he filled notebooks with drawings of everything he was curious about. He painted this when he was only about twenty, while he was still learning in another artist's workshop in Florence.",
     intro:"You've looked at the two people and their expressions. Now let's go closer and find what's hiding in this painting.",
     src:"images/annunciation.jpg", tiles:"images/annunciation.jpg",
     music:"audio/biber-annunciation.mp3",
@@ -231,7 +239,7 @@ window.WORKS = [
         title:"Paler and bluer", body:"The more air there is between you and something, the paler and bluer it looks. Leonardo noticed this, wrote about it in his notebooks, and painted it: dark, sharp trees up close, soft blue mountains far away. Painters call it aerial perspective, and it makes a flat painting feel deep."}
     ],
     done:[
-      "Here is the story. An angel named Gabriel has come to tell a young woman named Mary that she will be the mother of Jesus. Painters across the Renaissance painted this moment again and again. This is Leonardo's version, made when he was barely a teenager in Florence.",
+      "Here is the story. An angel named Gabriel has come to tell a young woman named Mary that she will be the mother of Jesus. Painters across the Renaissance painted this moment again and again. This is Leonardo's version, made when he was only about twenty, a young painter in Florence.",
       "Now look at their faces again, knowing what you know. Gabriel makes sense: he came straight from God and he is sure. Mary is harder to explain. She has just heard something that will change everything. But she raises her hand not in fear. More like she is saying: yes. As if some quiet part of her already knew.",
       "Leonardo da Vinci painted this around 1472. It lives in the Uffizi in Florence. When you stand in front of the real one, look at the wings first. Everyone does. Then look at their faces. Then look all the way down at the tiny wildflowers blooming in the grass."
     ]
@@ -241,6 +249,7 @@ window.WORKS = [
     card:"The whole world arrives to see one baby, and everyone brings everything they have.",
     subtitle:"Gold everywhere, and a crowd from every corner of the earth.",
     alt:"Adoration of the Magi by Gentile da Fabriano",
+    meet:"Gentile da Fabriano was one of the most famous painters in Italy 600 years ago. The richest man in Florence asked him for this painting for his family's chapel, and Gentile covered it in real gold.",
     intro:"You've looked at the whole scene. Now let's go find specific things that prove what you just read.",
     src:"images/adoration.jpg", tiles:"images/adoration.jpg",
     music:"audio/adeste-fideles.mp3",
@@ -277,6 +286,7 @@ window.WORKS = [
     card:"A blue night, a brass band, and a whole street dancing.",
     subtitle:"It's night, the band is playing, and everybody's out.",
     alt:"Gettin' Religion by Archibald J. Motley Jr.: a crowded street at night in deep blue light, with brass musicians, dancers, and neighbors watching from porches and windows",
+    meet:"Archibald Motley Jr. was born in New Orleans and grew up in Chicago, where he went to art school. He loved jazz and city nights, and he painted the people of his city's Black neighborhoods having a good time.",
     intro:"You've soaked up the whole noisy night. Now let's find the people and the tiny details hiding in the blue.",
     src:"images/gettin-religion.jpg", tiles:"images/gettin-religion.jpg",
     music:"audio/canal-street-blues.mp3",
@@ -315,6 +325,7 @@ window.WORKS = [
     card:"A shop at dawn, a clock on the wall, and nobody there yet.",
     subtitle:"Early light, an empty shop, and a clock that tells you the time.",
     alt:"Seven A.M. by Edward Hopper: a white corner shop with a clock and a few bottles in the window, next to a dark green wood, in early morning light",
+    meet:"Edward Hopper grew up in a little town on the Hudson River, where he loved to draw boats. He was tall and very quiet, and he sometimes thought about a painting for months before he picked up a brush.",
     intro:"You've watched the morning light. Now let's look closely at this quiet little shop.",
     src:"images/seven-am.jpg", tiles:"images/seven-am.jpg",
     music:"audio/wild-rose.mp3",
@@ -368,6 +379,7 @@ window.WORKS = [
     card:"Quiet sunlight & counting window blinds.",
     subtitle:"A whole city street, still asleep. Let's be quiet with it.",
     alt:"Early Sunday Morning by Edward Hopper: a row of red brick shops and apartments on an empty street in morning sun",
+    meet:"Edward Hopper lived and worked in New York City. For years he had to earn his living drawing pictures for magazines and ads, which he didn't enjoy. By the time he painted this, in 1930, he could finally spend every day painting what he wanted.",
     intro:"You've let the quiet street settle around you. Now let's walk along it slowly and notice the small things.",
     src:"images/early-sunday-morning.jpg", tiles:"images/early-sunday-morning.jpg",
     music:"audio/gymnopedie-1.mp3",
@@ -415,6 +427,7 @@ window.WORKS = [
     card:"Bakery desserts & thick \"frosting\" paint.",
     subtitle:"Rows and rows of cake and pie. Look with your eyes, and your sweet tooth.",
     alt:"Pie Counter by Wayne Thiebaud: rows of cake and pie slices on white plates along a counter",
+    meet:"Wayne Thiebaud lived in California. As a teenager he worked for a little while drawing cartoons at Walt Disney's studio! He became a painter and an art teacher, and he loved painting ordinary things like pies, cakes and gumball machines.",
     intro:"You've looked at every slice. Now let's find a few special ones, and look at how the paint itself is made like frosting.",
     src:"images/pie-counter.jpg", tiles:"images/pie-counter.jpg",
     music:"audio/waltz-of-the-flowers.mp3",
@@ -469,6 +482,7 @@ window.WORKS = [
     card:"A snowman, two cats, and laundry flapping in the cold.",
     subtitle:"A snowy backyard in New York, seen from a window.",
     alt:"Backyards, Greenwich Village by John Sloan: children build a snowman in a snowy backyard under clotheslines, while two cats play and a girl watches from a window",
+    meet:"John Sloan started out drawing pictures for newspapers, so he learned to sketch quickly and to notice everything. Then he moved to New York City and painted everyday life there: streets, rooftops, laundry lines and neighbors.",
     intro:"You've felt the cold, bright afternoon. Now let's find everyone who's out in the snow.",
     src:"images/backyards-greenwich-village.jpg", tiles:"images/backyards-greenwich-village.jpg",
     music:"audio/traumerei.mp3",
@@ -508,6 +522,7 @@ window.WORKS = [
     card:"A glowing teardrop rising out of a soft green sea.",
     subtitle:"A painting of change. What do you see?",
     alt:"Sea Change by Agnes Pelton: a glowing white teardrop rises above soft mint-green waves under a deep blue sky",
+    meet:"Agnes Pelton grew up in Brooklyn, New York. Most painters of her time painted people and places. She painted glowing shapes that she saw in her imagination, and she liked to live in quiet places, far from the busy city.",
     intro:"Now let's go looking for change.",
     src:"images/sea-change.jpg", tiles:"images/sea-change.jpg",
     music:"audio/arabesque-harp.mp3",
@@ -559,9 +574,10 @@ window.WORKS = [
     card:"Lady Liberty, puffing boats & the carved eagle.",
     subtitle:"New York is throwing a party, and everyone's invited.",
     alt:"New York/Liberty by Florine Stettheimer: a golden Statue of Liberty, a harbor full of ships and flags, and the city skyline, in a frame topped by a carved eagle",
+    meet:"Florine Stettheimer was a painter and a poet who lived in New York City. She even designed the costumes and scenery for an opera! She hardly ever sold her paintings. She kept them for herself, her family and her friends.",
     intro:"You've taken in the whole celebration. Now let's go and find the guests at this party.",
     src:"images/new-york-liberty.jpg", tiles:"images/new-york-liberty.jpg",
-    music:"audio/humoresque.mp3",
+    music:"audio/stars-and-stripes.mp3",
     prompts:[
       "Just look. This is New York City, and it's having a party. Can you feel it?",
       "Find the colors of the flag: red, white, and blue. How many places can you spot them?",
@@ -599,6 +615,7 @@ window.WORKS = [
     card:"A flag you've seen a thousand times, stacked up three times over.",
     subtitle:"You know this flag. But have you ever really looked at it?",
     alt:"Three Flags by Jasper Johns: three American flags stacked on top of each other, each one smaller and closer than the last",
+    meet:"Jasper Johns grew up in South Carolina and moved to New York to be an artist. One night he dreamed that he painted a big American flag. The next morning he got up and started one! He painted this, his most surprising flag, in 1958.",
     intro:"You've looked at the whole stack. Now let's look again, really closely, at something you thought you already knew.",
     src:"images/three-flags.jpg", tiles:"images/three-flags.jpg",
     music:"audio/america-chimes.mp3",
@@ -634,6 +651,7 @@ window.WORKS = [
     card:"Giant glowing castle arches & silver harp strings.",
     subtitle:"A bridge so big and bright it feels like a cathedral.",
     alt:"The Brooklyn Bridge: Variation on an Old Theme by Joseph Stella: the bridge's pointed arches and curving cables glow against a city at night",
+    meet:"Joseph Stella grew up in a small mountain town in Italy. He first came to New York to study to be a doctor, like his older brother. But he loved drawing too much, so he became an artist instead.",
     intro:"You've stood under the bridge. Now let's find what Stella hid inside it.",
     src:"images/brooklyn-bridge.jpg", tiles:"images/brooklyn-bridge.jpg",
     music:"audio/rhapsody-in-blue.mp3", musicStart:385,
@@ -669,6 +687,7 @@ window.WORKS = [
     card:"Real miniature toys & recycled creatures.",
     subtitle:"A whole circus small enough to pack in a suitcase.",
     alt:"Calder's Circus by Alexander Calder: tiny wire and cloth performers around a little circus ring",
+    meet:"Alexander Calder's father and grandfather were both sculptors. As a boy he made toys, and jewelry for his sister's dolls, out of bits of wire. Before he became an artist, he studied to be an engineer, so he knew how to make things move.",
     intro:"You've looked over the whole circus. Now let's find the performers. Every one of them was made by hand from bits and scraps.",
     src:"images/calder-circus.jpg", tiles:"images/calder-circus.jpg",
     music:"audio/over-the-waves.mp3",
@@ -725,6 +744,7 @@ window.WORKS = [
     card:"Charging herds & snow pillows on branches.",
     subtitle:"A snowstorm, a dark forest, and something big on the run.",
     alt:"The Buffalo Hunt by Horace Pippin: dark buffalo charge through deep snow beside a bare tree in a blizzard",
+    meet:"Horace Pippin grew up in a small town in New York State. When he was a boy, he won a box of crayons and some paints in a drawing contest, and he never stopped making pictures. He never went to art school. He taught himself.",
     intro:"You've felt the storm. Now let's look closer at what's happening out there in the snow.",
     src:"images/buffalo-hunt.jpg", tiles:"images/buffalo-hunt.jpg",
     music:"audio/new-world-largo.mp3",
@@ -762,6 +782,7 @@ window.WORKS = [
     card:"Soft breathing curves & visual music.",
     subtitle:"No people, no places. Just color, curving like music.",
     alt:"Music, Pink and Blue No. 2 by Georgia O'Keeffe: soft pink, purple and orange curves fold around a deep blue shape",
+    meet:"Georgia O'Keeffe grew up on a big farm in Wisconsin. When she was twelve, she told a friend she was going to be an artist, and she did it. She loved to look very, very closely at things, and to paint them big.",
     intro:"You've let the colors move around you. Now let's find some of the different 'notes' in this painting.",
     src:"images/music-pink-blue.jpg", tiles:"images/music-pink-blue.jpg",
     music:"audio/the-swan.mp3",
@@ -823,6 +844,7 @@ window.WORKS = [
     card:"A giant green billiard table in the desert.",
     subtitle:"Something is very strange here. Can you figure out what?",
     alt:"La Fortune by Man Ray: a long green billiard table stretches across a desert under brightly colored clouds",
+    meet:"Man Ray grew up in Brooklyn, New York. His name was Emmanuel Radnitzky, but he made up a short new one for himself. He moved to Paris and made paintings, photographs and odd objects, and he loved playing games, especially chess.",
     intro:"You've looked at this strange dream. Now let's hunt for the clues.",
     src:"images/la-fortune.jpg", tiles:"images/la-fortune.jpg",
     music:"audio/meditation.mp3",
@@ -853,6 +875,7 @@ window.WORKS = [
     card:"A lady on the edge of her seat, hands on her hips, ready to jump up.",
     subtitle:"A bold pose, a purple bow, and two eyebrows that say a lot.",
     alt:"Mrs. Charles Thursby by John Singer Sargent: a woman in a dark striped jacket and a deep red skirt sits forward on the edge of a white armchair, hands on her hips, one foot on a footstool, looking straight at us",
+    meet:"John Singer Sargent was an American who grew up traveling all over Europe with his family. He became the most popular portrait painter of his time. Rich and famous people in London, Paris and New York lined up to have him paint them.",
     intro:"You've met Mrs. Thursby. Now let's look closely, from her shoes to her eyebrows.",
     src:"images/mrs-charles-thursby.jpg", tiles:"images/mrs-charles-thursby.dzi", thumbPos:"50% 26%",
     music:"audio/salut-d-amour.mp3",
@@ -897,6 +920,7 @@ window.WORKS = [
     card:"A famous model in a room full of patterns, rhinestones and color.",
     subtitle:"A room made of patterns, and a woman who knows who she is.",
     alt:"Isn't She Lovely, Tracey Norman by Mickalene Thomas: a woman in a black one-shoulder dress sits on a white wicker stool beside a patterned armchair, with a little dog at her feet, in a room of bright color blocks, wallpapers and black-and-white photos",
+    meet:"Mickalene Thomas grew up in New Jersey and makes her art in New York. Her own mother was a model, and was the first person she loved to make pictures of. The Newark Museum asked her to make this portrait of Tracey Norman, who grew up in Newark.",
     intro:"You've met Tracey. Now let's look closely at all the pieces of her room.",
     src:"images/isnt-she-lovely.jpg", tiles:"images/isnt-she-lovely.jpg", thumbPos:"60% 25%",
     music:"audio/lovely-summertime.mp3",
@@ -929,5 +953,119 @@ window.WORKS = [
       "Tracey Norman grew up in Newark, New Jersey, and became a famous model in the 1970s. Her face was on boxes of hair color in stores all over the country. She was one of the first Black transgender models, and today she is celebrated for being exactly who she is.",
       "At the Bruce, find her in the room called Identity, near Mrs. Charles Thursby. Two women, painted 125 years apart, both sitting in a way that says: here I am. Stand between them. What's the same? What's different?"
     ]
+  },
+
+  {
+    id:"arch", museum:"bruce", title:"The Arch of Titus", artist:"George Healy, Frederic Church and Jervis McEntee", meetLabel:"Meet the artists",
+    card:"An ancient arch in Rome, a poet and his daughter, and three painters who painted themselves.",
+    subtitle:"Three friends, one canvas, and a doorway two thousand years old.",
+    alt:"The Arch of Titus by George Healy, Frederic Church and Jervis McEntee: a huge carved Roman arch with the Colosseum seen through it, a man and a girl standing beneath it, and three men in dark coats at the right, one of them sketching",
+    meet:"Three American friends painted this together in Rome, in 1871. George Healy painted portraits. Frederic Church and Jervis McEntee painted landscapes. Each one did the part he was best at, and then they painted themselves into the picture!",
+    intro:"You've stood under the arch. Now let's find who else is there.",
+    src:"images/arch-of-titus.jpg", tiles:"images/arch-of-titus.jpg", thumbPos:"50% 75%",
+    music:"audio/meditation.mp3",
+    prompts:[
+      "Just look. You're standing in Rome, under a stone arch that is almost two thousand years old.",
+      "Look up. How big is the arch compared to the people?",
+      "Look through the arch. What can you see far away?",
+      "Where is the sunlight? Where are the shadows?",
+      "Who do you think these people are? What are they doing here?"
+    ],
+    stops:[
+      {find:"Look through the arch. Can you find a huge round building, far away?", cx:0.58, cy:0.64, box:{x:0.38, y:0.56, w:0.4, h:0.17}, title:"The Colosseum", body:"That's the Colosseum, a giant stadium where the ancient Romans watched shows and contests. It was already very old when this was painted, and you can still visit it today."},
+      {find:"Can you find a man in a tall hat and a girl in a pink dress?", cx:0.4, cy:0.77, box:{x:0.31, y:0.68, w:0.17, h:0.18}, title:"A poet and his daughter", body:"The man is Henry Wadsworth Longfellow, one of the most famous American poets of his time, out for a walk with his daughter Edith. They were visiting Rome too, far from their home in Massachusetts."},
+      {find:"Can you find horses carved into the stone?", cx:0.23, cy:0.56, box:{x:0.08, y:0.48, w:0.3, h:0.16}, title:"A picture made of stone", body:"The Romans carved pictures right into the arch: horses pulling a chariot in a victory parade. The arch was built to celebrate an emperor named Titus."},
+      {find:"Look up inside the arch. Can you find the rows of little square boxes?", cx:0.42, cy:0.27, box:{x:0.1, y:0.13, w:0.7, h:0.3}, title:"A ceiling of squares", body:"The curved ceiling is carved into rows of squares, each with a stone flower inside. Look how carefully the painters showed every one, getting smaller as the arch curves away."},
+      {find:"Can you find someone drawing?", cx:0.72, cy:0.85, box:{x:0.62, y:0.73, w:0.25, h:0.25}, title:"The sketcher", body:"That's Frederic Church, one of the three painters, sitting with his sketchbook and drawing the arch. Artists often drew outdoors first, then made the big painting later in a studio."},
+      {find:"Two more painters are watching him. Can you find the one holding a palette?", cx:0.87, cy:0.8, box:{x:0.76, y:0.64, w:0.2, h:0.2}, title:"Three painters in their own painting", body:"A palette is the flat board painters mix their colors on. These are the other two artists, looking over their friend's shoulder. All three of them put themselves in the painting, like signing it with their faces."}
+    ],
+    done:[
+      "The Arch of Titus was painted in 1871 by three American artists working together in Rome. It's unusual for painters to share one canvas, but these three were good friends.",
+      "Back then, many American artists sailed across the ocean to Italy to study the old buildings and the famous paintings there. This picture is a bit like a postcard home: look where we are, and look who we met!",
+      "At the Bruce, stand back and see how tall the arch is. Then step close and find the poet, his daughter, and the three painters."
+    ]
+  },
+
+  {
+    id:"davis", museum:"bruce", title:"Place des Vosges No. 1", artist:"Stuart Davis",
+    card:"A square in Paris turned into flat, bright blocks of color.",
+    subtitle:"Pink, lilac, red and yellow: a Paris square made simple.",
+    alt:"Place des Vosges No. 1 by Stuart Davis: a row of buildings around an empty gray square, painted as flat blocks of white, pink, lilac, red and yellow with thin black lines for windows and arches",
+    meet:"Stuart Davis was an American painter who loved jazz music, city signs and bright color. In 1928 he sailed to Paris and stayed for more than a year. He painted its old streets and squares as flat, cheerful shapes.",
+    intro:"You've looked across the square. Now let's find the little things Davis kept.",
+    src:"images/place-des-vosges.jpg", tiles:"images/place-des-vosges.jpg",
+    music:"audio/canal-street-blues.mp3",
+    prompts:[
+      "Just look. This is a square in Paris, France, on a sunny day.",
+      "How many colors can you count on the buildings?",
+      "Look at the windows and doors. How did the artist make them?",
+      "Is anybody here? Where do you think everyone went?",
+      "If you lived here, which building would be yours?"
+    ],
+    stops:[
+      {find:"Can you find a tall red shape with squiggles on it?", cx:0.92, cy:0.76, box:{x:0.86, y:0.63, w:0.11, h:0.26}, title:"A splash of red", body:"It might be a sign or a poster stand. Davis loved the signs and posters on city streets. He didn't copy the words. He turned them into squiggles."},
+      {find:"Can you find a green door?", cx:0.775, cy:0.655, box:{x:0.73, y:0.59, w:0.09, h:0.12}, title:"One green door", body:"All the other doorways are just thin black lines. Only this one is filled with green. Why do you think Davis chose this door?"},
+      {find:"Can you find a little blue sign with letters?", cx:0.925, cy:0.622, box:{x:0.87, y:0.59, w:0.11, h:0.07}, title:"A street sign", body:"A tiny blue sign with white letters, just like the real street signs in Paris. It's one of the few places Davis used blue, besides the sky."},
+      {find:"Can you find a balcony that looks like a see-through box?", cx:0.14, cy:0.52, box:{x:0.03, y:0.46, w:0.22, h:0.12}, title:"Drawn, not painted", body:"Davis drew the balcony with a few black lines, and you can see right through it! He liked to draw on top of his colors, the way you might with a marker."},
+      {find:"Can you find a chimney on a roof?", cx:0.825, cy:0.06, box:{x:0.78, y:0.01, w:0.09, h:0.11}, title:"Up on the roof", body:"One skinny chimney pokes up into the blue sky. The roofs are flat gray shapes with little windows drawn on, like a row of hats."},
+      {find:"One building wears a pattern of yellow lines. Can you find it?", cx:0.8, cy:0.4, box:{x:0.62, y:0.26, w:0.35, h:0.3}, title:"Bricks, the quick way", body:"The real buildings in this square are made of red brick with pale stone stripes. Davis didn't paint every brick. A few yellow lines are enough to say: brick!"},
+      {find:"Davis chose every color. Now you choose! Pick a color, then tap any shape to fill it.", cx:0.5, cy:0.5, box:{x:0, y:0, w:1, h:1},
+        fill:{ map:"images/place-des-vosges-map.png", real:"Davis's",
+          colors:["#e58fb0","#d9c3e6","#c8393b","#f1e58f","#d9a04e","#7fb6d9","#9aa0a6","#f4f1ea","#2f9e77","#f08a2e","#6a4fb3","#2a2f38"] },
+        title:"Your square", body:"Slide across to see Davis's colors. The real square is all red brick and gray stone. Davis gave every building its own color instead: pink, lilac, red, yellow. How does your square feel? How does his?"}
+    ],
+    done:[
+      "Stuart Davis painted Place des Vosges No. 1 in 1928, during his stay in Paris. The Place des Vosges is a real square, more than 400 years old, and you can still walk around it today.",
+      "The real buildings all match: red brick, gray roofs, stone arches. Davis kept the shapes but changed the colors, and he left out the people, the trees and the fountain. He painted how the square felt to him: bright, simple and sunny.",
+      "At the Bruce, it hangs near the big, shadowy Arch of Titus. Two Americans visiting Europe, about sixty years apart. Look from one to the other. Which place would you rather visit?"
+    ]
+  }
+];
+
+// "Which one?" Two works side by side with a ladder of questions, planned backwards from the last one:
+// first plain looking (with right answers, and showing that "both" and "neither" are real answers),
+// then how each person presents herself, then open questions where any answer is fine.
+// view = the part of each work to show for a question (fractions of that work; whole work if left out).
+window.PAIRS = [
+  {
+    id:"thursby-thomas", museum:"bruce", a:"thursby", b:"thomas", names:["Mrs. Thursby", "Tracey"],
+    title:"Two portraits", sub:"Sargent and Mickalene Thomas", cover:"images/pair-thursby-thomas.jpg",
+    card:"Two women, painted 125 years apart. Which one...?",
+    questions:[
+      {q:"Which one has a dog?", answer:"b", yes:"A fluffy black-and-white dog sits at Tracey's feet."},
+      {q:"Which one is wearing a necklace?", answer:"both", view:{a:{x:0.14, y:0.22, w:0.72, h:0.36}, b:{x:0.42, y:0.0, w:0.44, h:0.66}},
+        yes:"Mrs. Thursby has a long chain. Tracey has a sparkly ring necklace. Sometimes the answer is both."},
+      {q:"Which one has a big smile?", answer:"neither", view:{a:{x:0.33, y:0.225, w:0.32, h:0.16}, b:{x:0.5, y:0.0, w:0.22, h:0.29}},
+        yes:"Long ago, almost nobody smiled in a portrait. Tracey doesn't have to smile either."},
+      {q:"Which one has her hands on her hips?", answer:"a", view:{a:{x:0.0, y:0.2, w:1, h:0.45}, b:{x:0.3, y:0.0, w:0.66, h:0.7}},
+        yes:"Mrs. Thursby: both hands, elbows out. Tracey stretches one arm across the chair instead."},
+      {q:"Which one is looking right at you?", answer:"both", view:{a:{x:0.33, y:0.225, w:0.32, h:0.16}, b:{x:0.5, y:0.0, w:0.22, h:0.29}},
+        yes:"Neither one looks away. They want you to look back."},
+      {q:"Which picture tells you more about the person in it?", note:"Sargent tells you with her pose. Thomas tells you with a whole room of patterns and color. What did you notice first?"},
+      {q:"Which one looks sure of herself?", view:{a:{x:0.0, y:0.2, w:1, h:0.45}, b:{x:0.3, y:0.0, w:0.66, h:0.7}},
+        say:{a:"What makes her look so sure? Her hands? Her eyes? The way she sits?", b:"What makes her look so sure? Her eyes? Her arm? The way she sits?", both:"Two women, 125 years apart, and both look sure of themselves. How can you tell?", neither:"Interesting! What would they need to do to look sure of themselves?"}},
+      {q:"Which one is telling you: this is who I am?",
+        say:{a:"Mrs. Thursby it is. What do you think she's telling you about herself?", b:"Tracey it is. What do you think she's telling you about herself?", both:"Both of them! What is each one telling you?", neither:"Maybe a portrait can't tell you everything. What would you ask them, if you could?"}}
+    ],
+    end:{title:"How do you want to be seen?", body:"There was no wrong answer to that last one. At the Bruce, these two hang in a room called Identity, and its wall asks: How do you see yourself? How do you want others to see you? If someone painted your portrait, how would you sit? What would be in your room?"}
+  },
+  {
+    id:"arch-davis", museum:"bruce", a:"arch", b:"davis", names:["The Arch", "The Square"],
+    title:"Two Americans in Europe", sub:"The Arch of Titus and Place des Vosges", cover:"images/pair-arch-davis.jpg",
+    card:"Rome and Paris, painted by visitors from America. Which one...?",
+    questions:[
+      {q:"Which one has people in it?", answer:"a", yes:"Five people stand under the arch. The square is completely empty."},
+      {q:"Which one has a blue sky?", answer:"both", yes:"Look through the arch, and above the rooftops."},
+      {q:"Which one shows nighttime?", answer:"neither", yes:"Both are sunny days. One is full of deep shadows, and the other has no shadows at all."},
+      {q:"Which one has a pink building?", answer:"b", yes:"The real building isn't pink. The painter just liked it that way."},
+      {q:"Which one shows a place far away from America?", answer:"both", yes:"The arch is in Rome, Italy. The square is in Paris, France. American artists sailed across the ocean to paint them."},
+      {q:"Which one could you use like a photo, to see just how the place looked?",
+        say:{a:"The arch painters showed every stone and shadow, almost like a camera.", b:"Interesting! The shapes are right, even if the colors are made up.", both:"Each one keeps something real: one the stones and shadows, the other the shapes.", neither:"True, a painting is never quite a photo. Somebody chose what to put in."}},
+      {q:"Which one shows how it felt to be there?",
+        say:{a:"How do you think it felt under that giant arch? Small? Amazed?", b:"How do you think the square felt to the painter? Sunny? Happy?", both:"One feels grand and old. One feels bright and playful. Both are feelings!", neither:"What would you add to a painting to show how a place feels?"}},
+      {q:"Which one is more true?",
+        say:{a:"It does look just like the real arch. Is looking right the same as being true?", b:"The colors are made up, but maybe the feeling is real. Can a feeling be true?", both:"Maybe there's more than one way to tell the truth about a place.", neither:"Maybe every painting is partly made up. Even a careful one leaves things out."}}
+    ],
+    end:{title:"Two ways to tell the truth", body:"There was no wrong answer to that last one. One painting shows how a place looked. The other shows how a place felt. Think of somewhere you love. Would you paint how it looks, or how it feels?"}
   }
 ];
