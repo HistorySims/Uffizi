@@ -328,7 +328,7 @@ window.WORKS = [
     meet:"Edward Hopper grew up in a little town on the Hudson River, where he loved to draw boats. He was tall and very quiet, and he sometimes thought about a painting for months before he picked up a brush.",
     intro:"You've watched the morning light. Now let's look closely at this quiet little shop.",
     src:"images/seven-am.jpg", tiles:"images/seven-am.jpg",
-    music:"audio/wild-rose.mp3",
+    music:"audio/appalachian-spring.mp3",
     prompts:[
       "Just look. It's very early. The sun is just coming up, and nobody is here yet.",
       "Where is the light coming from? Find the brightest spot, and the darkest.",
